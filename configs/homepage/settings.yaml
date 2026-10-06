@@ -1,0 +1,64 @@
+---
+# Homepage application-level settings.
+# Reference: https://gethomepage.dev/configs/settings/
+# {{HOMEPAGE_VAR_*}} values come from .env via docker-compose.yml (HOMEPAGE_TITLE, HOMEPAGE_THEME, ...),
+# the visual preset (custom.css) from configs/homepage/themes/<HOMEPAGE_THEME_PRESET>.css.
+title: "{{HOMEPAGE_VAR_TITLE}}"
+theme: "{{HOMEPAGE_VAR_THEME}}"
+color: "{{HOMEPAGE_VAR_COLOR}}"
+headerStyle: "{{HOMEPAGE_VAR_HEADER_STYLE}}"
+cardStyle: "{{HOMEPAGE_VAR_CARD_STYLE}}"
+blockStyle: "{{HOMEPAGE_VAR_BLOCK_STYLE}}"
+font: "{{HOMEPAGE_VAR_FONT}}"
+background:
+  opacity: 50
+favicon: https://gethomepage.dev/assets/favicon.ico
+# Container state as a dot, CPU/RAM/network per container on hover.
+statusStyle: dot
+showStats: false
+target: _blank
+hideErrors: true
+language: en
+useEqualHeights: true
+hideVersion: true
+disableIndexing: true
+
+quicklaunch:
+  searchDescriptions: true
+  hideInternetSearch: false
+  showSearchSuggestions: true
+
+# layout.style: row + columns: N forces each group into a single horizontal row.
+fullWidth: false
+layout:
+  Entertainment:
+    tab: Entertainment
+    style: row
+    columns: 7
+  Messaging:
+    tab: Entertainment
+    initiallyCollapsed: false
+  Media:
+    tab: Entertainment
+    initiallyCollapsed: true
+    style: row
+    columns: 6
+
+  Knowledge:
+    tab: Operations
+    initiallyCollapsed: false
+  Development:
+    tab: Operations
+  Secrets:
+    tab: Operations
+    initiallyCollapsed: false
+
+  Household:
+    tab: Home
+  Irl:
+    tab: Home
+    initiallyCollapsed: true
+  Infrastructure:
+    tab: Home
+    initiallyCollapsed: false
+    iconsOnly: true

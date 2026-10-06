@@ -1,0 +1,481 @@
+# Single ingress for both layers (docker-compose.yml infra + Aspire app stack).
+# Upstreams are container names on flat_lab_net and container (target) ports, never host ports.
+# A matcher may list an old subdomain next to the current one so existing bookmarks keep working.
+
+*.{$DUCKDNS_DOMAIN} {
+    tls {
+        dns duckdns {$DUCKDNS_TOKEN}
+        resolvers 1.1.1.1 8.8.8.8
+    }
+
+    @adguard host adguard.{$DUCKDNS_DOMAIN}
+    handle @adguard {
+        reverse_proxy adguardhome:81
+    }
+
+    @adventures host adventures.{$DUCKDNS_DOMAIN} travel.{$DUCKDNS_DOMAIN}
+    handle @adventures {
+        reverse_proxy adventures:8000
+    }
+
+    @affine host affine.{$DUCKDNS_DOMAIN}
+    handle @affine {
+        reverse_proxy affine:3010
+    }
+
+    @aliases host aliases.{$DUCKDNS_DOMAIN}
+    handle @aliases {
+        reverse_proxy aliases:80
+    }
+
+    @analytics host analytics.{$DUCKDNS_DOMAIN} stats.{$DUCKDNS_DOMAIN}
+    handle @analytics {
+        reverse_proxy analytics:8000
+    }
+
+    @archive host archive.{$DUCKDNS_DOMAIN}
+    handle @archive {
+        reverse_proxy archive:8083 {
+            header_up X-Forwarded-Proto https
+        }
+    }
+
+    @audiomuse host audiomuse.{$DUCKDNS_DOMAIN}
+    handle @audiomuse {
+        reverse_proxy audiomuse-ai:8500
+    }
+
+    @blog host blog.{$DUCKDNS_DOMAIN}
+    handle @blog {
+        reverse_proxy blog:2368
+    }
+
+    @bookmarks host bookmarks.{$DUCKDNS_DOMAIN}
+    handle @bookmarks {
+        reverse_proxy bookmarks:80
+    }
+
+    @books host books.{$DUCKDNS_DOMAIN}
+    handle @books {
+        reverse_proxy books:5000
+    }
+
+    @budget host budget.{$DUCKDNS_DOMAIN}
+    handle @budget {
+        reverse_proxy budget:5006
+    }
+
+    @changedetection host changedetection.{$DUCKDNS_DOMAIN}
+    handle @changedetection {
+        reverse_proxy changedetection:5000
+    }
+
+    @chat host chat.{$DUCKDNS_DOMAIN}
+    handle @chat {
+        reverse_proxy snikket-portal:80
+    }
+
+    @checkouts host paperless.{$DUCKDNS_DOMAIN} checkouts.{$DUCKDNS_DOMAIN}
+    handle @checkouts {
+        reverse_proxy checkouts:8000
+    }
+
+    @cloud host cloud.{$DUCKDNS_DOMAIN}
+    handle @cloud {
+        # Seafile requires the original Host header and HTTPS protocol for CSRF
+        reverse_proxy cloud:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto https
+            header_up X-Forwarded-Host {host}
+        }
+    }
+
+    @converter host convert.{$DUCKDNS_DOMAIN} converter.{$DUCKDNS_DOMAIN}
+    handle @converter {
+        reverse_proxy converter:3000
+    }
+
+    # Aspire dashboard runs on the host (systemd, launch profile "http"); Caddy terminates TLS.
+    @dashboard host dashboard.{$DUCKDNS_DOMAIN}
+    handle @dashboard {
+        reverse_proxy host.docker.internal:19000
+    }
+
+    @devtools host devtools.{$DUCKDNS_DOMAIN}
+    handle @devtools {
+        reverse_proxy dev-tools:3000
+    }
+
+    @docs host docs.{$DUCKDNS_DOMAIN}
+    handle @docs {
+        reverse_proxy dev-notes:3000
+    }
+
+    @documents host documents.{$DUCKDNS_DOMAIN}
+    handle @documents {
+        reverse_proxy documents:8080
+    }
+
+    @esign host esign.{$DUCKDNS_DOMAIN}
+    handle @esign {
+        reverse_proxy docuseal:3000
+    }
+
+    @favourites host favourites.{$DUCKDNS_DOMAIN}
+    handle @favourites {
+        reverse_proxy favourites:5230
+    }
+
+    @feed host feed.{$DUCKDNS_DOMAIN}
+    handle @feed {
+        reverse_proxy feed:8080
+    }
+
+    @files host files.{$DUCKDNS_DOMAIN}
+    handle @files {
+        reverse_proxy files:80
+    }
+
+    @flows host flows.{$DUCKDNS_DOMAIN} nodered.{$DUCKDNS_DOMAIN}
+    handle @flows {
+        reverse_proxy flows:1880
+    }
+
+    @forum host forum.{$DUCKDNS_DOMAIN}
+    # Both path AND host must match: without the host clause, /api/* on every subdomain
+    # (homepage, dashboard, ...) would be routed here to forum:8536 and 502.
+    @forum_api {
+        path /api/* /api/v3/* /pictrs/* /inbox* /site_outbox* /nodeinfo* /.well-known/*
+        host forum.{$DUCKDNS_DOMAIN}
+    }
+    handle @forum_api {
+        reverse_proxy forum:8536
+    }
+    handle @forum {
+        reverse_proxy forum-ui:1234
+    }
+
+    @gallery host gallery.{$DUCKDNS_DOMAIN}
+    handle @gallery {
+        reverse_proxy gallery:80
+    }
+
+    @genealogy host genealogy.{$DUCKDNS_DOMAIN}
+    handle @genealogy {
+        reverse_proxy genealogy:5000
+    }
+
+    @shortener host shortener.{$DUCKDNS_DOMAIN}
+    handle @shortener {
+        reverse_proxy shortener:3000
+    }
+
+    @history host history.{$DUCKDNS_DOMAIN}
+    handle @history {
+        reverse_proxy history:8000
+    }
+
+    @home-assistant host home-assistant.{$DUCKDNS_DOMAIN}
+    handle @home-assistant {
+        reverse_proxy host.docker.internal:8123
+    }
+
+    @homepage host homepage.{$DUCKDNS_DOMAIN}
+    handle @homepage {
+        # Forward the original Host header; otherwise homepage's Host validation rejects the request with 400
+        # and Caddy reports 502 to the browser.
+        reverse_proxy homepage:3000 {
+            header_up Host {host}
+        }
+    }
+
+    @household host household.{$DUCKDNS_DOMAIN}
+    handle @household {
+        reverse_proxy household:80
+    }
+
+    @ide host ide.{$DUCKDNS_DOMAIN}
+    handle @ide {
+        reverse_proxy ide:8443
+    }
+
+    @immich host photos.{$DUCKDNS_DOMAIN} immich.{$DUCKDNS_DOMAIN}
+    handle @immich {
+        reverse_proxy immich-server:2283
+    }
+
+    @indexer host indexer.{$DUCKDNS_DOMAIN}
+    handle @indexer {
+        reverse_proxy indexer:9696
+    }
+
+    @inventory host inventory.{$DUCKDNS_DOMAIN}
+    handle @inventory {
+        reverse_proxy inventory:7745
+    }
+
+    @irc host irc.{$DUCKDNS_DOMAIN}
+    handle @irc {
+        reverse_proxy irc:9000
+    }
+
+    @karakeep host karakeep.{$DUCKDNS_DOMAIN}
+    handle @karakeep {
+        reverse_proxy cabinet:3000
+    }
+
+    @kimai host time-kimai.{$DUCKDNS_DOMAIN}
+    handle @kimai {
+        reverse_proxy kimai:80
+    }
+
+    @lidarr host lidarr.{$DUCKDNS_DOMAIN}
+    handle @lidarr {
+        reverse_proxy indexer-music:8686
+    }
+
+    @llm host llm.{$DUCKDNS_DOMAIN}
+    handle @llm {
+        reverse_proxy llm:8080
+    }
+
+    @locations host locations.{$DUCKDNS_DOMAIN}
+    handle @locations {
+        reverse_proxy dawarich:3000
+    }
+
+    # Element web client, with the Synapse client API on the same host (config: configs/element, configs/synapse).
+    @matrix host matrix.{$DUCKDNS_DOMAIN} element.{$DUCKDNS_DOMAIN}
+    handle @matrix {
+        @synapse path /_matrix/* /_synapse/client/*
+        handle @synapse {
+            reverse_proxy matrix-server:8008
+        }
+        handle {
+            reverse_proxy matrix:80
+        }
+    }
+
+    @meals host meals.{$DUCKDNS_DOMAIN} recipes.{$DUCKDNS_DOMAIN}
+    handle @meals {
+        reverse_proxy meals:8089
+    }
+
+    @medical host medical.{$DUCKDNS_DOMAIN} emr.{$DUCKDNS_DOMAIN}
+    handle @medical {
+        reverse_proxy medical:443 {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
+    }
+
+    @metrics host metrics.{$DUCKDNS_DOMAIN} beszel.{$DUCKDNS_DOMAIN}
+    handle @metrics {
+        reverse_proxy metrics:8090
+    }
+
+    @monitor host monitor.{$DUCKDNS_DOMAIN}
+    handle @monitor {
+        reverse_proxy monitor:61208
+    }
+
+    @music host music.{$DUCKDNS_DOMAIN}
+    handle @music {
+        reverse_proxy music:4533
+    }
+
+    @news host news.{$DUCKDNS_DOMAIN}
+    handle @news {
+        reverse_proxy news:4000
+    }
+
+    @notes host notes.{$DUCKDNS_DOMAIN}
+    handle @notes {
+        reverse_proxy notes:6806 {
+            header_up Host {host}
+            flush_interval -1
+        }
+    }
+
+    @notifications host notifications.{$DUCKDNS_DOMAIN}
+    handle @notifications {
+        reverse_proxy notifications:80
+    }
+
+    @pass host pass.{$DUCKDNS_DOMAIN}
+    handle @pass {
+        reverse_proxy passbolt:80
+    }
+
+    @passwords host passwords.{$DUCKDNS_DOMAIN}
+    handle @passwords {
+        reverse_proxy passwords:80
+    }
+
+    @paste host paste.{$DUCKDNS_DOMAIN}
+    handle @paste {
+        reverse_proxy privatebin:8080
+    }
+
+    @perplexica host perplexica.{$DUCKDNS_DOMAIN}
+    handle @perplexica {
+        reverse_proxy perplexica:3000
+    }
+
+    @phonebook host phonebook.{$DUCKDNS_DOMAIN}
+    handle @phonebook {
+        reverse_proxy phonebook:5232 {
+            transport http
+        }
+    }
+
+    @pocket host pocket.{$DUCKDNS_DOMAIN}
+    handle @pocket {
+        reverse_proxy pocket:3000
+    }
+
+    @projects host projects.{$DUCKDNS_DOMAIN} code.{$DUCKDNS_DOMAIN}
+    handle @projects {
+        request_body {
+            max_size 512MiB
+        }
+        reverse_proxy projects:6610 {
+            header_up Host {upstream_hostport}
+            header_up X-Forwarded-Host {host}
+        }
+    }
+
+    @radarr host radarr.{$DUCKDNS_DOMAIN}
+    handle @radarr {
+        reverse_proxy indexer-films:7878
+    }
+
+    @reddit host reddit.{$DUCKDNS_DOMAIN}
+    handle @reddit {
+        reverse_proxy reddit:8080
+    }
+
+    @rsshub host rsshub.{$DUCKDNS_DOMAIN}
+    handle @rsshub {
+        reverse_proxy rsshub:1200
+    }
+
+    @search host search.{$DUCKDNS_DOMAIN}
+    handle @search {
+        reverse_proxy search:8080 {
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    @secrets host secrets.{$DUCKDNS_DOMAIN}
+    handle @secrets {
+        reverse_proxy infisical:80
+    }
+
+    @sharing host sharing.{$DUCKDNS_DOMAIN}
+    handle @sharing {
+        reverse_proxy sharing:3000
+    }
+
+    @sign host sign.{$DUCKDNS_DOMAIN}
+    handle @sign {
+        reverse_proxy documenso:3500
+    }
+
+    @snippets host snippets.{$DUCKDNS_DOMAIN}
+    handle @snippets {
+        reverse_proxy snippets:6157
+    }
+
+    @sonarr host sonarr.{$DUCKDNS_DOMAIN}
+    handle @sonarr {
+        reverse_proxy indexer-serials:8989
+    }
+
+    @subscriptions host subscriptions.{$DUCKDNS_DOMAIN}
+    handle @subscriptions {
+        reverse_proxy subscriptions:80
+    }
+
+    @tasks host tasks.{$DUCKDNS_DOMAIN}
+    handle @tasks {
+        reverse_proxy super-productivity:1900
+    }
+
+    @time host time.{$DUCKDNS_DOMAIN}
+    handle @time {
+        reverse_proxy solidtime:80
+    }
+
+    @toolbox host tools.{$DUCKDNS_DOMAIN} toolbox.{$DUCKDNS_DOMAIN}
+    handle @toolbox {
+        reverse_proxy toolbox:80
+    }
+
+    @torrent host torrent.{$DUCKDNS_DOMAIN}
+    handle @torrent {
+        reverse_proxy torrent:8080
+    }
+
+    @track host track.{$DUCKDNS_DOMAIN}
+    handle @track {
+        reverse_proxy ryot:8000
+    }
+
+    @twofa host 2fa.{$DUCKDNS_DOMAIN}
+    handle @twofa {
+        reverse_proxy twofauth:8000
+    }
+
+    @videos host videos.{$DUCKDNS_DOMAIN}
+    handle @videos {
+        reverse_proxy videos:8096
+    }
+
+    @webcheck host webcheck.{$DUCKDNS_DOMAIN}
+    handle @webcheck {
+        reverse_proxy web-check:3000
+    }
+
+    @whiteboard host whiteboard.{$DUCKDNS_DOMAIN}
+    handle @whiteboard {
+        reverse_proxy whiteboard:80
+    }
+
+    @whois host whois.{$DUCKDNS_DOMAIN}
+    handle @whois {
+        reverse_proxy whois:8043
+    }
+
+    @wiki host wiki.{$DUCKDNS_DOMAIN}
+    handle @wiki {
+        reverse_proxy wiki:80
+    }
+
+    @xmpp host xmpp.{$DUCKDNS_DOMAIN} converse.{$DUCKDNS_DOMAIN}
+    handle @xmpp {
+        # Ejabberd BOSH / WebSocket / admin API
+        @ejabberd path /bosh /bosh/* /ws /ws/* /websocket /websocket/* /http-bind /http-bind/* /api /api/*
+        handle @ejabberd {
+            reverse_proxy xmpp-server:5280
+        }
+        # Converse.js static web client (default for everything else)
+        handle {
+            reverse_proxy xmpp:80
+        }
+    }
+
+    @ytdl host ytdl.{$DUCKDNS_DOMAIN}
+    handle @ytdl {
+        reverse_proxy ytdl:8081
+    }
+
+    # Fallback
+    handle {
+        abort
+    }
+}

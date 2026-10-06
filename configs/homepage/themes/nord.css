@@ -1,0 +1,17 @@
+/* Nord palette for Homepage. Selected with HOMEPAGE_THEME_PRESET=nord in .env (mounted as /app/config/custom.css).
+   Overrides Homepage's colour scale (--color-50 lightest .. --color-900 darkest; dark mode uses 800 as background),
+   so it applies whatever `color:` is set in settings.yaml. Best with HOMEPAGE_THEME=dark. */
+html[class*="theme-"] {
+  --color-50: 236 239 244;
+  --color-100: 229 233 240;
+  --color-200: 216 222 233;
+  --color-300: 163 177 201;
+  --color-400: 129 161 193;
+  --color-500: 94 129 172;
+  --color-600: 76 86 106;
+  --color-700: 67 76 94;
+  --color-800: 46 52 64;
+  --color-900: 36 41 51;
+  --color-logo-start: 136 192 208 / 40%;
+  --color-logo-stop: 136 192 208 / 80%;
+}

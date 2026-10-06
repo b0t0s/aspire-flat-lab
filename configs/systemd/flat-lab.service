@@ -1,0 +1,26 @@
+# Template: deploy.sh renders {{USER}}, {{REPO}} and {{DOTNET_ROOT}} and installs it as /etc/systemd/system/flat-lab.service.
+[Unit]
+Description=Flat Lab Stack
+# Infra (caddy, flat_lab_net, ...) is docker-compose.yml and must be up first.
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User={{USER}}
+Environment="HOME=/home/{{USER}}"
+Environment="DOTNET_ROOT={{DOTNET_ROOT}}"
+Environment="DOTNET_CLI_TELEMETRY_OPTOUT=1"
+Environment="PATH={{DOTNET_ROOT}}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+WorkingDirectory={{REPO}}
+ExecStart={{DOTNET_ROOT}}/dotnet run --file {{REPO}}/apphost.cs # --launch-profile http
+Restart=always
+RestartSec=10
+TimeoutStopSec=120
+KillSignal=SIGINT
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

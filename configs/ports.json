@@ -1,0 +1,97 @@
+{
+  "Development": {
+    "code-server/code-server": 0,
+    "coding-toolbox/coding-toolbox": 6,
+    "convertx/convertx": 8,
+    "excalidraw/excalidraw": 10,
+    "it-tools/it-tools": 5,
+    "kimai/kimai": 13,
+    "kutt/kutt": 7,
+    "onedev/onedev-agent": 2,
+    "onedev/onedev-http": 1,
+    "opengist/opengist": 3,
+    "solidtime/solidtime": 12,
+    "super-productivity/super-productivity": 11,
+    "web-check/web-check": 4,
+    "whois/whois": 9
+  },
+  "Entertainment": {
+    "jellyfin/jellyfin": 3,
+    "kavita/kavita": 1,
+    "miniflux/miniflux": 0,
+    "navidrome/navidrome": 2,
+    "photoview/photoview": 4
+  },
+  "Household": {
+    "actualbudget/actualbudget": 1,
+    "grocy/grocy": 6,
+    "homebox/homebox": 3,
+    "managemeals/managemeals": 5,
+    "nodered/nodered": 4,
+    "radicale/radicale": 0,
+    "wallos/wallos": 2
+  },
+  "Infrastructure": {
+    "beszel-hub/beszel-hub": 1,
+    "changedetection/changedetection": 0,
+    "plausible/plausible": 2
+  },
+  "Irl": {
+    "gramps-web/gramps-web": 0,
+    "openemr/openemr-http": 1,
+    "openemr/openemr-https": 2
+  },
+  "Knowledge": {
+    "adventurelog/adventurelog": 16,
+    "affine/affine": 1,
+    "archivebox/archivebox": 13,
+    "bookstack/bookstack": 9,
+    "calibre-web/calibre-web": 12,
+    "dawarich/dawarich": 15,
+    "faved/faved": 4,
+    "ghost/ghost": 3,
+    "karakeep/karakeep": 6,
+    "keila/keila": 11,
+    "linkwarden/linkwarden": 7,
+    "memos/memos": 2,
+    "outline/outline": 8,
+    "paperless-ngx/paperless-ngx": 0,
+    "perplexica/perplexica": 14,
+    "siyuan/siyuan": 10,
+    "stirling-pdf/stirling-pdf": 5
+  },
+  "Media": {
+    "audiomuse-ai/audiomuse-ai": 8,
+    "immich-server/immich-server": 0,
+    "lidarr/lidarr": 7,
+    "metube/metube": 2,
+    "prowlarr/prowlarr": 4,
+    "qbittorrent/qbittorrent-web": 3,
+    "radarr/radarr": 5,
+    "ryot/ryot": 1,
+    "sonarr/sonarr": 6
+  },
+  "Messaging": {
+    "chat-irc-ergochat/irc-web": 4,
+    "chat-irc-thelounge/thelounge": 5,
+    "chat-xmpp-ejabberd/xmpp-http": 9,
+    "conversejs/conversejs": 8,
+    "documenso/documenso": 1,
+    "docuseal/docuseal": 2,
+    "element-web/element-web": 6,
+    "lemmy-project-proxy/lemmy-project-proxy": 0,
+    "lemmy/lemmy": 10,
+    "livekit/livekit-http": 11,
+    "pingvin-share/pingvin-share": 3,
+    "synapse/synapse-client": 7
+  },
+  "Secrets": {
+    "aliasvault/aliasvault": 2,
+    "infisical/infisical": 6,
+    "passbolt/passbolt": 4,
+    "privatebin/privatebin": 3,
+    "psono-server/psono": 5,
+    "twofauth/twofauth": 0,
+    "vaultwarden/vaultwarden": 1
+  }
+}

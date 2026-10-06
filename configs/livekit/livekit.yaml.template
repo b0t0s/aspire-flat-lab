@@ -1,0 +1,21 @@
+# Rendered by the AppHost (src/extensions/chat-services.cs) into /etc/livekit/livekit.yaml.
+# Placeholders are filled from .env secrets (LIVEKIT_API_KEY / LIVEKIT_API_SECRET).
+# Reference: https://docs.livekit.io/home/self-hosting/deployment/
+port: 7880
+bind_addresses:
+  - ""
+rtc:
+  tcp_port: 7881
+  # single-port UDP mux, published as 7882/udp
+  udp_port: 7882
+  use_external_ip: true
+redis:
+  address: livekit-redis:6379
+keys:
+  ${API_KEY}: ${API_SECRET}
+turn:
+  enabled: true
+  domain: livekit.${DOMAIN}
+  udp_port: 3478
+logging:
+  level: info

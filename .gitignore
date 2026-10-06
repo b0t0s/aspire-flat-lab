@@ -22,7 +22,6 @@ venv/
 .env.*
 *.env
 !.env.example
-configs/
 
 # Docker / Compose
 docker-compose.override.yml
