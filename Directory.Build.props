@@ -1,0 +1,91 @@
+<Project>
+
+	<!--<Import 
+		Condition="Exists('$(MSBuildProjectDirectory)\obj\$(MSBuildProjectFile).EntityFrameworkCore.targets')"
+		Project="$(MSBuildProjectDirectory)\obj\$(MSBuildProjectFile).EntityFrameworkCore.targets"
+	/>
+
+	<PropertyGroup Condition="!$(MSBuildProjectName.Contains('AppHost'))">
+		 Custom Build Paths 
+		<UseArtifactsOutput>true</UseArtifactsOutput>
+		<ArtifactsPath>$(MSBuildThisFileDirectory)build</ArtifactsPath>
+	</PropertyGroup>-->
+
+	<!-- Properties that affect all projects -->
+	<PropertyGroup>
+	  <!-- Assembly Information -->
+	  <Company>Flat lab</Company>
+	  <Product>$(MSBuildProjectName)</Product>
+	  
+	  <Title>$(Product)</Title>
+	  <Authors>$(Company)</Authors>
+	  <AssemblyName>$(Product)</AssemblyName>
+	  <AssemblyTitle>$(Product)</AssemblyTitle>
+	  <Copyright>Copyright 2025-$([System.DateTime]::Now.ToString(yyyy))© $(Company). All rights reserved</Copyright>
+
+      <_KebabCaseName>$([System.Text.RegularExpressions.Regex]::Replace($(MSBuildProjectName), '([a-z0-9])([A-Z])|([A-Z])([A-Z][a-z])', '$1$3-$2$4'))</_KebabCaseName>
+      <UserSecretsId>$(_KebabCaseName.ToLower())-dev</UserSecretsId>
+
+	  <!-- Versions -->
+	  <Version>$(Build_BuildNumber)</Version>
+	  <FileVersion>$(Build_BuildNumber)</FileVersion>
+	  <AssemblyVersion>$(Build_BuildNumber)</AssemblyVersion>
+	  
+	  <!-- Build and Deployment -->
+	  <WarningsAsErrors />
+	  <Deterministic>True</Deterministic>
+	  <NeutralLanguage>en</NeutralLanguage>
+	  
+	  <AccelerateBuildsInVisualStudio>True</AccelerateBuildsInVisualStudio>
+	  <CopyOutputSymbolsToPublishDirectory>False</CopyOutputSymbolsToPublishDirectory>
+	  
+	  <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
+	  <AppendRuntimeIdentifierToOutputPath>False</AppendRuntimeIdentifierToOutputPath>
+	  
+	  <IncludeAllContentForSelfExtract>false</IncludeAllContentForSelfExtract>
+	  <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+	  
+	  <!-- Code Quality and Style -->
+	  <Nullable>enable</Nullable>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <LangVersion>latest</LangVersion>
+	  <AnalysisLevel>preview-all</AnalysisLevel>
+	  <EnableNETAnalyzers>True</EnableNETAnalyzers>
+	  <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+	  <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='Debug'">
+      <Optimize>False</Optimize>
+      <DebugType>Full</DebugType>
+      <DebugSymbols>True</DebugSymbols>
+  	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
+      <Optimize>True</Optimize>
+      <DebugType>None</DebugType>
+      <DebugSymbols>False</DebugSymbols>
+	</PropertyGroup>
+
+	<!-- Code Analysis -->
+	<!-- Only include analyzers for non-test projects -->
+	<ItemGroup Condition="!$(MSBuildProjectName.Contains('Test'))">
+		<PackageReference Include="Roslynator.Analyzers" Version="4.*">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="10.*">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.*">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.*">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+</Project>

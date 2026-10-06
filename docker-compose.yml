@@ -1,0 +1,585 @@
+services:
+  zerotier-init:
+    image: alpine:latest
+    container_name: zerotier-init
+    restart: "no"
+    volumes:
+    - ${ZEROTIER_DATA_PATH:-../services-data/system/zerotier}:/var/lib/zerotier-one
+    entrypoint: /bin/sh
+    command:
+    - -c
+    - |
+      if [ ! -f /var/lib/zerotier-one/local.conf ]; then
+        echo "Configuring zerotier-one to listen on all interfaces..."
+        printf '{"settings":{"tcpListenAddress":"0.0.0.0:9993"}}\n' > /var/lib/zerotier-one/local.conf
+        echo "local.conf written."
+      else
+        echo "local.conf already exists. Skipping."
+      fi
+
+  zerotier:
+    build:
+      context: ./src/additional-software/zerotier
+      dockerfile: Dockerfile
+    container_name: zerotier
+    restart: unless-stopped
+    labels:
+    - glance.hide=true
+    cap_add:
+    - NET_ADMIN
+    - SYS_ADMIN
+    devices:
+    - /dev/net/tun
+    volumes:
+    - ${ZEROTIER_DATA_PATH:-../services-data/system/zerotier}:/var/lib/zerotier-one
+    environment:
+    - ZEROTIER_NETWORK_ID=${ZEROTIER_NETWORK_ID:?set ZEROTIER_NETWORK_ID in .env}
+    networks:
+    - homelab_net
+    depends_on:
+      zerotier-init:
+        condition: service_completed_successfully
+
+  caddy:
+    labels:
+    - glance.hide=true
+    build:
+      context: ./src/additional-software/caddy
+      dockerfile: Dockerfile
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+    - "80:80"
+    - "443:443"
+    environment:
+    - DUCKDNS_TOKEN=${DUCKDNS_TOKEN:?set DUCKDNS_TOKEN in .env}
+    - DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN:?set DUCKDNS_DOMAIN in .env}
+    volumes:
+    - ./configs/caddy/Caddyfile:/etc/caddy/Caddyfile
+    - ../services-data/system/caddy/data:/data
+    - ../services-data/system/caddy/config:/config
+    networks:
+    - homelab_net
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+  adguardhome:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=AdGuard
+    - homepage.icon=mdi-shield-check
+    - homepage.description=DNS sinkhole
+    - homepage.href=https://adguard.${DUCKDNS_DOMAIN:-localhost}
+    - homepage.widget.type=adguard
+    - homepage.widget.url=https://adguard.${DUCKDNS_DOMAIN:-localhost}
+    - homepage.widget.username={{HOMEPAGE_VAR_ADGUARD_WIDGET_USERNAME}}
+    - homepage.widget.password={{HOMEPAGE_VAR_ADGUARD_WIDGET_PASSWORD}}
+    image: adguard/adguardhome:latest
+    container_name: adguardhome
+    restart: unless-stopped
+    volumes:
+    - ${ADGUARD_WORKDIR:-../services-data/system/adguardhome/workdir}:/opt/adguardhome/work
+    - ${ADGUARD_CONFDIR:-../services-data/system/adguardhome/confdir}:/opt/adguardhome/conf
+    ports:
+    - "53:53/tcp"
+    - "53:53/udp"
+    - "10002:81/tcp"
+    - "10001:3000/tcp"
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=${DUCKDNS_DOMAIN:-localhost}
+    networks:
+    - homelab_net
+
+  homepage:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    environment:
+    - HOMEPAGE_MCP_TOKEN=${HOMEPAGE_MCP_TOKEN:-}
+    - HOMEPAGE_MCP_ENABLED=${HOMEPAGE_MCP_ENABLED:-false}
+    - HOMEPAGE_MCP_ALLOW_WRITE=${HOMEPAGE_MCP_ALLOW_WRITE:-false}
+    - HOMEPAGE_ALLOWED_HOSTS=${HOMEPAGE_ALLOWED_HOSTS:-homepage.${DUCKDNS_DOMAIN:-localhost},localhost,127.0.0.1}
+    # Look & header widgets:
+    - HOMEPAGE_VAR_TITLE=${HOMEPAGE_TITLE:-flat-lab}
+    - HOMEPAGE_VAR_THEME=${HOMEPAGE_THEME:-dark}
+    - HOMEPAGE_VAR_COLOR=${HOMEPAGE_COLOR:-slate}
+    - HOMEPAGE_VAR_HEADER_STYLE=${HOMEPAGE_HEADER_STYLE:-boxed}
+    - HOMEPAGE_VAR_CARD_STYLE=${HOMEPAGE_CARD_STYLE:-}
+    - HOMEPAGE_VAR_BLOCK_STYLE=${HOMEPAGE_BLOCK_STYLE:-}
+    - HOMEPAGE_VAR_FONT=${HOMEPAGE_FONT:-}
+    - HOMEPAGE_VAR_DOMAIN=${DUCKDNS_DOMAIN}
+    - HOMEPAGE_VAR_TZ=${TZ:-Europe/Kyiv}
+    - HOMEPAGE_VAR_OPENMETEO_LABEL=${OPENMETEO_LABEL:-Home}
+    - HOMEPAGE_VAR_OPENMETEO_LAT=${OPENMETEO_LAT:-50.45}
+    - HOMEPAGE_VAR_OPENMETEO_LON=${OPENMETEO_LON:-30.52}
+    # Widget credentials:
+    - HOMEPAGE_VAR_BESZEL_WIDGET_USERNAME=${BESZEL_WIDGET_USERNAME:-}
+    - HOMEPAGE_VAR_BESZEL_WIDGET_PASSWORD=${BESZEL_WIDGET_PASSWORD:-}
+    - HOMEPAGE_VAR_CHANGEDETECTION_WIDGET_KEY=${CHANGEDETECTION_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_KARAKEEP_WIDGET_KEY=${KARAKEEP_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_ADGUARD_WIDGET_USERNAME=${ADGUARD_WIDGET_USERNAME:-admin}
+    - HOMEPAGE_VAR_ADGUARD_WIDGET_PASSWORD=${ADGUARD_WIDGET_PASSWORD:-}
+    - HOMEPAGE_VAR_HOMEASSISTANT_WIDGET_KEY=${HOMEASSISTANT_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_NTFY_WIDGET_USERNAME=${NTFY_WIDGET_USERNAME:-}
+    - HOMEPAGE_VAR_NTFY_WIDGET_PASSWORD=${NTFY_WIDGET_PASSWORD:-}
+    - HOMEPAGE_VAR_CALIBRE_WIDGET_USER=${CALIBRE_WIDGET_USER:-admin}
+    - HOMEPAGE_VAR_CALIBRE_WIDGET_PASSWORD=${CALIBRE_WIDGET_PASSWORD:-}
+    - HOMEPAGE_VAR_HOMEBOX_WIDGET_USERNAME=${HOMEBOX_WIDGET_USERNAME:-}
+    - HOMEPAGE_VAR_HOMEBOX_WIDGET_PASSWORD=${HOMEBOX_WIDGET_PASSWORD:-}
+    - HOMEPAGE_VAR_IMMICH_WIDGET_KEY=${IMMICH_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_JELLYFIN_WIDGET_KEY=${JELLYFIN_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_KAVITA_WIDGET_USER=${KAVITA_WIDGET_USER:-admin}
+    - HOMEPAGE_VAR_KAVITA_WIDGET_PASSWORD=${KAVITA_WIDGET_PASSWORD:-}
+    - HOMEPAGE_VAR_LIDARR_WIDGET_KEY=${LIDARR_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_LINKWARDEN_WIDGET_KEY=${LINKWARDEN_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_MINIFLUX_WIDGET_KEY=${MINIFLUX_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_NAVIDROME_WIDGET_USER=${NAVIDROME_WIDGET_USER:-admin}
+    - HOMEPAGE_VAR_NAVIDROME_WIDGET_TOKEN=${NAVIDROME_WIDGET_TOKEN:-}
+    - HOMEPAGE_VAR_NAVIDROME_WIDGET_SALT=${NAVIDROME_WIDGET_SALT:-}
+    - HOMEPAGE_VAR_PAPERLESS_WIDGET_KEY=${PAPERLESS_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_PROWLARR_WIDGET_KEY=${PROWLARR_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_QBITTORRENT_WIDGET_USER=${QBITTORRENT_WIDGET_USER:-admin}
+    - HOMEPAGE_VAR_QBITTORRENT_WIDGET_PASSWORD=${QBITTORRENT_WIDGET_PASSWORD:-}
+    - HOMEPAGE_VAR_RADARR_WIDGET_KEY=${RADARR_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_SONARR_WIDGET_KEY=${SONARR_WIDGET_KEY:-}
+    - HOMEPAGE_VAR_WALLOS_WIDGET_KEY=${WALLOS_WIDGET_KEY:-}
+    ports:
+    - "10000:3000"
+    volumes:
+    - ../services-data/system/homepage/config:/app/config
+    - ./configs/homepage/docker.yaml:/app/config/docker.yaml:ro
+    - ./configs/homepage/settings.yaml:/app/config/settings.yaml:ro
+    - ./configs/homepage/widgets.yaml:/app/config/widgets.yaml:ro
+    - ./configs/homepage/bookmarks.yaml:/app/config/bookmarks.yaml:ro
+    - ./configs/homepage/themes/${HOMEPAGE_THEME_PRESET:-default}.css:/app/config/custom.css:ro
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+    - homelab_net
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+  searxng:
+    labels:
+    - homepage.group=Household
+    - homepage.name=Search
+    - homepage.icon=mdi-magnify
+    - homepage.href=https://search.${DUCKDNS_DOMAIN:-localhost}
+    image: searxng/searxng:latest
+    container_name: search
+    restart: unless-stopped
+    environment:
+    - SEARXNG_SECRET=${SEARXNG_SECRET:?set SEARXNG_SECRET in .env}
+    - SEARXNG_REDIS_URL=redis://searxng-redis:6379/0
+    ports:
+    - "10003:8080"
+    volumes:
+    - ./configs/searxng:/etc/searxng
+    dns:
+    - "${DNS1:-}"
+    - "${DNS2:-}"
+    networks:
+    - homelab_net
+
+  searxng-redis:
+    image: redis:7-alpine
+    container_name: searxng-redis
+    restart: unless-stopped
+    volumes:
+    - ${SEARXNG_REDIS_DATA:-../services-data/system/searxng/redis}:/data
+    networks:
+    - homelab_net
+
+  rsshub:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=RSS Generator
+    - homepage.icon=mdi-rss-box
+    - homepage.href=https://rsshub.${DUCKDNS_DOMAIN:-localhost}
+    image: diygod/rsshub:latest
+    container_name: rsshub
+    restart: unless-stopped
+    environment:
+    - NODE_ENV=production
+    ports:
+    - "10004:1200"
+    networks:
+    - homelab_net
+
+  # myspeed:
+  #   labels:
+  #   - homepage.group=Infrastructure
+  #   - homepage.name=Speed
+  #   - homepage.icon=mdi-speedometer
+  #   - homepage.href=https://speed.${DUCKDNS_DOMAIN:-localhost}
+  #   - homepage.widget.type=myspeed
+  #   - homepage.widget.url=http://speed:5216
+  #   image: germannewsmaker/myspeed:latest
+  #   container_name: speed
+  #   restart: unless-stopped
+  #   ports:
+  #   - "${MYSPEED_PORT:-5216}:5216"
+  #   volumes:
+  #   - ${MYSPEED_DATA_PATH:-../services-data/system/myspeed}:/config
+  #   networks:
+  #   - homelab_net
+
+  # netalertx:
+  #   labels:
+  #   - homepage.group=Infrastructure
+  #   - homepage.name=Network
+  #   - homepage.icon=mdi-network
+  #   - homepage.href=https://network.${DUCKDNS_DOMAIN:-localhost}
+  #   - homepage.widget.type=netalertx
+  #   - homepage.widget.url=http://netalertx:20211
+  #   image: jokobsk/netalertx:latest
+  #   container_name: network
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   privileged: true
+  #   tmpfs:
+  #   - /tmp:rw,nosuid,nodev,size=256m
+  #   environment:
+  #   - TZ=${TZ:-Europe/Kyiv}
+  #   - GR_TZ=${TZ:-Europe/Kyiv}
+  #   volumes:
+  #   - ${NETALERTX_DATA_PATH:-../services-data/system/netalertx}:/data
+
+  filebrowser-quantum:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Files
+    - homepage.icon=si-filebrowser
+    - homepage.href=https://files.${DUCKDNS_DOMAIN:-localhost}
+    - homepage.widget.type=filebrowser
+    - homepage.widget.url=http://filebrowser-quantum:80
+    image: gtstef/filebrowser:1.3.3-stable
+    container_name: files
+    restart: unless-stopped
+    environment:
+    - FB_NOAUTH=true
+    - FB_AUTH.METHOD=noauth
+    - FB_BASEURL=/
+    - FILEBROWSER_DATABASE=/config/database.db
+    - FILEBROWSER_CONFIG=/config/config.yaml
+    ports:
+    - "10005:80"
+    volumes:
+    - ${FILEBROWSER_DATA:-../services-data/system/filebrowser-quantum}:/config
+    - ./configs/filebrowser-quantum/config.yaml:/config/config.yaml:ro
+    - ${FILEBROWSER_FILES:-../services-data/public}:/srv
+    networks:
+    - homelab_net
+
+  glances:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Monitor
+    - homepage.icon=mdi-monitor-eye
+    - homepage.href=https://monitor.${DUCKDNS_DOMAIN:-localhost}
+    - homepage.widget.type=glances
+    - homepage.widget.url=http://monitor:61208
+    - homepage.widget.version=4
+    - homepage.widget.metric=info
+    image: nicolargo/glances:latest
+    container_name: monitor
+    restart: unless-stopped
+    pid: host
+    privileged: true
+    environment:
+    - GLANCES_OPT=-w
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - ${GLANCES_DATA_PATH:-../services-data/system/glances}:/glances/conf
+    ports:
+    - "10006:61208"
+    networks:
+    - homelab_net
+
+  # olivetin:
+  #   labels:
+  #   - homepage.group=Infrastructure
+  #   - homepage.name=OliveTin
+  #   - homepage.icon=mdi-gamepad
+  #   - homepage.description=Buttons panel
+  #   - homepage.href=https://control.${DUCKDNS_DOMAIN:-localhost}
+  #   image: jamesread/olivetin:latest
+  #   container_name: olivetin
+  #   restart: unless-stopped
+  #   user: "${UID:-1000}:124"
+  #   group_add:
+  #   - 124
+  #   ports:
+  #   - "${OLIVETIN_PORT:-1337}:1337"
+  #   volumes:
+  #   - ${OLIVETIN_DATA:-../services-data/system/olivetin}:/config
+  #   - ./configs/olivetin/config.yaml:/config/config.yaml:ro
+  #   - ./configs/olivetin/entities:/config/entities
+  #   - /var/run/docker.sock:/var/run/docker.sock
+  #   # - ../services-data:/srv/services-data:ro
+  #   # - /var/log/journal:/var/log/journal:ro    
+  #   networks:
+  #   - homelab_net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    labels:
+    - glance.hide=true
+    environment:
+    - OLLAMA_ORIGINS=*
+    - OLLAMA_HOST=0.0.0.0
+    - OLLAMA_KEEP_ALIVE=24h
+    - OLLAMA_API_KEY=${OLLAMA_API_KEY:-}
+    ports:
+    - "11434:11434"
+    volumes:
+    - ${OLLAMA_DATA:-../services-data/system/ollama}:/root/.ollama
+    networks:
+    - homelab_net
+
+  open-webui:
+    labels:
+    - homepage.group=Development
+    - homepage.name=LLM
+    - homepage.icon=mdi-robot
+    - homepage.description=
+    - homepage.href=https://llm.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: llm
+    restart: unless-stopped
+    ports:
+    - "10007:8080"
+    volumes:
+    - ${OPEN_WEBUI_DATA:-../services-data/system/open-webui}:/app/backend/data
+    networks:
+    - homelab_net
+    environment:
+      - TZ=Europe/Kyiv
+      - ENABLE_SIGNUP=True
+      - OLLAMA_BASE_URL=http://ollama:11434
+
+  seafile:
+    labels:
+    - homepage.group=Household
+    - homepage.name=Cloud
+    - homepage.icon=mdi-cloud
+    - homepage.href=https://cloud.${DUCKDNS_DOMAIN:-localhost}
+    image: seafileltd/seafile-mc:latest
+    container_name: cloud
+    restart: unless-stopped
+    ports:
+      - "10008:80"
+    environment:
+      - DB_HOST=seafile-db
+      - TIME_ZONE=Europe/Kyiv
+      - SEAFILE_SERVER_LETSENCRYPT=false
+      - SEAFILE_SERVER_HOSTNAME=${DUCKDNS_DOMAIN:-localhost}
+      - DB_ROOT_PASSWD=${SEAFILE_DB_ROOT_PASS:?set SEAFILE_DB_ROOT_PASS in .env}
+      - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL:?set SEAFILE_ADMIN_EMAIL in .env}
+      - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASS:?set SEAFILE_ADMIN_PASS in .env}
+    volumes:
+    - ${SEAFILE_DATA:-../services-data/system/seafile}:/shared
+    depends_on:
+      - seafile-db
+      - seafile-memcached
+    networks:
+      - homelab_net
+      
+  seafile-db:
+    image: mariadb:11.8.8
+    container_name: seafile-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${SEAFILE_DB_ROOT_PASS:?set SEAFILE_DB_ROOT_PASS in .env}
+      - MYSQL_LOG_CONSOLE=true
+      - DEBUG=True
+    volumes:
+      - ${SEAFILE_DB_DATA:-../services-data/system/seafile-db}:/var/lib/mysql
+    networks:
+      - homelab_net
+
+  seafile-memcached:
+    image: memcached:1.6-alpine
+    container_name: seafile-memcached
+    restart: unless-stopped
+    entrypoint: memcached -m 256
+    networks:
+      - homelab_net
+
+  seafile-auto-config:
+    image: docker:cli
+    container_name: seafile-auto-config
+    restart: "no"
+    environment:
+    - DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN:-localhost}
+    volumes:
+    - ${SEAFILE_DATA:-../services-data/system/seafile}:/shared
+    - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: /bin/sh
+    command:
+    - -c
+    - |
+      CFG=/shared/seafile/conf/seahub_settings.py
+      for i in $$(seq 1 100); do [ -f "$$CFG" ] && break; sleep 3; done
+      [ -f "$$CFG" ] || { echo "seahub_settings.py not found, giving up"; exit 1; }
+      sleep 5
+      sed -i "s|'LOCATION': 'memcached:11211'|'LOCATION': 'seafile-memcached:11211'|" "$$CFG"
+      if ! grep -q CSRF_TRUSTED_ORIGINS "$$CFG"; then
+        printf "\nSERVICE_URL = 'https://cloud.%s'\nFILE_SERVER_ROOT = 'https://cloud.%s/seafhttp'\nCSRF_TRUSTED_ORIGINS = ['https://cloud.%s']\nSECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')\n" "$$DUCKDNS_DOMAIN" "$$DUCKDNS_DOMAIN" "$$DUCKDNS_DOMAIN" >> "$$CFG"
+        docker restart cloud
+      fi
+    depends_on:
+      - seafile
+
+  home-assistant:
+    labels:
+    - homepage.group=Household
+    - homepage.name=Home Assistant
+    - homepage.icon=mdi-home-automation
+    - homepage.href=https://home-assistant.${DUCKDNS_DOMAIN:-localhost}
+    - homepage.widget.type=homeassistant
+    - homepage.widget.url=http://host.docker.internal:8123
+    - homepage.widget.key={{HOMEPAGE_VAR_HOMEASSISTANT_WIDGET_KEY}}
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: home-assistant
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    cap_add:
+    - NET_ADMIN
+    - NET_RAW
+    volumes:
+    - ${HOME_ASSISTANT_DATA:-../services-data/system/home-assistant}:/config
+    - ./configs/home-assistant/configuration.yaml:/config/configuration.yaml:ro
+    - /etc/localtime:/etc/localtime:ro
+    - /run/dbus:/run/dbus:ro
+    environment:
+    - TZ=${TZ:-Europe/Kyiv}
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    environment:
+    - LOG_LEVEL=info
+    ports:
+    - "10009:8191"
+    networks:
+    - homelab_net
+
+  # watchtower:
+  #   labels:
+  #   - homepage.group=Infrastructure
+  #   - homepage.name=watchtower
+  #   - homepage.icon=mdi-update
+  #   - homepage.description=Services auto-updater
+  #   - homepage.widget.type=watchtower
+  #   - homepage.widget.url=http://watchtower:8080
+  #   image: containrrr/watchtower:latest
+  #   container_name: watchtower
+  #   restart: unless-stopped
+  #   command: --cleanup --schedule "0 0 4 * * *" --label-enable
+  #   environment:
+  #   - DOCKER_API_VERSION=1.40
+  #   volumes:
+  #   - /var/run/docker.sock:/var/run/docker.sock
+  #   networks:
+  #   - homelab_net
+
+  rustdesk-hbbs:
+    image: rustdesk/rustdesk-server:latest
+    container_name: rustdesk-hbbs
+    restart: unless-stopped
+    labels:
+    - glance.hide=true
+    command: hbbs
+    volumes:
+    - ${RUSTDESK_DATA_PATH:-../services-data/system/rustdesk}:/root
+    ports:
+    - "21115:21115"
+    - "21116:21116"
+    - "21116:21116/udp"
+    - "21118:21118"
+    networks:
+    - homelab_net
+
+  rustdesk-hbbr:
+    image: rustdesk/rustdesk-server:latest
+    container_name: rustdesk-hbbr
+    restart: unless-stopped
+    command: hbbr
+    volumes:
+    - ${RUSTDESK_DATA_PATH:-../services-data/system/rustdesk}:/root
+    ports:
+    - "21117:21117"
+    - "21119:21119"
+    networks:
+    - homelab_net
+
+  ntfy:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Notifications
+    - homepage.icon=mdi-bell-ring
+    - homepage.href=https://notifications.${DUCKDNS_DOMAIN:-localhost}
+    - homepage.widget.type=ntfy
+    - homepage.widget.url=http://ntfy:80
+    - homepage.widget.topic=${NTFY_WIDGET_TOPIC:-general}
+    - homepage.widget.username={{HOMEPAGE_VAR_NTFY_WIDGET_USERNAME}}
+    - homepage.widget.password={{HOMEPAGE_VAR_NTFY_WIDGET_PASSWORD}}
+    image: binwiederhier/ntfy:latest
+    container_name: notifications
+    restart: unless-stopped
+    command: serve
+    environment:
+    - TZ=${TZ:-Europe/Kyiv}
+    - NTFY_BASE_URL=https://notifications.${DUCKDNS_DOMAIN:-localhost}
+    - NTFY_AUTH_DEFAULT_ACCESS=read-write
+    - NTFY_ENABLE_LOGIN=true
+    - NTFY_BEHIND_PROXY=true
+    volumes:
+    - ${NTFY_AUTH:-../services-data/system/ntfy/auth}:/var/lib/ntfy
+    - ./configs/ntfy:/etc/ntfy:ro
+    - ${NTFY_CACHE:-../services-data/system/ntfy/cache}:/var/cache/ntfy
+    ports:
+    - "10010:80"
+    networks:
+    - homelab_net
+
+  minecraft:
+    labels:
+    - homepage.group=Entertainment
+    - homepage.name=minecraft
+    - homepage.icon=mdi-minecraft
+    - homepage.description=Game server
+    - homepage.widget.type=minecraft
+    - homepage.widget.url=udp://minecraft:25565
+    image: itzg/minecraft-server:latest
+    container_name: minecraft
+    restart: unless-stopped
+    ports:
+    - "25565:25565"
+    environment:
+    - EULA=TRUE
+    - TYPE=PAPER
+    - DIFFICULTY=hard
+    - LEVEL_TYPE=AMPLIFIED
+    - ICON=/data/server-icon.png
+    - OVERRIDE_ICON=true
+    - ENABLE_RCON=false
+    - ONLINE_MODE=false
+    - MEMORY=2G
+    - MOTD=Flat-lab
+    volumes:
+    - ./configs/minecraft:/config:ro
+    - ${MINECRAFT_DATA:-../services-data/system/minecraft}:/data
+    networks:
+    - homelab_net
+
+networks:
+  homelab_net:
+    name: homelab_net
+    external: true
