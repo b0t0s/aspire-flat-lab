@@ -35,7 +35,7 @@ services:
     environment:
     - ZEROTIER_NETWORK_ID=${ZEROTIER_NETWORK_ID:?set ZEROTIER_NETWORK_ID in .env}
     networks:
-    - homelab_net
+    - flat_lab_net
     depends_on:
       zerotier-init:
         condition: service_completed_successfully
@@ -59,7 +59,7 @@ services:
     - ../services-data/system/caddy/data:/data
     - ../services-data/system/caddy/config:/config
     networks:
-    - homelab_net
+    - flat_lab_net
     extra_hosts:
     - "host.docker.internal:host-gateway"
 
@@ -88,7 +88,7 @@ services:
     environment:
       - HOMEPAGE_ALLOWED_HOSTS=${DUCKDNS_DOMAIN:-localhost}
     networks:
-    - homelab_net
+    - flat_lab_net
 
   homepage:
     labels:
@@ -156,7 +156,7 @@ services:
     - ./configs/homepage/themes/${HOMEPAGE_THEME_PRESET:-default}.css:/app/config/custom.css:ro
     - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-    - homelab_net
+    - flat_lab_net
     extra_hosts:
     - "host.docker.internal:host-gateway"
 
@@ -180,7 +180,7 @@ services:
     - "${DNS1:-}"
     - "${DNS2:-}"
     networks:
-    - homelab_net
+    - flat_lab_net
 
   searxng-redis:
     image: redis:7-alpine
@@ -189,7 +189,7 @@ services:
     volumes:
     - ${SEARXNG_REDIS_DATA:-../services-data/system/searxng/redis}:/data
     networks:
-    - homelab_net
+    - flat_lab_net
 
   rsshub:
     labels:
@@ -205,7 +205,7 @@ services:
     ports:
     - "10004:1200"
     networks:
-    - homelab_net
+    - flat_lab_net
 
   # myspeed:
   #   labels:
@@ -223,7 +223,7 @@ services:
   #   volumes:
   #   - ${MYSPEED_DATA_PATH:-../services-data/system/myspeed}:/config
   #   networks:
-  #   - homelab_net
+  #   - flat_lab_net
 
   # netalertx:
   #   labels:
@@ -270,7 +270,7 @@ services:
     - ./configs/filebrowser-quantum/config.yaml:/config/config.yaml:ro
     - ${FILEBROWSER_FILES:-../services-data/public}:/srv
     networks:
-    - homelab_net
+    - flat_lab_net
 
   glances:
     labels:
@@ -295,7 +295,7 @@ services:
     ports:
     - "10006:61208"
     networks:
-    - homelab_net
+    - flat_lab_net
 
   # olivetin:
   #   labels:
@@ -320,7 +320,7 @@ services:
   #   # - ../services-data:/srv/services-data:ro
   #   # - /var/log/journal:/var/log/journal:ro    
   #   networks:
-  #   - homelab_net
+  #   - flat_lab_net
 
   ollama:
     image: ollama/ollama:latest
@@ -338,7 +338,7 @@ services:
     volumes:
     - ${OLLAMA_DATA:-../services-data/system/ollama}:/root/.ollama
     networks:
-    - homelab_net
+    - flat_lab_net
 
   open-webui:
     labels:
@@ -355,7 +355,7 @@ services:
     volumes:
     - ${OPEN_WEBUI_DATA:-../services-data/system/open-webui}:/app/backend/data
     networks:
-    - homelab_net
+    - flat_lab_net
     environment:
       - TZ=Europe/Kyiv
       - ENABLE_SIGNUP=True
@@ -386,7 +386,7 @@ services:
       - seafile-db
       - seafile-memcached
     networks:
-      - homelab_net
+      - flat_lab_net
       
   seafile-db:
     image: mariadb:11.8.8
@@ -399,7 +399,7 @@ services:
     volumes:
       - ${SEAFILE_DB_DATA:-../services-data/system/seafile-db}:/var/lib/mysql
     networks:
-      - homelab_net
+      - flat_lab_net
 
   seafile-memcached:
     image: memcached:1.6-alpine
@@ -407,7 +407,7 @@ services:
     restart: unless-stopped
     entrypoint: memcached -m 256
     networks:
-      - homelab_net
+      - flat_lab_net
 
   seafile-auto-config:
     image: docker:cli
@@ -468,7 +468,7 @@ services:
     ports:
     - "10009:8191"
     networks:
-    - homelab_net
+    - flat_lab_net
 
   # watchtower:
   #   labels:
@@ -487,7 +487,7 @@ services:
   #   volumes:
   #   - /var/run/docker.sock:/var/run/docker.sock
   #   networks:
-  #   - homelab_net
+  #   - flat_lab_net
 
   rustdesk-hbbs:
     image: rustdesk/rustdesk-server:latest
@@ -504,7 +504,7 @@ services:
     - "21116:21116/udp"
     - "21118:21118"
     networks:
-    - homelab_net
+    - flat_lab_net
 
   rustdesk-hbbr:
     image: rustdesk/rustdesk-server:latest
@@ -517,7 +517,7 @@ services:
     - "21117:21117"
     - "21119:21119"
     networks:
-    - homelab_net
+    - flat_lab_net
 
   ntfy:
     labels:
@@ -547,7 +547,7 @@ services:
     ports:
     - "10010:80"
     networks:
-    - homelab_net
+    - flat_lab_net
 
   minecraft:
     labels:
@@ -577,9 +577,9 @@ services:
     - ./configs/minecraft:/config:ro
     - ${MINECRAFT_DATA:-../services-data/system/minecraft}:/data
     networks:
-    - homelab_net
+    - flat_lab_net
 
 networks:
-  homelab_net:
-    name: homelab_net
+  flat_lab_net:
+    name: flat_lab_net
     external: true
