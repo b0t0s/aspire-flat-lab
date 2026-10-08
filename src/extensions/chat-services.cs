@@ -20,13 +20,13 @@ public static class ChatServices
             .WithHomepage("Messaging", "Sharing", "mdi-share-variant", href: $"https://sharing.{domain}");
 
         // IRC
-        var ergochat = builder.AddContainer("chat-irc-ergochat", "ghcr.io/ergochat/ergo", "latest")
+        var ergochat = builder.AddContainer("irc-ergochat", "ghcr.io/ergochat/ergo", "latest")
             .WithContainerName("irc-server")
             .WithEndpoint(6667, 6667, name: "irc")
             .WithLabPort(8080, "irc-web")
             .WithHomepage("Messaging", "IRC", "mdi-server-network", "SERVER", $"https://irc.{domain}");
 
-        builder.AddContainer("chat-irc-thelounge", "ghcr.io/thelounge/thelounge", "latest")
+        builder.AddContainer("irc-thelounge", "ghcr.io/thelounge/thelounge", "latest")
             .WithContainerName("irc")
             .WithEnvironment("HOST", "0.0.0.0")
             .WithEnvironment("PORT", "9000")
@@ -63,7 +63,7 @@ public static class ChatServices
             .WithLabPort(80, "conversejs")
             .WithHomepage("Messaging", "XMPP", "mdi-chat", href: $"https://xmpp.{domain}");
 
-        builder.AddContainer("chat-xmpp-ejabberd", "ghcr.io/processone/ejabberd", "latest")
+        builder.AddContainer("xmpp-ejabberd", "ghcr.io/processone/ejabberd", "latest")
             .WithContainerName("xmpp-server")
             .WithStartPolicy(variants.StartByDefault)
             .WithEnvironment("EJABBERD_MACRO_HOST", domain)
@@ -114,22 +114,6 @@ public static class ChatServices
             .WaitFor(dependencies["lemmy-project-pictrs"])
             .WaitFor(lemmyUi);
 
-        builder.AddContainer("livekit", "livekit/livekit-server", "latest")
-            .WithContainerName("livekit")
-            .WithStartPolicy(chat.StartByDefault)
-            .WithArgs("--config", "/etc/livekit/livekit.yaml")
-            .WithConfigTemplate("configs/livekit/livekit.yaml.template", "/etc/livekit", "livekit.yaml", new Dictionary<string, object>
-            {
-                ["DOMAIN"] = domain,
-                ["API_KEY"] = settings.Secret("LIVEKIT_API_KEY"),
-                ["API_SECRET"] = settings.Secret("LIVEKIT_API_SECRET", SecretKind.LongPassword),
-            })
-            .WithLabPort(7880, "livekit-http")
-            .WithEndpoint(7881, 7881, name: "livekit-rtc-tcp")
-            .WithPublishedPort(7882, 7882, "udp")
-            .WithPublishedPort(3478, 3478, "udp")
-            .WithLab(lab => lab.PortGroup = "Messaging")
-            .WaitFor(dependencies["livekit-redis"]);
     }
 
     /// <summary>

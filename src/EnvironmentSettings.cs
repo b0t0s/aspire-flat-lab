@@ -58,6 +58,7 @@ public sealed class EnvironmentSettings(IDistributedApplicationBuilder builder)
             Gid = configuration["PGID"] ?? "1000";
             Dns1 = configuration["DNS1"] ?? "";
             Dns2 = configuration["DNS2"] ?? "";
+            NodeIp = configuration["NODE_IP"] ?? "127.0.0.1";
         }
 
         public string DataRoot { get; }
@@ -67,5 +68,6 @@ public sealed class EnvironmentSettings(IDistributedApplicationBuilder builder)
         public string Gid { get; }
         public string Dns1 { get; }
         public string Dns2 { get; }
+        public string NodeIp { get; }
     }
 }

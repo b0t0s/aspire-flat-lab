@@ -72,20 +72,19 @@
     "sonarr/sonarr": 6
   },
   "Messaging": {
-    "chat-irc-ergochat/irc-web": 4,
-    "chat-irc-thelounge/thelounge": 5,
-    "chat-sonar-app/sonar-http": 12,
-    "chat-sonar-mint/sonar-mint-internal": 13,
-    "chat-xmpp-ejabberd/xmpp-http": 9,
     "conversejs/conversejs": 8,
     "documenso/documenso": 1,
     "docuseal/docuseal": 2,
     "element-web/element-web": 6,
+    "irc-ergochat/irc-web": 4,
+    "irc-thelounge/thelounge": 5,
     "lemmy-project-proxy/lemmy-project-proxy": 0,
     "lemmy/lemmy": 10,
     "livekit/livekit-http": 11,
     "pingvin-share/pingvin-share": 3,
-    "synapse/synapse-client": 7
+    "sonar-mint/sonar-mint-internal": 13,
+    "synapse/synapse-client": 7,
+    "xmpp-ejabberd/xmpp-http": 9
   },
   "Secrets": {
     "aliasvault/aliasvault": 2,

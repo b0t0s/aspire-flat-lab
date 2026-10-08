@@ -36,7 +36,7 @@ builder.AddSecretServices(dependencies, environmentSettings);
 builder.AddMediaServices(dependencies, environmentSettings);
 builder.AddChatServices(dependencies, environmentSettings);
 builder.AddIrlServices(dependencies, environmentSettings);
-builder.AddSonarServices(environmentSettings);
+builder.AddSonarServices(dependencies, environmentSettings);
 
 var compose = builder.AddDockerComposeEnvironment("flat-lab");
 

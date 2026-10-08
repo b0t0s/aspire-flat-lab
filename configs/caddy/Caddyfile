@@ -391,17 +391,20 @@
 
     @sonar host sonar.{$DUCKDNS_DOMAIN}
     handle @sonar {
-        reverse_proxy sonar:8080
-    }
-
-    @sonar-mgmt host sonar-mgmt.{$DUCKDNS_DOMAIN}
-    handle @sonar-mgmt {
-        reverse_proxy sonar-mgmt:8080
+        root * /srv/sonar
+        encode zstd gzip
+        try_files {path} /index.html
+        file_server
     }
 
     @sonar-mint host mint.{$DUCKDNS_DOMAIN}
     handle @sonar-mint {
         reverse_proxy sonar-mint:8080
+    }
+    
+    @sonar-mgmt host sonar-mgmt.{$DUCKDNS_DOMAIN}
+    handle @sonar-mgmt {
+        reverse_proxy sonar-mgmt:8081
     }
 
     @livekit host livekit.{$DUCKDNS_DOMAIN}

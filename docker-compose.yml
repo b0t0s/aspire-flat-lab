@@ -58,6 +58,7 @@ services:
     - ./configs/caddy/Caddyfile:/etc/caddy/Caddyfile
     - ../services-data/system/caddy/data:/data
     - ../services-data/system/caddy/config:/config
+    - ${SONAR_DIST_PATH:-../additional-software/sonar/app/dist}:/srv/sonar:ro
     networks:
     - flat_lab_net
     extra_hosts:

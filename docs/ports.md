@@ -111,16 +111,15 @@ Web ports are `prefix * 1000 + position` in declaration order per homepage group
 | 17001/tcp | `documenso` | 3500 | documenso / documenso |
 | 17002/tcp | `docuseal` | 3000 | docuseal / docuseal |
 | 17003/tcp | `sharing` | 3000 | pingvin-share / pingvin-share |
-| 17004/tcp | `irc-server` | 8080 | chat-irc-ergochat / irc-web |
-| 17005/tcp | `irc` | 9000 | chat-irc-thelounge / thelounge |
+| 17004/tcp | `irc-server` | 8080 | irc-ergochat / irc-web |
+| 17005/tcp | `irc` | 9000 | irc-thelounge / thelounge |
 | 17006/tcp | `matrix` | 80 | element-web / element-web |
 | 17007/tcp | `matrix-server` | 8008 | synapse / synapse-client |
 | 17008/tcp | `xmpp` | 80 | conversejs / conversejs |
-| 17009/tcp | `xmpp-server` | 5280 | chat-xmpp-ejabberd / xmpp-http |
+| 17009/tcp | `xmpp-server` | 5280 | xmpp-ejabberd / xmpp-http |
 | 17010/tcp | `forum` | 8536 | lemmy / lemmy |
 | 17011/tcp | `livekit` | 7880 | livekit / livekit-http |
-| 17012/tcp | `sonar` | 8080 | chat-sonar-app / sonar-http |
-| 17013/tcp | `sonar-mint` | 8080 | chat-sonar-mint / sonar-mint-internal |
+| 17013/tcp | `sonar-mint` | 8080 | sonar-mint / sonar-mint-internal |
 
 ## Irl
 
@@ -135,10 +134,10 @@ Web ports are `prefix * 1000 + position` in declaration order per homepage group
 | Host port | Container | Container port | Resource / endpoint |
 |---|---|---|---|
 | 3478/udp | `livekit` | 3478 | livekit / published |
-| 5222/tcp | `xmpp-server` | 5222 | chat-xmpp-ejabberd / xmpp-client |
-| 5223/tcp | `xmpp-server` | 5223 | chat-xmpp-ejabberd / xmpp-client-tls |
-| 5269/tcp | `xmpp-server` | 5269 | chat-xmpp-ejabberd / xmpp-s2s |
-| 6667/tcp | `irc-server` | 6667 | chat-irc-ergochat / irc |
+| 5222/tcp | `xmpp-server` | 5222 | xmpp-ejabberd / xmpp-client |
+| 5223/tcp | `xmpp-server` | 5223 | xmpp-ejabberd / xmpp-client-tls |
+| 5269/tcp | `xmpp-server` | 5269 | xmpp-ejabberd / xmpp-s2s |
+| 6667/tcp | `irc-server` | 6667 | irc-ergochat / irc |
 | 6881/tcp | `torrent` | 6881 | qbittorrent / published |
 | 6881/udp | `torrent` | 6881 | qbittorrent / published |
 | 7881/tcp | `livekit` | 7881 | livekit / livekit-rtc-tcp |
