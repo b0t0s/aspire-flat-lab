@@ -119,6 +119,8 @@ Web ports are `prefix * 1000 + position` in declaration order per homepage group
 | 17009/tcp | `xmpp-server` | 5280 | chat-xmpp-ejabberd / xmpp-http |
 | 17010/tcp | `forum` | 8536 | lemmy / lemmy |
 | 17011/tcp | `livekit` | 7880 | livekit / livekit-http |
+| 17012/tcp | `sonar` | 8080 | chat-sonar-app / sonar-http |
+| 17013/tcp | `sonar-mint` | 8080 | chat-sonar-mint / sonar-mint-internal |
 
 ## Irl
 

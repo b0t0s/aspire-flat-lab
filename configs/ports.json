@@ -74,6 +74,8 @@
   "Messaging": {
     "chat-irc-ergochat/irc-web": 4,
     "chat-irc-thelounge/thelounge": 5,
+    "chat-sonar-app/sonar-http": 12,
+    "chat-sonar-mint/sonar-mint-internal": 13,
     "chat-xmpp-ejabberd/xmpp-http": 9,
     "conversejs/conversejs": 8,
     "documenso/documenso": 1,

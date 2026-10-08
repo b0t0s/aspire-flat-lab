@@ -18,6 +18,7 @@
 #:include src/extensions/entertainment-services.cs
 #:include src/extensions/irl-services.cs
 #:include src/extensions/chat-services.cs
+#:include src/extensions/sonar-services.cs
 
 // Infra (caddy, zerotier, homepage, adguard, seafile, ...) lives in docker-compose.yml so it survives restarts of this app stack.
 
@@ -35,6 +36,7 @@ builder.AddSecretServices(dependencies, environmentSettings);
 builder.AddMediaServices(dependencies, environmentSettings);
 builder.AddChatServices(dependencies, environmentSettings);
 builder.AddIrlServices(dependencies, environmentSettings);
+builder.AddSonarServices(environmentSettings);
 
 var compose = builder.AddDockerComposeEnvironment("flat-lab");
 

@@ -97,7 +97,6 @@
         reverse_proxy converter:3000
     }
 
-    # Aspire dashboard runs on the host (systemd, launch profile "http"); Caddy terminates TLS.
     @dashboard host dashboard.{$DUCKDNS_DOMAIN}
     handle @dashboard {
         reverse_proxy host.docker.internal:19000
@@ -246,7 +245,6 @@
         reverse_proxy dawarich:3000
     }
 
-    # Element web client, with the Synapse client API on the same host (config: configs/element, configs/synapse).
     @matrix host matrix.{$DUCKDNS_DOMAIN} element.{$DUCKDNS_DOMAIN}
     handle @matrix {
         @synapse path /_matrix/* /_synapse/client/*
@@ -389,6 +387,30 @@
     @snippets host snippets.{$DUCKDNS_DOMAIN}
     handle @snippets {
         reverse_proxy snippets:6157
+    }
+
+    @sonar host sonar.{$DUCKDNS_DOMAIN}
+    handle @sonar {
+        reverse_proxy sonar:8080
+    }
+
+    @sonar-mgmt host sonar-mgmt.{$DUCKDNS_DOMAIN}
+    handle @sonar-mgmt {
+        reverse_proxy sonar-mgmt:8080
+    }
+
+    @sonar-mint host mint.{$DUCKDNS_DOMAIN}
+    handle @sonar-mint {
+        reverse_proxy sonar-mint:8080
+    }
+
+    @livekit host livekit.{$DUCKDNS_DOMAIN}
+    handle @livekit {
+        reverse_proxy livekit:7880 {
+            header_up Host {host}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+        }
     }
 
     @sonarr host sonarr.{$DUCKDNS_DOMAIN}
