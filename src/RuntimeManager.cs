@@ -1,17 +1,9 @@
 global using static ContainerConventions;
-using Aspire.Hosting;
-using Aspire.Hosting.ApplicationModel;
+using System.Text.Json;
 using Aspire.Hosting.Docker;
 using Aspire.Hosting.Docker.Resources.ServiceNodes;
-using Aspire.Hosting.Eventing;
 
-/// <summary>
-/// Container settings that must reach both run mode (DCP, as <c>docker run</c> flags)
-/// and publish mode (Docker Compose service properties).
-/// Plain <c>WithContainerRuntimeArgs</c> only affects run mode, so every lab-wide
-/// convention is recorded here and emitted twice by <see cref="ContainerConventions.ApplyLabConventions"/>.
-/// </summary>
-public sealed class LabContainerAnnotation : IResourceAnnotation
+internal sealed class LabContainerAnnotation : IResourceAnnotation
 {
     public const string DefaultNetwork = "flat_lab_net";
 
@@ -20,6 +12,7 @@ public sealed class LabContainerAnnotation : IResourceAnnotation
     public Dictionary<string, string> Labels { get; } = new(StringComparer.Ordinal);
     public List<string> Dns { get; } = [];
     public List<string> CapAdd { get; } = [];
+    public List<string> GroupAdd { get; } = [];
     public List<string> Devices { get; } = [];
     public List<string> Tmpfs { get; } = [];
     public List<string> EnvFiles { get; } = [];
@@ -41,9 +34,9 @@ public sealed class LabContainerAnnotation : IResourceAnnotation
     public bool IsHostNetwork => Network == "host";
 }
 
-public sealed record LabHealthcheck(string Command, string Interval = "10s", string Timeout = "5s", int Retries = 10, string? StartPeriod = null);
+internal sealed record LabHealthcheck(string Command, string Interval = "10s", string Timeout = "5s", int Retries = 10, string? StartPeriod = null);
 
-public static class ContainerConventions
+internal static class ContainerConventions
 {
     public static LabContainerAnnotation GetLabSettings(this IResource resource)
     {
@@ -65,47 +58,71 @@ public static class ContainerConventions
     }
 
     public static IResourceBuilder<T> WithStartPolicy<T>(this IResourceBuilder<T> resource, bool startByDefault)
-        where T : ContainerResource =>
-        startByDefault ? resource : resource.WithExplicitStart();
+        where T : ContainerResource
+    {
+        return startByDefault ? resource : resource.WithExplicitStart();
+    }
 
     public static IResourceBuilder<T> WithRestart<T>(this IResourceBuilder<T> resource, string policy)
-        where T : ContainerResource => resource.WithLab(lab => lab.Restart = policy);
+        where T : ContainerResource
+    {
+        return resource.WithLab(lab => lab.Restart = policy);
+    }
 
     public static IResourceBuilder<T> WithNetwork<T>(this IResourceBuilder<T> resource, string network)
-        where T : ContainerResource => resource.WithLab(lab => lab.Network = network);
+        where T : ContainerResource
+    {
+        return resource.WithLab(lab => lab.Network = network);
+    }
 
     public static IResourceBuilder<T> WithHostNetwork<T>(this IResourceBuilder<T> resource)
-        where T : ContainerResource => resource.WithNetwork("host");
+        where T : ContainerResource
+    {
+        return resource.WithNetwork("host");
+    }
 
     public static IResourceBuilder<T> WithDns<T>(this IResourceBuilder<T> resource, params string?[] servers)
-        where T : ContainerResource =>
-        resource.WithLab(lab => lab.Dns.AddRange(servers.Where(s => !string.IsNullOrWhiteSpace(s))!));
+        where T : ContainerResource
+    {
+        return resource.WithLab(lab => lab.Dns.AddRange(servers.Where(s => !string.IsNullOrWhiteSpace(s))!));
+    }
+
+    public static IResourceBuilder<T> WithGroupAdd<T>(this IResourceBuilder<T> resource, string groupId)
+        where T : ContainerResource
+    {
+        return resource.WithLab(lab => lab.GroupAdd.Add(groupId));
+    }
 
     public static IResourceBuilder<T> WithEnvFile<T>(this IResourceBuilder<T> resource, string path)
-        where T : ContainerResource => resource.WithLab(lab => lab.EnvFiles.Add(path));
+        where T : ContainerResource
+    {
+        return resource.WithLab(lab => lab.EnvFiles.Add(path));
+    }
 
-    /// <summary>
-    /// A web/UI port. The host port is generated: group prefix * 1000 + position of the port within its group,
-    /// in declaration order (docs/ports.md). Add new services at the end of their group to keep existing ports stable.
-    /// Standard protocol ports (IRC 6667, XMPP 5222, ...) use a plain <c>WithEndpoint(port, port)</c> instead.
-    /// </summary>
     public static IResourceBuilder<T> WithLabPort<T>(this IResourceBuilder<T> resource, int targetPort, string name, string? scheme = null)
-        where T : ContainerResource => resource.WithLab(lab => lab.LabPorts.Add((targetPort, name, scheme)));
+        where T : ContainerResource
+    {
+        return resource.WithLab(lab => lab.LabPorts.Add((targetPort, name, scheme)));
+    }
 
-    /// <summary>Publish a raw host port (e.g. UDP) that is not modelled as an Aspire endpoint.</summary>
     public static IResourceBuilder<T> WithPublishedPort<T>(this IResourceBuilder<T> resource, int hostPort, int containerPort, string protocol = "tcp")
-        where T : ContainerResource => resource.WithLab(lab => lab.ExtraPorts.Add((hostPort, containerPort, protocol)));
+        where T : ContainerResource
+    {
+        return resource.WithLab(lab => lab.ExtraPorts.Add((hostPort, containerPort, protocol)));
+    }
 
     public static IResourceBuilder<T> WithHealthcheck<T>(this IResourceBuilder<T> resource, string command,
         string interval = "10s", string timeout = "5s", int retries = 10, string? startPeriod = null)
-        where T : ContainerResource =>
-        resource.WithLab(lab => lab.Healthcheck = new LabHealthcheck(command, interval, timeout, retries, startPeriod));
+        where T : ContainerResource
+    {
+        return resource.WithLab(lab => lab.Healthcheck = new LabHealthcheck(command, interval, timeout, retries, startPeriod));
+    }
 
-    /// <summary>gethomepage.dev docker-label discovery.</summary>
     public static IResourceBuilder<T> WithHomepage<T>(this IResourceBuilder<T> resource,
         string group, string name, string icon, string description = "", string? href = null)
-        where T : ContainerResource =>
-        resource.WithLab(lab =>
+        where T : ContainerResource
+    {
+        return resource.WithLab(lab =>
         {
             lab.Labels["homepage.group"] = group;
             lab.Labels["homepage.name"] = name;
@@ -113,12 +130,14 @@ public static class ContainerConventions
             lab.Labels["homepage.description"] = description;
             if (href is not null) lab.Labels["homepage.href"] = href;
         });
+    }
 
     public static IResourceBuilder<T> WithHomepageWidget<T>(this IResourceBuilder<T> resource,
         string type, string? url = null,
         string? key = null, string? username = null, string? password = null, string? token = null, string? salt = null, string? version = null)
-        where T : ContainerResource =>
-        resource.WithLab(lab =>
+        where T : ContainerResource
+    {
+        return resource.WithLab(lab =>
         {
             lab.Labels["homepage.widget.type"] = type;
             if (url is not null) lab.Labels["homepage.widget.url"] = url;
@@ -127,17 +146,17 @@ public static class ContainerConventions
                 if (!string.IsNullOrEmpty(value)) lab.Labels[$"homepage.widget.{field}"] = value;
             }
         });
+    }
 
-    /// <summary>
-    /// Homepage substitutes <c>{{HOMEPAGE_VAR_*}}</c> from its own environment, so widget credentials stay out of
-    /// container labels. The homepage service in docker-compose.yml maps <c>HOMEPAGE_VAR_KEY=${KEY}</c>.
-    /// </summary>
-    public static string HomepageVar(string envKey) => $"{{{{HOMEPAGE_VAR_{envKey}}}}}";
+    public static string HomepageVar(string envKey)
+    {
+        return $"{{{{HOMEPAGE_VAR_{envKey}}}}}";
+    }
 
-    /// <summary>Dashboard button that runs a shell command inside the running container.</summary>
     public static IResourceBuilder<T> WithDockerExecCommand<T>(this IResourceBuilder<T> resource, string name, string displayName, string shellCommand, string icon = "ArrowSync")
-        where T : ContainerResource =>
-        resource.WithCommand(name, displayName, async context =>
+        where T : ContainerResource
+    {
+        return resource.WithCommand(name, displayName, async context =>
         {
             var containerName = resource.Resource.Annotations.OfType<ContainerNameAnnotation>().LastOrDefault()?.Name ?? resource.Resource.Name;
             var start = new System.Diagnostics.ProcessStartInfo("docker") { RedirectStandardOutput = true, RedirectStandardError = true };
@@ -157,26 +176,26 @@ public static class ContainerConventions
                 ? ResourceCommandState.Enabled
                 : ResourceCommandState.Disabled,
         });
+    }
 
     public static IResourceBuilder<T> WithDockerSocket<T>(this IResourceBuilder<T> resource, bool isReadOnly = true)
-        where T : ContainerResource =>
-        resource.WithBindMount("/var/run/docker.sock", "/var/run/docker.sock", isReadOnly);
+        where T : ContainerResource
+    {
+        return resource.WithBindMount("/var/run/docker.sock", "/var/run/docker.sock", isReadOnly);
+    }
 
-    /// <summary>Bind-mount a path that lives in this repository (relative to <c>apphost.cs</c>).</summary>
     public static IResourceBuilder<T> WithRepoMount<T>(this IResourceBuilder<T> resource,
         string repoRelativePath, string containerPath, bool isReadOnly = false)
-        where T : ContainerResource =>
-        resource.WithBindMount(RepoPath(resource.ApplicationBuilder, repoRelativePath), containerPath, isReadOnly);
+        where T : ContainerResource
+    {
+        return resource.WithBindMount(RepoPath(resource.ApplicationBuilder, repoRelativePath), containerPath, isReadOnly);
+    }
 
-    public static string RepoPath(this IDistributedApplicationBuilder builder, string repoRelativePath) =>
-        Path.GetFullPath(repoRelativePath, builder.AppHostDirectory);
+    public static string RepoPath(this IDistributedApplicationBuilder builder, string repoRelativePath)
+    {
+        return Path.GetFullPath(repoRelativePath, builder.AppHostDirectory);
+    }
 
-    /// <summary>
-    /// A human-edited config file owned by the repo (configs/...), mounted read-only.
-    /// If the repo copy does not exist yet but the service's old copy does (<paramref name="legacyHostPath"/>, usually under
-    /// services-data), it is imported into configs/ on the first run so it can be reviewed and committed.
-    /// With neither present the mount is skipped and the image's built-in config applies.
-    /// </summary>
     public static IResourceBuilder<T> WithConfigFile<T>(this IResourceBuilder<T> resource, string repoRelativePath, string containerPath, string? legacyHostPath = null)
         where T : ContainerResource
     {
@@ -186,7 +205,7 @@ public static class ContainerConventions
         {
             if (legacyHostPath is not null && File.Exists(legacyHostPath))
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(source)!);
+                _ = Directory.CreateDirectory(Path.GetDirectoryName(source)!);
                 File.Copy(legacyHostPath, source);
                 Console.WriteLine($"[flat-lab] imported {legacyHostPath} -> {repoRelativePath} (review and commit it)");
             }
@@ -200,11 +219,6 @@ public static class ContainerConventions
         return resource.WithBindMount(source, containerPath, isReadOnly: true);
     }
 
-    /// <summary>
-    /// A config file that needs secrets: configs/&lt;template&gt; with <c>${NAME}</c> placeholders is rendered at container start and
-    /// copied to <paramref name="containerDirectory"/>. Values are strings or secret parameters; in publish mode parameters stay
-    /// <c>${ENV_KEY}</c> so compose fills them from .env and no secret is written anywhere else.
-    /// </summary>
     public static IResourceBuilder<T> WithConfigTemplate<T>(this IResourceBuilder<T> resource, string repoTemplatePath, string containerDirectory, string fileName,
         IReadOnlyDictionary<string, object> variables, Func<string, string>? escape = null, int? owner = null)
         where T : ContainerResource
@@ -232,13 +246,9 @@ public static class ContainerConventions
         }, defaultOwner: owner, defaultGroup: owner);
     }
 
-    /// <summary>
-    /// Cascade auto-start through the dependency graph: anything an auto-started resource
-    /// <c>WaitFor</c>s must auto-start as well, otherwise the consumer hangs in "Waiting".
-    /// </summary>
     public static IDistributedApplicationBuilder CascadeAutoStartThroughDependencies(this IDistributedApplicationBuilder builder)
     {
-        builder.Eventing.Subscribe<BeforeStartEvent>((@event, _) =>
+        _ = builder.Eventing.Subscribe<BeforeStartEvent>((@event, _) =>
         {
             var pending = new Stack<IResource>(@event.Model.Resources
                 .Where(r => !r.Annotations.OfType<ExplicitStartupAnnotation>().Any()));
@@ -251,7 +261,9 @@ public static class ContainerConventions
                     var dependency = wait.Resource;
                     foreach (var explicitStart in dependency.Annotations.OfType<ExplicitStartupAnnotation>().ToList())
                     {
+#pragma warning disable IDE0058 // Expression value is never used
                         dependency.Annotations.Remove(explicitStart);
+#pragma warning restore IDE0058 // Expression value is never used
                     }
                     pending.Push(dependency);
                 }
@@ -261,10 +273,6 @@ public static class ContainerConventions
         return builder;
     }
 
-    /// <summary>
-    /// Emit every <see cref="LabContainerAnnotation"/> into both run mode and publish mode.
-    /// Call once, after all resources are added and before <c>Build()</c>.
-    /// </summary>
     public static IDistributedApplicationBuilder ApplyLabConventions(
         this IDistributedApplicationBuilder builder,
         IResourceBuilder<DockerComposeEnvironmentResource> compose,
@@ -276,7 +284,7 @@ public static class ContainerConventions
             builder.Configuration["Pipeline:OutputPath"] ?? builder.Configuration["Publishing:OutputPath"] ?? "aspire-output",
             builder.AppHostDirectory);
 
-        compose
+        _ = compose
             .WithProperties(env => env.DefaultNetworkName = LabContainerAnnotation.DefaultNetwork)
             .ConfigureComposeFile(file =>
             {
@@ -290,10 +298,9 @@ public static class ContainerConventions
             })
             .ConfigureEnvFile(env =>
             {
-                // Bind mounts and Dockerfile images are rewritten below, so their generated placeholders are unused.
                 foreach (var key in env.Keys.Where(k => k.Contains("_BINDMOUNT_", StringComparison.Ordinal)).ToList())
                 {
-                    env.Remove(key);
+                    _ = env.Remove(key);
                 }
             });
 
@@ -304,13 +311,14 @@ public static class ContainerConventions
             var lab = container.GetLabSettings();
             var resource = builder.CreateResourceBuilder(container);
 
-            resource.WithContainerRuntimeArgs(context =>
+            _ = resource.WithContainerRuntimeArgs(context =>
             {
                 var args = context.Args;
                 args.Add($"--restart={lab.Restart}");
                 args.Add($"--network={lab.Network}");
                 foreach (var (key, value) in lab.Labels) args.Add($"--label={key}={value}");
                 foreach (var dns in lab.Dns) args.Add($"--dns={dns}");
+                foreach (var group in lab.GroupAdd) args.Add($"--group-add={group}");
                 foreach (var cap in lab.CapAdd) args.Add($"--cap-add={cap}");
                 foreach (var device in lab.Devices) args.Add($"--device={device}");
                 foreach (var tmpfs in lab.Tmpfs) args.Add($"--tmpfs={tmpfs}");
@@ -332,7 +340,7 @@ public static class ContainerConventions
                 }
             });
 
-            resource.PublishAsDockerComposeService((_, service) =>
+            _ = resource.PublishAsDockerComposeService((_, service) =>
             {
                 service.Restart = lab.Restart;
                 if (lab.IsHostNetwork)
@@ -346,7 +354,6 @@ public static class ContainerConventions
                     service.Networks.Add(lab.Network);
                 }
 
-                // Literal values (e.g. passwords containing '$') must not be interpolated by compose.
                 foreach (var key in service.Environment.Keys.ToList())
                 {
                     if (service.Environment[key] is { } value) service.Environment[key] = EscapeForCompose(value);
@@ -354,6 +361,7 @@ public static class ContainerConventions
 
                 foreach (var (key, value) in lab.Labels) service.Labels[key] = EscapeForCompose(value);
                 service.Dns.AddRange(lab.Dns);
+                service.GroupAdd.AddRange(lab.GroupAdd);
                 service.CapAdd.AddRange(lab.CapAdd);
                 service.Devices.AddRange(lab.Devices);
                 service.Tmpfs.AddRange(lab.Tmpfs);
@@ -376,7 +384,6 @@ public static class ContainerConventions
                     };
                 }
 
-                // Host ports: mirror run mode, where every endpoint with an explicit port is published on the host.
                 if (!lab.IsHostNetwork)
                 {
                     foreach (var endpoint in container.Annotations.OfType<EndpointAnnotation>())
@@ -391,7 +398,6 @@ public static class ContainerConventions
                     service.Expose.Clear();
                 }
 
-                // Bind mounts: replace the empty host-specific placeholders with paths relative to the compose file.
                 var mounts = container.Annotations.OfType<ContainerMountAnnotation>()
                     .Where(m => m.Type == ContainerMountType.BindMount && m.Source is not null)
                     .ToDictionary(m => m.Target, m => m.Source!, StringComparer.Ordinal);
@@ -403,7 +409,6 @@ public static class ContainerConventions
                     }
                 }
 
-                // Dockerfile resources: build from the repo instead of expecting a pre-pushed ${X_IMAGE}.
                 if (container.Annotations.OfType<DockerfileBuildAnnotation>().FirstOrDefault() is { } build)
                 {
                     service.Image = $"flat-lab/{container.Name}:local";
@@ -419,11 +424,6 @@ public static class ContainerConventions
         return builder;
     }
 
-    /// <summary>
-    /// Port groups = homepage groups. Host port = prefix * 1000 + offset + position within the group (declaration order).
-    /// A prefix can be moved with <c>PORT_PREFIX_&lt;GROUP&gt;</c> in .env; nothing else about ports is configurable.
-    /// 100xx is shared with docker-compose.yml, which owns 10000-10099, so the app stack starts at 10100 there.
-    /// </summary>
     public static readonly IReadOnlyList<(string Group, int Prefix, int Offset)> PortGroups =
     [
         ("Infrastructure", 10, 100),
@@ -435,7 +435,6 @@ public static class ContainerConventions
         ("Secrets", 16, 0),
         ("Messaging", 17, 0),
         ("Irl", 18, 0),
-        // 19xxx: Aspire dashboard / OTLP / resource service (apphost.run.json)
     ];
 
     private sealed record PortRow(string Group, int HostPort, string Protocol, string Resource, string Container, int TargetPort, string Endpoint);
@@ -450,11 +449,9 @@ public static class ContainerConventions
             basePort[group] = prefix * 1000 + offset;
         }
 
-        // Sticky slots: configs/ports.json remembers each endpoint's position in its group, so inserting a
-        // service anywhere only takes the lowest free slot and never shifts existing ports.
         var lockPath = Path.Combine(builder.AppHostDirectory, "configs", "ports.json");
         var previous = File.Exists(lockPath)
-            ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, int>>>(File.ReadAllText(lockPath)) ?? []
+            ? JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, int>>>(File.ReadAllText(lockPath)) ?? []
             : [];
         var slots = new SortedDictionary<string, SortedDictionary<string, int>>(StringComparer.Ordinal);
 
@@ -487,14 +484,15 @@ public static class ContainerConventions
             foreach (var entry in byGroup)
             {
                 var port = basePort[byGroup.Key] + groupSlots[entry.Key];
-                builder.CreateResourceBuilder(entry.Container)
+                _ = builder.CreateResourceBuilder(entry.Container)
                     .WithEndpoint(port: port, targetPort: entry.TargetPort, name: entry.Name, scheme: entry.Scheme ?? "http");
                 var containerName = entry.Container.Annotations.OfType<ContainerNameAnnotation>().LastOrDefault()?.Name ?? entry.Container.Name;
                 rows.Add(new PortRow(byGroup.Key, port, "tcp", entry.Container.Name, containerName, entry.TargetPort, entry.Name));
             }
         }
 
-        var lockContent = System.Text.Json.JsonSerializer.Serialize(slots, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }).Replace("\r\n", "\n") + "\n";
+        JsonSerializerOptions options = new() { WriteIndented = true };
+        var lockContent = JsonSerializer.Serialize(slots, options).Replace("\r\n", "\n") + "\n";
         WriteIfChanged(lockPath, lockContent);
 
         foreach (var container in builder.Resources.OfType<ContainerResource>())
@@ -502,7 +500,6 @@ public static class ContainerConventions
             var lab = container.GetLabSettings();
             var containerName = container.Annotations.OfType<ContainerNameAnnotation>().LastOrDefault()?.Name ?? container.Name;
 
-            // Explicit (standard protocol) ports, listed for the docs and the duplicate check.
             var generated = lab.LabPorts.Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
             foreach (var endpoint in container.Annotations.OfType<EndpointAnnotation>().Where(e => e.Port is not null && !generated.Contains(e.Name)))
             {
@@ -526,7 +523,6 @@ public static class ContainerConventions
         return rows;
     }
 
-    /// <summary>docs/ports.md is generated from the same data that assigns the ports, so it cannot drift.</summary>
     private static void WritePortsDocument(IDistributedApplicationBuilder builder, List<PortRow> rows)
     {
         var text = new System.Text.StringBuilder()
@@ -541,15 +537,15 @@ public static class ContainerConventions
 
         foreach (var group in rows.GroupBy(r => r.Group).OrderBy(g => g.Min(r => r.Group == "Protocol" ? int.MaxValue : r.HostPort)))
         {
-            text.AppendLine($"## {(group.Key == "Protocol" ? "Standard protocol ports" : group.Key)}")
+            _ = text.AppendLine($"## {(group.Key == "Protocol" ? "Standard protocol ports" : group.Key)}")
                 .AppendLine()
                 .AppendLine("| Host port | Container | Container port | Resource / endpoint |")
                 .AppendLine("|---|---|---|---|");
             foreach (var row in group.OrderBy(r => r.HostPort))
             {
-                text.AppendLine($"| {row.HostPort}/{row.Protocol} | `{row.Container}` | {row.TargetPort} | {row.Resource} / {row.Endpoint} |");
+                _ = text.AppendLine($"| {row.HostPort}/{row.Protocol} | `{row.Container}` | {row.TargetPort} | {row.Resource} / {row.Endpoint} |");
             }
-            text.AppendLine();
+            _ = text.AppendLine();
         }
 
         WriteIfChanged(Path.Combine(builder.AppHostDirectory, "docs", "ports.md"), text.ToString().Replace("\r\n", "\n"));
@@ -570,10 +566,6 @@ public static class ContainerConventions
         }
     }
 
-    /// <summary>
-    /// Host paths become <c>${FLAT_LAB_DATA:-…}</c> / <c>${FLAT_LAB_ROOT:-…}</c> expressions so the
-    /// published compose file works on the server regardless of where it was generated.
-    /// </summary>
     private static string ToComposePath(string hostPath, string publishDirectory, string repoRoot, string dataRoot)
     {
         // Unix system paths such as /var/run/docker.sock are not fully qualified on a Windows dev PC; keep them verbatim.
@@ -582,7 +574,10 @@ public static class ContainerConventions
             return hostPath;
         }
 
-        static string Relative(string from, string to) => Path.GetRelativePath(from, to).Replace('\\', '/');
+        static string Relative(string from, string to)
+        {
+            return Path.GetRelativePath(from, to).Replace('\\', '/');
+        }
 
         if (IsUnder(hostPath, dataRoot))
         {
@@ -590,7 +585,6 @@ public static class ContainerConventions
             return $"${{FLAT_LAB_DATA:-{Relative(publishDirectory, dataRoot)}}}" + (rest == "." ? "" : "/" + rest);
         }
 
-        // Everything else that sits on the same drive (repo files, siblings like ../snikket.conf) is repo-relative.
         if (Path.GetPathRoot(hostPath) == Path.GetPathRoot(repoRoot))
         {
             var rest = Relative(repoRoot, hostPath);
@@ -600,9 +594,10 @@ public static class ContainerConventions
         return hostPath.Replace('\\', '/');
     }
 
-    /// <summary>Escape '$' for compose interpolation, keeping Aspire-generated <c>${PLACEHOLDER}</c> references intact.</summary>
-    private static string EscapeForCompose(string value) =>
-        System.Text.RegularExpressions.Regex.Replace(value, @"\$(?!\{[A-Za-z_][A-Za-z0-9_]*(:-[^}]*)?\})", "$$$$");
+    private static string EscapeForCompose(string value)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(value, @"\$(?!\{[A-Za-z_][A-Za-z0-9_]*(:-[^}]*)?\})", "$$$$");
+    }
 
     private static bool IsUnder(string path, string root)
     {

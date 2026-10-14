@@ -80,6 +80,9 @@ step "prerequisites"
 have docker || die "docker not found (run with --bootstrap)"
 docker compose version >/dev/null 2>&1 || die "docker compose plugin not found (run with --bootstrap)"
 if (( APPS )); then
+  node_path="$(command -v node)" || die "node not found on PATH (required by Aspire JavaScript resources)"
+  npm_path="$(command -v npm)" || die "npm not found on PATH (required by Aspire JavaScript resources)"
+  node_npm_path="$(dirname "$node_path"):$(dirname "$npm_path")"
   [[ -x "$DOTNET_ROOT/dotnet" ]] || die "dotnet not found in $DOTNET_ROOT (run with --bootstrap or set DOTNET_ROOT)"
   "$DOTNET_ROOT/dotnet" --list-sdks | grep -q '^10\.' || die ".NET 10 SDK required (run with --bootstrap)"
 fi
@@ -166,7 +169,7 @@ if (( APPS )); then
   step "app layer (Aspire AppHost via systemd)"
   # Build first: a broken change fails here and the running stack stays up.
   "$DOTNET_ROOT/dotnet" build apphost.cs -nologo -v quiet
-  unit="$(sed -e "s|{{USER}}|$USER|g" -e "s|{{REPO}}|$REPO|g" -e "s|{{DOTNET_ROOT}}|$DOTNET_ROOT|g" configs/systemd/flat-lab.service)"
+  unit="$(sed -e "s|{{USER}}|$USER|g" -e "s|{{REPO}}|$REPO|g" -e "s|{{DOTNET_ROOT}}|$DOTNET_ROOT|g" -e "s|{{NODE_NPM_PATH}}|$node_npm_path|g" configs/systemd/flat-lab.service)"
   if ! cmp -s <(printf '%s\n' "$unit") /etc/systemd/system/flat-lab.service; then
     printf '%s\n' "$unit" | sudo tee /etc/systemd/system/flat-lab.service >/dev/null
     sudo systemctl daemon-reload

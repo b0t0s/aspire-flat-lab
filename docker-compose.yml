@@ -58,6 +58,7 @@ services:
     - ./configs/caddy/Caddyfile:/etc/caddy/Caddyfile
     - ../services-data/system/caddy/data:/data
     - ../services-data/system/caddy/config:/config
+    - ${SONAR_DIST_PATH:-../additional-software/sonar/app/dist}:/srv/sonar:ro
     networks:
     - flat_lab_net
     extra_hosts:
@@ -191,61 +192,6 @@ services:
     networks:
     - flat_lab_net
 
-  rsshub:
-    labels:
-    - homepage.group=Infrastructure
-    - homepage.name=RSS Generator
-    - homepage.icon=mdi-rss-box
-    - homepage.href=https://rsshub.${DUCKDNS_DOMAIN:-localhost}
-    image: diygod/rsshub:latest
-    container_name: rsshub
-    restart: unless-stopped
-    environment:
-    - NODE_ENV=production
-    ports:
-    - "10004:1200"
-    networks:
-    - flat_lab_net
-
-  # myspeed:
-  #   labels:
-  #   - homepage.group=Infrastructure
-  #   - homepage.name=Speed
-  #   - homepage.icon=mdi-speedometer
-  #   - homepage.href=https://speed.${DUCKDNS_DOMAIN:-localhost}
-  #   - homepage.widget.type=myspeed
-  #   - homepage.widget.url=http://speed:5216
-  #   image: germannewsmaker/myspeed:latest
-  #   container_name: speed
-  #   restart: unless-stopped
-  #   ports:
-  #   - "${MYSPEED_PORT:-5216}:5216"
-  #   volumes:
-  #   - ${MYSPEED_DATA_PATH:-../services-data/system/myspeed}:/config
-  #   networks:
-  #   - flat_lab_net
-
-  # netalertx:
-  #   labels:
-  #   - homepage.group=Infrastructure
-  #   - homepage.name=Network
-  #   - homepage.icon=mdi-network
-  #   - homepage.href=https://network.${DUCKDNS_DOMAIN:-localhost}
-  #   - homepage.widget.type=netalertx
-  #   - homepage.widget.url=http://netalertx:20211
-  #   image: jokobsk/netalertx:latest
-  #   container_name: network
-  #   restart: unless-stopped
-  #   network_mode: host
-  #   privileged: true
-  #   tmpfs:
-  #   - /tmp:rw,nosuid,nodev,size=256m
-  #   environment:
-  #   - TZ=${TZ:-Europe/Kyiv}
-  #   - GR_TZ=${TZ:-Europe/Kyiv}
-  #   volumes:
-  #   - ${NETALERTX_DATA_PATH:-../services-data/system/netalertx}:/data
-
   filebrowser-quantum:
     labels:
     - homepage.group=Infrastructure
@@ -254,21 +200,17 @@ services:
     - homepage.href=https://files.${DUCKDNS_DOMAIN:-localhost}
     - homepage.widget.type=filebrowser
     - homepage.widget.url=http://filebrowser-quantum:80
-    image: gtstef/filebrowser:1.3.3-stable
+    image: gtstef/filebrowser:2.0.1-stable
     container_name: files
     restart: unless-stopped
     environment:
-    - FB_NOAUTH=true
-    - FB_AUTH.METHOD=noauth
-    - FB_BASEURL=/
-    - FILEBROWSER_DATABASE=/config/database.db
     - FILEBROWSER_CONFIG=/config/config.yaml
     ports:
     - "10005:80"
     volumes:
     - ${FILEBROWSER_DATA:-../services-data/system/filebrowser-quantum}:/config
     - ./configs/filebrowser-quantum/config.yaml:/config/config.yaml:ro
-    - ${FILEBROWSER_FILES:-../services-data/public}:/srv
+    - ${FILEBROWSER_FILES:-../services-data/public}:/public
     networks:
     - flat_lab_net
 
@@ -297,69 +239,51 @@ services:
     networks:
     - flat_lab_net
 
-  # olivetin:
+  # netalertx:
   #   labels:
   #   - homepage.group=Infrastructure
-  #   - homepage.name=OliveTin
-  #   - homepage.icon=mdi-gamepad
-  #   - homepage.description=Buttons panel
-  #   - homepage.href=https://control.${DUCKDNS_DOMAIN:-localhost}
-  #   image: jamesread/olivetin:latest
-  #   container_name: olivetin
+  #   - homepage.name=Network
+  #   - homepage.icon=mdi-network
+  #   - homepage.href=https://network.${DUCKDNS_DOMAIN:-localhost}
+  #   - homepage.widget.type=netalertx
+  #   - homepage.widget.url=http://netalertx:20211
+  #   image: jokobsk/netalertx:latest
+  #   container_name: network
   #   restart: unless-stopped
-  #   user: "${UID:-1000}:124"
-  #   group_add:
-  #   - 124
-  #   ports:
-  #   - "${OLIVETIN_PORT:-1337}:1337"
+  #   network_mode: host
+  #   privileged: true
+  #   tmpfs:
+  #   - /tmp:rw,nosuid,nodev,size=256m
+  #   environment:
+  #   - TZ=${TZ:-Europe/Kyiv}
+  #   - GR_TZ=${TZ:-Europe/Kyiv}
   #   volumes:
-  #   - ${OLIVETIN_DATA:-../services-data/system/olivetin}:/config
-  #   - ./configs/olivetin/config.yaml:/config/config.yaml:ro
-  #   - ./configs/olivetin/entities:/config/entities
-  #   - /var/run/docker.sock:/var/run/docker.sock
-  #   # - ../services-data:/srv/services-data:ro
-  #   # - /var/log/journal:/var/log/journal:ro    
-  #   networks:
-  #   - flat_lab_net
+  #   - ${NETALERTX_DATA_PATH:-../services-data/system/netalertx}:/data
 
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    restart: unless-stopped
+  home-assistant:
     labels:
-    - glance.hide=true
-    environment:
-    - OLLAMA_ORIGINS=*
-    - OLLAMA_HOST=0.0.0.0
-    - OLLAMA_KEEP_ALIVE=24h
-    - OLLAMA_API_KEY=${OLLAMA_API_KEY:-}
-    ports:
-    - "11434:11434"
-    volumes:
-    - ${OLLAMA_DATA:-../services-data/system/ollama}:/root/.ollama
-    networks:
-    - flat_lab_net
-
-  open-webui:
-    labels:
-    - homepage.group=Development
-    - homepage.name=LLM
-    - homepage.icon=mdi-robot
-    - homepage.description=
-    - homepage.href=https://llm.${DUCKDNS_DOMAIN:-localhost}
-    image: ghcr.io/open-webui/open-webui:main
-    container_name: llm
+    - homepage.group=Household
+    - homepage.name=Home Assistant
+    - homepage.icon=mdi-home-automation
+    - homepage.href=https://home-assistant.${DUCKDNS_DOMAIN:-localhost}
+    - homepage.widget.type=homeassistant
+    - homepage.widget.url=http://host.docker.internal:8123
+    - homepage.widget.key={{HOMEPAGE_VAR_HOMEASSISTANT_WIDGET_KEY}}
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: home-assistant
     restart: unless-stopped
-    ports:
-    - "10007:8080"
+    privileged: true
+    network_mode: host
+    cap_add:
+    - NET_ADMIN
+    - NET_RAW
     volumes:
-    - ${OPEN_WEBUI_DATA:-../services-data/system/open-webui}:/app/backend/data
-    networks:
-    - flat_lab_net
+    - ${HOME_ASSISTANT_DATA:-../services-data/system/home-assistant}:/config
+    - ./configs/home-assistant/configuration.yaml:/config/configuration.yaml:ro
+    - /etc/localtime:/etc/localtime:ro
+    - /run/dbus:/run/dbus:ro
     environment:
-      - TZ=Europe/Kyiv
-      - ENABLE_SIGNUP=True
-      - OLLAMA_BASE_URL=http://ollama:11434
+    - TZ=${TZ:-Europe/Kyiv}
 
   seafile:
     labels:
@@ -434,31 +358,6 @@ services:
     depends_on:
       - seafile
 
-  home-assistant:
-    labels:
-    - homepage.group=Household
-    - homepage.name=Home Assistant
-    - homepage.icon=mdi-home-automation
-    - homepage.href=https://home-assistant.${DUCKDNS_DOMAIN:-localhost}
-    - homepage.widget.type=homeassistant
-    - homepage.widget.url=http://host.docker.internal:8123
-    - homepage.widget.key={{HOMEPAGE_VAR_HOMEASSISTANT_WIDGET_KEY}}
-    image: ghcr.io/home-assistant/home-assistant:stable
-    container_name: home-assistant
-    restart: unless-stopped
-    privileged: true
-    network_mode: host
-    cap_add:
-    - NET_ADMIN
-    - NET_RAW
-    volumes:
-    - ${HOME_ASSISTANT_DATA:-../services-data/system/home-assistant}:/config
-    - ./configs/home-assistant/configuration.yaml:/config/configuration.yaml:ro
-    - /etc/localtime:/etc/localtime:ro
-    - /run/dbus:/run/dbus:ro
-    environment:
-    - TZ=${TZ:-Europe/Kyiv}
-
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
@@ -469,25 +368,6 @@ services:
     - "10009:8191"
     networks:
     - flat_lab_net
-
-  # watchtower:
-  #   labels:
-  #   - homepage.group=Infrastructure
-  #   - homepage.name=watchtower
-  #   - homepage.icon=mdi-update
-  #   - homepage.description=Services auto-updater
-  #   - homepage.widget.type=watchtower
-  #   - homepage.widget.url=http://watchtower:8080
-  #   image: containrrr/watchtower:latest
-  #   container_name: watchtower
-  #   restart: unless-stopped
-  #   command: --cleanup --schedule "0 0 4 * * *" --label-enable
-  #   environment:
-  #   - DOCKER_API_VERSION=1.40
-  #   volumes:
-  #   - /var/run/docker.sock:/var/run/docker.sock
-  #   networks:
-  #   - flat_lab_net
 
   rustdesk-hbbs:
     image: rustdesk/rustdesk-server:latest
@@ -546,36 +426,6 @@ services:
     - ${NTFY_CACHE:-../services-data/system/ntfy/cache}:/var/cache/ntfy
     ports:
     - "10010:80"
-    networks:
-    - flat_lab_net
-
-  minecraft:
-    labels:
-    - homepage.group=Entertainment
-    - homepage.name=minecraft
-    - homepage.icon=mdi-minecraft
-    - homepage.description=Game server
-    - homepage.widget.type=minecraft
-    - homepage.widget.url=udp://minecraft:25565
-    image: itzg/minecraft-server:latest
-    container_name: minecraft
-    restart: unless-stopped
-    ports:
-    - "25565:25565"
-    environment:
-    - EULA=TRUE
-    - TYPE=PAPER
-    - DIFFICULTY=hard
-    - LEVEL_TYPE=AMPLIFIED
-    - ICON=/data/server-icon.png
-    - OVERRIDE_ICON=true
-    - ENABLE_RCON=false
-    - ONLINE_MODE=false
-    - MEMORY=2G
-    - MOTD=Flat-lab
-    volumes:
-    - ./configs/minecraft:/config:ro
-    - ${MINECRAFT_DATA:-../services-data/system/minecraft}:/data
     networks:
     - flat_lab_net
 

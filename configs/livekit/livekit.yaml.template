@@ -8,6 +8,10 @@ rtc:
   tcp_port: 7881
   # single-port UDP mux, published as 7882/udp
   udp_port: 7882
+  # node_ip: hint for LAN clients (e.g. the Pi's LAN IP). use_external_ip: true
+  # adds a STUN-discovered public IP candidate, so LAN and external clients
+  # both have a direct path. TURN at 3478 is the relay fallback.
+  node_ip: ${NODE_IP}
   use_external_ip: true
 redis:
   address: livekit-redis:6379

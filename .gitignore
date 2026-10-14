@@ -44,10 +44,13 @@ credentials.json
 *.crt
 
 # IDEs
+.agents
+.playwright/
 .vscode/
 .idea/
 .vs/
 *.iml
+
 
 # Misc
 *.swp
@@ -59,3 +62,5 @@ container-snapshots/
 
 # Files the SearXNG container generates next to its settings
 configs/searxng/uwsgi.ini
+# Playwright CLI output (may contain credentials)
+.playwright-cli/

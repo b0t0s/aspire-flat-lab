@@ -1,7 +1,3 @@
-# Single ingress for both layers (docker-compose.yml infra + Aspire app stack).
-# Upstreams are container names on flat_lab_net and container (target) ports, never host ports.
-# A matcher may list an old subdomain next to the current one so existing bookmarks keep working.
-
 *.{$DUCKDNS_DOMAIN} {
     tls {
         dns duckdns {$DUCKDNS_TOKEN}
@@ -75,9 +71,9 @@
         reverse_proxy snikket-portal:80
     }
 
-    @checkouts host paperless.{$DUCKDNS_DOMAIN} checkouts.{$DUCKDNS_DOMAIN}
-    handle @checkouts {
-        reverse_proxy checkouts:8000
+    @documents host documents.{$DUCKDNS_DOMAIN}
+    handle @documents {
+        reverse_proxy documents:8000
     }
 
     @cloud host cloud.{$DUCKDNS_DOMAIN}
@@ -97,7 +93,6 @@
         reverse_proxy converter:3000
     }
 
-    # Aspire dashboard runs on the host (systemd, launch profile "http"); Caddy terminates TLS.
     @dashboard host dashboard.{$DUCKDNS_DOMAIN}
     handle @dashboard {
         reverse_proxy host.docker.internal:19000
@@ -113,9 +108,9 @@
         reverse_proxy dev-notes:3000
     }
 
-    @documents host documents.{$DUCKDNS_DOMAIN}
-    handle @documents {
-        reverse_proxy documents:8080
+    @pdf host pdf.{$DUCKDNS_DOMAIN}
+    handle @pdf {
+        reverse_proxy pdf:8080
     }
 
     @esign host esign.{$DUCKDNS_DOMAIN}
@@ -172,6 +167,11 @@
         reverse_proxy shortener:3000
     }
 
+    @control host control.{$DUCKDNS_DOMAIN}
+    handle @control {
+        reverse_proxy olivetin:1337
+    }
+
     @history host history.{$DUCKDNS_DOMAIN}
     handle @history {
         reverse_proxy history:8000
@@ -189,6 +189,11 @@
         reverse_proxy homepage:3000 {
             header_up Host {host}
         }
+    }
+
+    @hermes host hermes.{$DUCKDNS_DOMAIN}
+    handle @hermes {
+        reverse_proxy hermes:9119
     }
 
     @household host household.{$DUCKDNS_DOMAIN}
@@ -241,12 +246,16 @@
         reverse_proxy llm:8080
     }
 
+    @network host network.{$DUCKDNS_DOMAIN}
+    handle @network {
+        reverse_proxy host.docker.internal:20211
+    }
+
     @locations host locations.{$DUCKDNS_DOMAIN}
     handle @locations {
         reverse_proxy dawarich:3000
     }
 
-    # Element web client, with the Synapse client API on the same host (config: configs/element, configs/synapse).
     @matrix host matrix.{$DUCKDNS_DOMAIN} element.{$DUCKDNS_DOMAIN}
     handle @matrix {
         @synapse path /_matrix/* /_synapse/client/*
@@ -371,6 +380,11 @@
         }
     }
 
+    @speed host speed.{$DUCKDNS_DOMAIN}
+    handle @speed {
+        reverse_proxy speed:5216
+    }
+
     @secrets host secrets.{$DUCKDNS_DOMAIN}
     handle @secrets {
         reverse_proxy infisical:80
@@ -389,6 +403,33 @@
     @snippets host snippets.{$DUCKDNS_DOMAIN}
     handle @snippets {
         reverse_proxy snippets:6157
+    }
+
+    @sonar host sonar.{$DUCKDNS_DOMAIN}
+    handle @sonar {
+        root * /srv/sonar
+        encode zstd gzip
+        try_files {path} /index.html
+        file_server
+    }
+
+    @sonar-mgmt host sonar-mgmt.{$DUCKDNS_DOMAIN}
+    handle @sonar-mgmt {
+        reverse_proxy sonar-mgmt:8081
+    }
+
+    @mint host mint.{$DUCKDNS_DOMAIN}
+    handle @mint {
+        reverse_proxy lab-mint:8080
+    }
+
+    @livekit host livekit.{$DUCKDNS_DOMAIN}
+    handle @livekit {
+        reverse_proxy livekit:7880 {
+            header_up Host {host}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+        }
     }
 
     @sonarr host sonarr.{$DUCKDNS_DOMAIN}
@@ -458,12 +499,11 @@
 
     @xmpp host xmpp.{$DUCKDNS_DOMAIN} converse.{$DUCKDNS_DOMAIN}
     handle @xmpp {
-        # Ejabberd BOSH / WebSocket / admin API
         @ejabberd path /bosh /bosh/* /ws /ws/* /websocket /websocket/* /http-bind /http-bind/* /api /api/*
         handle @ejabberd {
             reverse_proxy xmpp-server:5280
         }
-        # Converse.js static web client (default for everything else)
+
         handle {
             reverse_proxy xmpp:80
         }
