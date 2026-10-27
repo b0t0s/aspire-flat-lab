@@ -5,8 +5,7 @@ internal sealed class DependenciesService : Dictionary<string, IResourceBuilder<
 internal static class TechnicalServices
 {
     private const string PgIsReady = "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB";
-    private const string MariaDbReady = "/usr/local/bin/healthcheck.sh --su-mysql --connect --innodb_initialized";
-
+    
     public static DependenciesService AddDependencies(this IDistributedApplicationBuilder builder, EnvironmentSettings settings)
     {
         var resources = new DependenciesService();
@@ -51,16 +50,6 @@ internal static class TechnicalServices
             .WithPublishedPort(11434, 11434);
 
         // Smarthome
-        _ = Postgres("gramps-db", "16-alpine", "gramps", "gramps", "GRAMPS_DB_PASSWORD",
-            settings.SmartHome.DataPath("GRAMPS_DB_DATA", "../services-data/system/gramps-db"));
-        _ = Add("openemr-db", "mariadb", "11.8.8")
-            .WithArgs("mariadbd", "--character-set-server=utf8mb4")
-            .WithEnvironment("MYSQL_ROOT_PASSWORD", settings.Secret("OPENEMR_DB_ROOT_PASS"))
-            .WithEnvironment("MYSQL_DATABASE", "openemr")
-            .WithEnvironment("MYSQL_USER", "openemr")
-            .WithEnvironment("MYSQL_PASSWORD", settings.Secret("OPENEMR_DB_PASS"))
-            .WithBindMount(settings.SmartHome.DataPath("OPENEMR_DB_DATA", "../services-data/system/openemr-db"), "/var/lib/mysql")
-            .WithHealthcheck(MariaDbReady, interval: "1m", retries: 3, startPeriod: "1m");
 
         // Development
 
@@ -82,8 +71,6 @@ internal static class TechnicalServices
         _ = Postgres("infisical-db", "16-alpine", "infisical", "infisical", "INFISICAL_DB_PASSWORD",
             settings.Secrets.DataPath("INFISICAL_DB_DATA", "../services-data/system/infisical/postgres"));
         _ = Redis("infisical-redis");
-
-        _ = Redis("livekit-redis");
 
         return resources;
     }

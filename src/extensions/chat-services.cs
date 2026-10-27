@@ -26,6 +26,7 @@ internal static class ChatServices
             .WithEnvironment("HERMES_HOME_MODE", "0700")
             .WithEnvironment("HERMES_UID", settings.Shared.Uid)
             .WithEnvironment("HERMES_GID", settings.Chat.Value("DOCKER_GID", settings.Shared.Gid))
+            .WithEnvironment("HOMEPAGE_MCP_TOKEN", settings.Secret("HOMEPAGE_MCP_TOKEN"))
             .WithDockerSocket()
             .WithGroupAdd(settings.Chat.Value("DOCKER_GID", "124"))
             .WithEnvironment("TERMINAL_DOCKER_RUN_AS_HOST_USER", "true")
@@ -37,7 +38,7 @@ internal static class ChatServices
             .WithBindMount(hermesDataPath, "/opt/data")
             .WithBindMount(hermesWorkspacePath, "/workspace")
             .WithBindMount(hermesPublicPath, "/public", isReadOnly: true)
-            .WithHomepage("Messaging", "Hermes", "mdi-robot", "AI agent", $"https://hermes.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Messaging", "Agent", "mdi-robot", "", $"https://hermes.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("open-webui", "ghcr.io/open-webui/open-webui", "main")
             .WithContainerName("llm")

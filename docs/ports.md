@@ -67,19 +67,15 @@ Web ports are `prefix * 1000 + position` in declaration order per homepage group
 | 17003/tcp | `sharing` | 3000 | pingvin-share / pingvin-share |
 | 17004/tcp | `irc-server` | 8080 | irc-ergochat / irc-web |
 | 17005/tcp | `irc` | 9000 | irc-thelounge / thelounge |
-| 17011/tcp | `livekit` | 7880 | livekit / livekit-http |
 
 ## Standard protocol ports
 
 | Host port | Container | Container port | Resource / endpoint |
 |---|---|---|---|
-| 3478/udp | `livekit` | 3478 | livekit / published |
 | 5216/tcp | `speed` | 5216 | myspeed / published |
 | 6667/tcp | `irc-server` | 6667 | irc-ergochat / irc |
 | 6881/tcp | `torrent` | 6881 | qbittorrent / published |
 | 6881/udp | `torrent` | 6881 | qbittorrent / published |
-| 7881/tcp | `livekit` | 7881 | livekit / livekit-rtc-tcp |
-| 7882/udp | `livekit` | 7882 | livekit / published |
 | 10004/tcp | `rsshub` | 1200 | rsshub / rsshub |
 | 10007/tcp | `llm` | 8080 | open-webui / open-webui |
 | 11434/tcp | `ollama` | 11434 | ollama / published |

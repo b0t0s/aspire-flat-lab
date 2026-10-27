@@ -26,7 +26,7 @@ internal sealed class EnvironmentSettings(IDistributedApplicationBuilder builder
             return prefixes.Any(p => name.StartsWith(p, StringComparison.Ordinal));
         }
 
-        if (Any(resourceName, "synapse-", "lemmy-", "livekit-", "snikket-", "ollama")) return Chat.StartByDefault;
+        if (Any(resourceName, "synapse-", "lemmy-", "snikket-", "ollama")) return Chat.StartByDefault;
         if (Any(resourceName, "immich-", "radarr-", "sonarr-")) return Media.StartByDefault;
         if (Any(resourceName, "passbolt-", "psono-", "infisical-", "documenso-")) return Secrets.StartByDefault;
         if (Any(resourceName, "ghost-", "affine-", "karakeep-", "linkwarden-", "paperless-", "outline-", "bookstack-", "keila-")) return Knowledge.StartByDefault;

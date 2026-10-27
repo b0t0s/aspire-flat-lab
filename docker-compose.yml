@@ -44,7 +44,7 @@ services:
     labels:
     - glance.hide=true
     build:
-      context: ./src/additional-software/caddy
+      context: ./src/containers/caddy
       dockerfile: Dockerfile
     container_name: caddy
     restart: unless-stopped
@@ -58,7 +58,6 @@ services:
     - ./configs/caddy/Caddyfile:/etc/caddy/Caddyfile
     - ../services-data/system/caddy/data:/data
     - ../services-data/system/caddy/config:/config
-    - ${SONAR_DIST_PATH:-../additional-software/sonar/app/dist}:/srv/sonar:ro
     networks:
     - flat_lab_net
     extra_hosts:
@@ -100,6 +99,7 @@ services:
     environment:
     - HOMEPAGE_MCP_TOKEN=${HOMEPAGE_MCP_TOKEN:-}
     - HOMEPAGE_MCP_ENABLED=${HOMEPAGE_MCP_ENABLED:-false}
+    - HOMEPAGE_AUTH_ENABLED=${HOMEPAGE_AUTH_ENABLED:-false}
     - HOMEPAGE_MCP_ALLOW_WRITE=${HOMEPAGE_MCP_ALLOW_WRITE:-false}
     - HOMEPAGE_ALLOWED_HOSTS=${HOMEPAGE_ALLOWED_HOSTS:-homepage.${DUCKDNS_DOMAIN:-localhost},localhost,127.0.0.1}
     # Look & header widgets:

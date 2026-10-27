@@ -34,7 +34,7 @@ layout:
   Entertainment:
     tab: Entertainment
     style: row
-    columns: 7
+    columns: 5
   Messaging:
     tab: Entertainment
     initiallyCollapsed: false

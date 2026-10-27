@@ -4,6 +4,26 @@
         resolvers 1.1.1.1 8.8.8.8
     }
 
+    @sonar host sonar.{$DUCKDNS_DOMAIN}
+    handle @sonar {
+        @sonar_rtc path /rtc /rtc/*
+        handle @sonar_rtc {
+            reverse_proxy livekit:7880
+        }
+        handle {
+            reverse_proxy sonar:8080
+        }
+    }
+
+    @livekit host livekit.{$DUCKDNS_DOMAIN}
+    handle @livekit {
+        reverse_proxy livekit:7880 {
+            header_up Host {host}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
     @adguard host adguard.{$DUCKDNS_DOMAIN}
     handle @adguard {
         reverse_proxy adguardhome:81
@@ -403,33 +423,6 @@
     @snippets host snippets.{$DUCKDNS_DOMAIN}
     handle @snippets {
         reverse_proxy snippets:6157
-    }
-
-    @sonar host sonar.{$DUCKDNS_DOMAIN}
-    handle @sonar {
-        root * /srv/sonar
-        encode zstd gzip
-        try_files {path} /index.html
-        file_server
-    }
-
-    @sonar-mgmt host sonar-mgmt.{$DUCKDNS_DOMAIN}
-    handle @sonar-mgmt {
-        reverse_proxy sonar-mgmt:8081
-    }
-
-    @mint host mint.{$DUCKDNS_DOMAIN}
-    handle @mint {
-        reverse_proxy lab-mint:8080
-    }
-
-    @livekit host livekit.{$DUCKDNS_DOMAIN}
-    handle @livekit {
-        reverse_proxy livekit:7880 {
-            header_up Host {host}
-            header_up X-Forwarded-For {remote}
-            header_up X-Forwarded-Proto {scheme}
-        }
     }
 
     @sonarr host sonarr.{$DUCKDNS_DOMAIN}

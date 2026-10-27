@@ -176,7 +176,6 @@ internal static class TechnicalServices
             .WithEnvironment("POSTGRES_INITDB_ARGS", "--encoding=UTF8 --lc-collate=C --lc-ctype=C");
         _ = Postgres("lemmy-db", "16-alpine", "lemmy", "lemmy", "LEMMY_DB_PASSWORD",
             settings.Chat.DataPath("LEMMY_DB_DATA", "../services-data/system/lemmy/postgres"));
-        _ = Redis("livekit-redis");
 
         // Snikket (XMPP all-in-one) needs host networking for its own 80/443/5222/5269.
         var snikketDataPath = settings.Chat.DataPath("SNIKKET_DATA_PATH", "../services-data/system/snikket");

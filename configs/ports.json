@@ -33,7 +33,6 @@
   "Messaging": {
     "irc-ergochat/irc-web": 4,
     "irc-thelounge/thelounge": 5,
-    "livekit/livekit-http": 11,
     "pingvin-share/pingvin-share": 3
   },
   "Secrets": {
