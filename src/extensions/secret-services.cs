@@ -52,5 +52,17 @@ internal static class SecretServices
             .WaitFor(dependencies["infisical-db"])
             .WaitFor(dependencies["infisical-redis"])
             .WithHomepage("Secrets", "Infisical", "mdi-key-variant", "Secrets manager", $"https://secrets.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("email-signature", "ghcr.io/clarkemedia/email-signature-generator", "latest")
+            .WithContainerName("signature")
+            .WithStartPolicy(settings.Secrets.StartByDefault)
+            .WithLabPort(80, "email-signature")
+            .WithHomepage("Development", "Signature", "mdi-email-edit", "Email signature generator", $"https://signature.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("origamivault", "ghcr.io/origamivault/origamivault", "latest")
+            .WithContainerName("origami")
+            .WithStartPolicy(settings.Secrets.StartByDefault)
+            .WithLabPort(8080, "origamivault")
+            .WithHomepage("Secrets", "OrigamiVault", "mdi-file-lock", "Paper backup of secrets", $"https://origami.{settings.Shared.DuckDnsDomain}");
     }
 }

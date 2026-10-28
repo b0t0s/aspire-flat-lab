@@ -56,6 +56,12 @@
         }
     }
 
+    @atuin host atuin.{$DUCKDNS_DOMAIN}
+    handle @atuin {
+        reverse_proxy atuin:8888
+    }
+
+
     @audiomuse host audiomuse.{$DUCKDNS_DOMAIN}
     handle @audiomuse {
         reverse_proxy audiomuse-ai:8500
@@ -76,9 +82,15 @@
         reverse_proxy books:5000
     }
 
+
     @budget host budget.{$DUCKDNS_DOMAIN}
     handle @budget {
         reverse_proxy budget:5006
+    }
+
+    @caddyui host caddyui.{$DUCKDNS_DOMAIN}
+    handle @caddyui {
+        reverse_proxy cpm:8501
     }
 
     @changedetection host changedetection.{$DUCKDNS_DOMAIN}
@@ -89,6 +101,21 @@
     @chat host chat.{$DUCKDNS_DOMAIN}
     handle @chat {
         reverse_proxy snikket-portal:80
+    }
+
+    @clips host clips.{$DUCKDNS_DOMAIN}
+    handle @clips {
+        reverse_proxy cliparr:7171
+    }
+
+    @diagrams host diagrams.{$DUCKDNS_DOMAIN}
+    handle @diagrams {
+        reverse_proxy diagrams:80
+    }
+
+    @dm-hero host dm-hero.{$DUCKDNS_DOMAIN}
+    handle @dm-hero {
+        reverse_proxy dm-hero:3000
     }
 
     @documents host documents.{$DUCKDNS_DOMAIN}
@@ -118,14 +145,34 @@
         reverse_proxy host.docker.internal:19000
     }
 
+    @dashboards host dashboards.{$DUCKDNS_DOMAIN}
+    handle @dashboards {
+        reverse_proxy excalidash:8080
+    }
+
+    @degoog host degoog.{$DUCKDNS_DOMAIN}
+    handle @degoog {
+        reverse_proxy degoog:4444
+    }
+
     @devtools host devtools.{$DUCKDNS_DOMAIN}
     handle @devtools {
         reverse_proxy dev-tools:3000
     }
 
+    @dockflare host dockflare.{$DUCKDNS_DOMAIN}
+    handle @dockflare {
+        reverse_proxy dockflare:5000
+    }
+
     @docs host docs.{$DUCKDNS_DOMAIN}
     handle @docs {
         reverse_proxy dev-notes:3000
+    }
+
+    @docs2 host docs2.{$DUCKDNS_DOMAIN}
+    handle @docs2 {
+        reverse_proxy zensical:8000
     }
 
     @pdf host pdf.{$DUCKDNS_DOMAIN}
@@ -136,6 +183,11 @@
     @esign host esign.{$DUCKDNS_DOMAIN}
     handle @esign {
         reverse_proxy docuseal:3000
+    }
+
+    @familytree host familytree.{$DUCKDNS_DOMAIN}
+    handle @familytree {
+        reverse_proxy parenthese:80
     }
 
     @favourites host favourites.{$DUCKDNS_DOMAIN}
@@ -151,6 +203,11 @@
     @files host files.{$DUCKDNS_DOMAIN}
     handle @files {
         reverse_proxy files:80
+    }
+
+    @floorplan host floorplan.{$DUCKDNS_DOMAIN}
+    handle @floorplan {
+        reverse_proxy floorplan:8080
     }
 
     @flows host flows.{$DUCKDNS_DOMAIN} nodered.{$DUCKDNS_DOMAIN}
@@ -192,6 +249,21 @@
         reverse_proxy olivetin:1337
     }
 
+    @gravity host gravity.{$DUCKDNS_DOMAIN}
+    handle @gravity {
+        reverse_proxy gravity:80
+    }
+
+    @healthlog host healthlog.{$DUCKDNS_DOMAIN}
+    handle @healthlog {
+        reverse_proxy healthlog:3000
+    }
+
+    @hiking host hiking.{$DUCKDNS_DOMAIN}
+    handle @hiking {
+        reverse_proxy hiking:80
+    }
+
     @history host history.{$DUCKDNS_DOMAIN}
     handle @history {
         reverse_proxy history:8000
@@ -226,6 +298,11 @@
         reverse_proxy ide:8443
     }
 
+    @ideon host ideon.{$DUCKDNS_DOMAIN}
+    handle @ideon {
+        reverse_proxy ideon:3000
+    }
+
     @immich host photos.{$DUCKDNS_DOMAIN} immich.{$DUCKDNS_DOMAIN}
     handle @immich {
         reverse_proxy immich-server:2283
@@ -251,9 +328,19 @@
         reverse_proxy cabinet:3000
     }
 
+    @kept host kept.{$DUCKDNS_DOMAIN}
+    handle @kept {
+        reverse_proxy kept:8080
+    }
+
     @kimai host time-kimai.{$DUCKDNS_DOMAIN}
     handle @kimai {
         reverse_proxy kimai:80
+    }
+
+    @languard host languard.{$DUCKDNS_DOMAIN}
+    handle @languard {
+        reverse_proxy host.docker.internal:8080
     }
 
     @lidarr host lidarr.{$DUCKDNS_DOMAIN}
@@ -261,9 +348,19 @@
         reverse_proxy indexer-music:8686
     }
 
+    @lightpanda host lightpanda.{$DUCKDNS_DOMAIN}
+    handle @lightpanda {
+        reverse_proxy lightpanda:9222
+    }
+
     @llm host llm.{$DUCKDNS_DOMAIN}
     handle @llm {
         reverse_proxy llm:8080
+    }
+
+    @music-assistant host music-assistant.{$DUCKDNS_DOMAIN}
+    handle @music-assistant {
+        reverse_proxy host.docker.internal:8095
     }
 
     @network host network.{$DUCKDNS_DOMAIN}
@@ -301,6 +398,12 @@
         }
     }
 
+    @medikeep host medikeep.{$DUCKDNS_DOMAIN}
+    handle @medikeep {
+        reverse_proxy medikeep:8000
+    }
+
+
     @metrics host metrics.{$DUCKDNS_DOMAIN} beszel.{$DUCKDNS_DOMAIN}
     handle @metrics {
         reverse_proxy metrics:8090
@@ -321,6 +424,11 @@
         reverse_proxy news:4000
     }
 
+    @nostos host nostos.{$DUCKDNS_DOMAIN}
+    handle @nostos {
+        reverse_proxy nostos:8080
+    }
+
     @notes host notes.{$DUCKDNS_DOMAIN}
     handle @notes {
         reverse_proxy notes:6806 {
@@ -332,6 +440,21 @@
     @notifications host notifications.{$DUCKDNS_DOMAIN}
     handle @notifications {
         reverse_proxy notifications:80
+    }
+
+    @obscura host obscura.{$DUCKDNS_DOMAIN}
+    handle @obscura {
+        reverse_proxy obscura:9222
+    }
+
+    @origami host origami.{$DUCKDNS_DOMAIN}
+    handle @origami {
+        reverse_proxy origami:8080
+    }
+
+    @panel host panel.{$DUCKDNS_DOMAIN}
+    handle @panel {
+        reverse_proxy panel:8000
     }
 
     @pass host pass.{$DUCKDNS_DOMAIN}
@@ -361,6 +484,26 @@
         }
     }
 
+    @pinchflat host youtube.{$DUCKDNS_DOMAIN} pinchflat.{$DUCKDNS_DOMAIN}
+    handle @pinchflat {
+        reverse_proxy youtube:8945
+    }
+
+    @piped host piped.{$DUCKDNS_DOMAIN}
+    handle @piped {
+        reverse_proxy piped-frontend:80
+    }
+
+    @pipedapi host pipedapi.{$DUCKDNS_DOMAIN}
+    handle @pipedapi {
+        reverse_proxy piped-backend:8080
+    }
+
+    @pipedproxy host pipedproxy.{$DUCKDNS_DOMAIN}
+    handle @pipedproxy {
+        reverse_proxy piped-proxy:8080
+    }
+
     @pocket host pocket.{$DUCKDNS_DOMAIN}
     handle @pocket {
         reverse_proxy pocket:3000
@@ -377,6 +520,11 @@
         }
     }
 
+    @rack host rack.{$DUCKDNS_DOMAIN}
+    handle @rack {
+        reverse_proxy rackdaddy-frontend:80
+    }
+
     @radarr host radarr.{$DUCKDNS_DOMAIN}
     handle @radarr {
         reverse_proxy indexer-films:7878
@@ -387,9 +535,24 @@
         reverse_proxy reddit:8080
     }
 
+    @registry host registry.{$DUCKDNS_DOMAIN}
+    handle @registry {
+        reverse_proxy registry:3000
+    }
+
+    @resonand host resonand.{$DUCKDNS_DOMAIN}
+    handle @resonand {
+        reverse_proxy resonand:8000
+    }
+
     @rsshub host rsshub.{$DUCKDNS_DOMAIN}
     handle @rsshub {
         reverse_proxy rsshub:1200
+    }
+
+    @scanopy host scanopy.{$DUCKDNS_DOMAIN}
+    handle @scanopy {
+        reverse_proxy scanopy:60072
     }
 
     @search host search.{$DUCKDNS_DOMAIN}
@@ -398,6 +561,16 @@
             header_up X-Forwarded-For {remote_host}
             header_up X-Real-IP {remote_host}
         }
+    }
+
+    @simplex host simplex.{$DUCKDNS_DOMAIN}
+    handle @simplex {
+        reverse_proxy smp-server:5223
+    }
+
+    @soulseek host soulseek.{$DUCKDNS_DOMAIN}
+    handle @soulseek {
+        reverse_proxy slskd:5030
     }
 
     @speed host speed.{$DUCKDNS_DOMAIN}
@@ -420,9 +593,19 @@
         reverse_proxy documenso:3500
     }
 
+    @signature host signature.{$DUCKDNS_DOMAIN}
+    handle @signature {
+        reverse_proxy signature:80
+    }
+
     @snippets host snippets.{$DUCKDNS_DOMAIN}
     handle @snippets {
         reverse_proxy snippets:6157
+    }
+
+    @solarmap host solarmap.{$DUCKDNS_DOMAIN}
+    handle @solarmap {
+        reverse_proxy solar:80
     }
 
     @sonarr host sonarr.{$DUCKDNS_DOMAIN}
@@ -430,14 +613,29 @@
         reverse_proxy indexer-serials:8989
     }
 
+    @soundvault host soundvault.{$DUCKDNS_DOMAIN}
+    handle @soundvault {
+        reverse_proxy soundvault:8080
+    }
+
     @subscriptions host subscriptions.{$DUCKDNS_DOMAIN}
     handle @subscriptions {
         reverse_proxy subscriptions:80
     }
 
+    @tapmap host tapmap.{$DUCKDNS_DOMAIN}
+    handle @tapmap {
+        reverse_proxy host.docker.internal:8050
+    }
+
     @tasks host tasks.{$DUCKDNS_DOMAIN}
     handle @tasks {
         reverse_proxy super-productivity:1900
+    }
+
+    @termix host termix.{$DUCKDNS_DOMAIN}
+    handle @termix {
+        reverse_proxy termix:8080
     }
 
     @time host time.{$DUCKDNS_DOMAIN}
@@ -460,9 +658,24 @@
         reverse_proxy ryot:8000
     }
 
+    @tradetally host tradetally.{$DUCKDNS_DOMAIN}
+    handle @tradetally {
+        reverse_proxy tradetally:80
+    }
+
     @twofa host 2fa.{$DUCKDNS_DOMAIN}
     handle @twofa {
         reverse_proxy twofauth:8000
+    }
+
+    @usertour host usertour.{$DUCKDNS_DOMAIN}
+    handle @usertour {
+        reverse_proxy usertour:80
+    }
+
+    @vaultisse host vaultisse.{$DUCKDNS_DOMAIN}
+    handle @vaultisse {
+        reverse_proxy vaultisse:3000
     }
 
     @videos host videos.{$DUCKDNS_DOMAIN}
@@ -490,6 +703,16 @@
         reverse_proxy wiki:80
     }
 
+    @wol host wol.{$DUCKDNS_DOMAIN}
+    handle @wol {
+        reverse_proxy host.docker.internal:3000
+    }
+
+    @worldmonitor host worldmonitor.{$DUCKDNS_DOMAIN}
+    handle @worldmonitor {
+        reverse_proxy worldmonitor:8080
+    }
+
     @xmpp host xmpp.{$DUCKDNS_DOMAIN} converse.{$DUCKDNS_DOMAIN}
     handle @xmpp {
         @ejabberd path /bosh /bosh/* /ws /ws/* /websocket /websocket/* /http-bind /http-bind/* /api /api/*
@@ -505,6 +728,11 @@
     @ytdl host ytdl.{$DUCKDNS_DOMAIN}
     handle @ytdl {
         reverse_proxy ytdl:8081
+    }
+
+    @ytdl-player host ytdl-player.{$DUCKDNS_DOMAIN}
+    handle @ytdl-player {
+        reverse_proxy ytdl-player:5000
     }
 
     # Fallback

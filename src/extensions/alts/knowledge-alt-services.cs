@@ -122,5 +122,19 @@ internal static class KnowledgeAltServices
             .WithLabPort(80, "bookstack")
             .WaitFor(dependencies["bookstack-db"])
             .WithHomepage("Knowledge", "Wiki", "mdi-file-document-multiple", href: $"https://wiki.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("keila", "pentacent/keila", "latest")
+            .WithContainerName("news")
+            .WithStartPolicy(settings.Knowledge.StartByDefault)
+            .WithEnvironment("PHX_HOST", $"news.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"ecto://keila:{settings.Secret("KEILA_DB_PASSWORD")}@keila-db:5432/keila"))
+            .WithEnvironment("SECRET_KEY_BASE", settings.Secret("KEILA_SECRET", SecretKind.LongPassword))
+            .WithEnvironment("SMTP_HOST", "")
+            .WithEnvironment("SMTP_USERNAME", "")
+            .WithEnvironment("SMTP_PASSWORD", "")
+            .WithBindMount(settings.Knowledge.DataPath("KEILA_DATA", "../services-data/system/keila"), "/app/data")
+            .WithLabPort(4000, "keila")
+            .WaitFor(dependencies["keila-db"])
+            .WithHomepage("Knowledge", "News", "mdi-email-newspaper", "Newsletter tool", $"https://news.{settings.Shared.DuckDnsDomain}");
     }
 }

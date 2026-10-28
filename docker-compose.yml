@@ -63,6 +63,28 @@ services:
     extra_hosts:
     - "host.docker.internal:host-gateway"
 
+  cpm:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Caddy UI
+    - homepage.icon=mdi-sign-direction
+    - homepage.href=https://caddyui.${DUCKDNS_DOMAIN:-localhost}
+    image: perteus/caddy-ui:latest
+    container_name: cpm
+    restart: unless-stopped
+    environment:
+    - CONTAINER_NAME=caddy
+    - CADDY_CONFIG_PATH=/caddy-config
+    - CADDY_DATA_PATH=/caddy-data
+    ports:
+    - "10056:8501"
+    volumes:
+    - ./configs/caddy/Caddyfile:/caddy-config/Caddyfile:ro
+    - ${CPM_DATA:-../services-data/system/caddy/data}:/caddy-data
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+    - flat_lab_net
+
   adguardhome:
     labels:
     - homepage.group=Infrastructure
@@ -160,6 +182,36 @@ services:
     - flat_lab_net
     extra_hosts:
     - "host.docker.internal:host-gateway"
+
+  ntfy:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Notifications
+    - homepage.icon=mdi-bell-ring
+    - homepage.href=https://notifications.${DUCKDNS_DOMAIN:-localhost}
+    - homepage.widget.type=ntfy
+    - homepage.widget.url=http://ntfy:80
+    - homepage.widget.topic=${NTFY_WIDGET_TOPIC:-general}
+    - homepage.widget.username={{HOMEPAGE_VAR_NTFY_WIDGET_USERNAME}}
+    - homepage.widget.password={{HOMEPAGE_VAR_NTFY_WIDGET_PASSWORD}}
+    image: binwiederhier/ntfy:latest
+    container_name: notifications
+    restart: unless-stopped
+    command: serve
+    environment:
+    - TZ=${TZ:-Europe/Kyiv}
+    - NTFY_BASE_URL=https://notifications.${DUCKDNS_DOMAIN:-localhost}
+    - NTFY_AUTH_DEFAULT_ACCESS=read-write
+    - NTFY_ENABLE_LOGIN=true
+    - NTFY_BEHIND_PROXY=true
+    volumes:
+    - ${NTFY_AUTH:-../services-data/system/ntfy/auth}:/var/lib/ntfy
+    - ./configs/ntfy:/etc/ntfy:ro
+    - ${NTFY_CACHE:-../services-data/system/ntfy/cache}:/var/cache/ntfy
+    ports:
+    - "10010:80"
+    networks:
+    - flat_lab_net
 
   searxng:
     labels:
@@ -399,33 +451,470 @@ services:
     networks:
     - flat_lab_net
 
-  ntfy:
+  dockflare:
     labels:
     - homepage.group=Infrastructure
-    - homepage.name=Notifications
-    - homepage.icon=mdi-bell-ring
-    - homepage.href=https://notifications.${DUCKDNS_DOMAIN:-localhost}
-    - homepage.widget.type=ntfy
-    - homepage.widget.url=http://ntfy:80
-    - homepage.widget.topic=${NTFY_WIDGET_TOPIC:-general}
-    - homepage.widget.username={{HOMEPAGE_VAR_NTFY_WIDGET_USERNAME}}
-    - homepage.widget.password={{HOMEPAGE_VAR_NTFY_WIDGET_PASSWORD}}
-    image: binwiederhier/ntfy:latest
-    container_name: notifications
+    - homepage.name=DockFlare
+    - homepage.icon=mdi-cloud
+    - homepage.href=https://dockflare.${DUCKDNS_DOMAIN:-localhost}
+    image: alplat/dockflare:stable
+    container_name: dockflare
     restart: unless-stopped
-    command: serve
     environment:
-    - TZ=${TZ:-Europe/Kyiv}
-    - NTFY_BASE_URL=https://notifications.${DUCKDNS_DOMAIN:-localhost}
-    - NTFY_AUTH_DEFAULT_ACCESS=read-write
-    - NTFY_ENABLE_LOGIN=true
-    - NTFY_BEHIND_PROXY=true
+    - REDIS_URL=redis://dockflare-redis:6379/0
+    - DOCKER_HOST=tcp://docker-socket-proxy:2375
+    - INTERNAL_BOOTSTRAP_SECRET=${DOCKFLARE_INTERNAL_BOOTSTRAP_SECRET:?set DOCKFLARE_INTERNAL_BOOTSTRAP_SECRET in .env}
     volumes:
-    - ${NTFY_AUTH:-../services-data/system/ntfy/auth}:/var/lib/ntfy
-    - ./configs/ntfy:/etc/ntfy:ro
-    - ${NTFY_CACHE:-../services-data/system/ntfy/cache}:/var/cache/ntfy
+    - ${DOCKFLARE_DATA:-../services-data/system/dockflare}:/app/data
     ports:
-    - "10010:80"
+    - "10020:5000"
+    depends_on:
+    - dockflare-redis
+    - docker-socket-proxy
+    networks:
+    - flat_lab_net
+
+  dockflare-redis:
+    labels:
+    - glance.hide=true
+    image: redis:7-alpine
+    container_name: dockflare-redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    networks:
+    - flat_lab_net
+
+  docker-socket-proxy:
+    labels:
+    - glance.hide=true
+    image: tecnativa/docker-socket-proxy:v0.4.1
+    container_name: docker-socket-proxy
+    restart: unless-stopped
+    logging:
+      driver: "none"
+    environment:
+    - DOCKER_HOST=unix:///var/run/docker.sock
+    - CONTAINERS=1
+    - EVENTS=1
+    - NETWORKS=1
+    - IMAGES=1
+    - POST=1
+    - PING=1
+    - INFO=1
+    - EXEC=1
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+    - flat_lab_net
+
+  languard:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=LAN map
+    - homepage.icon=mdi-lan
+    - homepage.href=https://languard.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/hillaliy/languard-frontend:latest
+    container_name: languard
+    restart: unless-stopped
+    network_mode: host
+    environment:
+    - BACKEND_UPSTREAM=127.0.0.1:8000
+    - FRONTEND_LISTEN_ADDRESS=:8080
+    depends_on:
+      languard-backend:
+        condition: service_healthy
+
+  languard-scheduler:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/hillaliy/languard-scheduler:latest
+    container_name: languard-scheduler
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    command: ["python", "-u", "manage.py", "run_scheduler", "--run-now"]
+    environment:
+    - SECRET_KEY=${LANGUARD_SECRET_KEY:?set LANGUARD_SECRET_KEY in .env}
+    - ALLOWED_HOSTS=${LANGUARD_ALLOWED_HOSTS:-localhost,127.0.0.1}
+    - DB_PATH=/data/db.sqlite3
+    - LOG_DIRECTORY=/data/logs
+    - STATIC_ROOT=/static
+    volumes:
+    - ${LANGUARD_DATA:-../services-data/system/languard}:/data
+    - ${LANGUARD_STATIC:-../services-data/system/languard/static}:/static
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      languard-backend:
+        condition: service_healthy
+
+  languard-backend:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/hillaliy/languard-backend:latest
+    container_name: languard-backend
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+    - SECRET_KEY=${LANGUARD_SECRET_KEY:?set LANGUARD_SECRET_KEY in .env}
+    - ALLOWED_HOSTS=${LANGUARD_ALLOWED_HOSTS:-localhost,127.0.0.1}
+    - BACKEND_LISTEN_PORT=8000
+    - DB_PATH=/data/db.sqlite3
+    - LOG_DIRECTORY=/data/logs
+    - STATIC_ROOT=/static
+    volumes:
+    - ${LANGUARD_DATA:-../services-data/system/languard}:/data
+    - ${LANGUARD_STATIC:-../services-data/system/languard/static}:/static
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; port = os.environ.get('BACKEND_LISTEN_PORT', '8000'); urllib.request.urlopen(f'http://127.0.0.1:{port}/api/v1/health/', timeout=3).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 60s
+
+  homelable:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Diagrams
+    - homepage.icon=mdi-sitemap
+    - homepage.href=https://diagrams.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/pouzor/homelable-frontend:latest
+    container_name: diagrams
+    restart: unless-stopped
+    environment:
+    - BACKEND_UPSTREAM=homelable-backend:8000
+    ports:
+    - "10021:80"
+    networks:
+    - flat_lab_net
+
+  homelable-backend:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/pouzor/homelable-backend:latest
+    container_name: homelable-backend
+    restart: unless-stopped
+    environment:
+    - SECRET_KEY=${HOMELABLE_SECRET_KEY:?set HOMELABLE_SECRET_KEY in .env}
+    - SQLITE_PATH=/app/data/homelab.db
+    - CORS_ORIGINS=["https://diagrams.${DUCKDNS_DOMAIN:-localhost}"]
+    - AUTH_MODE=local
+    - AUTH_USERNAME=${HOMELABLE_AUTH_USERNAME:-admin}
+    - AUTH_PASSWORD_HASH=${HOMELABLE_AUTH_PASSWORD_HASH:?set HOMELABLE_AUTH_PASSWORD_HASH in .env}
+    - SCANNER_RANGES=${HOMELABLE_SCANNER_RANGES:-["192.168.1.0/24"]}
+    - MCP_API_KEY=${HOMELABLE_MCP_API_KEY}
+    - MCP_SERVICE_KEY=${HOMELABLE_MCP_SERVICE_KEY}
+    volumes:
+    - ${HOMELABLE_DATA:-../services-data/system/homelable}:/app/data
+    cap_add:
+    - NET_RAW
+    networks:
+    - flat_lab_net
+
+  homelable-mcp:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/pouzor/homelable-mcp:latest
+    container_name: homelable-mcp
+    restart: unless-stopped
+    environment:
+    - BACKEND_URL=http://homelable-backend:8000
+    - MCP_API_KEY=${HOMELABLE_MCP_API_KEY}
+    - MCP_SERVICE_KEY=${HOMELABLE_MCP_SERVICE_KEY}
+    ports:
+    - "10022:8001"
+    depends_on:
+    - homelable-backend
+    networks:
+    - flat_lab_net
+
+  scanopy:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Scanner
+    - homepage.icon=mdi-radar
+    - homepage.href=https://scanopy.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/scanopy/scanopy/server:latest
+    container_name: scanopy
+    restart: unless-stopped
+    environment:
+    - SCANOPY_LOG_LEVEL=info
+    - SCANOPY_DATABASE_URL=postgresql://postgres:${SCANOPY_DB_PASSWORD}@scanopy-db:5432/scanopy
+    - SCANOPY_WEB_EXTERNAL_PATH=/app/static
+    - SCANOPY_PUBLIC_URL=https://scanopy.${DUCKDNS_DOMAIN:-localhost}
+    - SCANOPY_INTEGRATED_DAEMON_URL=http://host.docker.internal:60073
+    volumes:
+    - ${SCANOPY_DATA:-../services-data/system/scanopy/data}:/data
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    ports:
+    - "10023:60072"
+    depends_on:
+      scanopy-db:
+        condition: service_healthy
+      scanopy-daemon:
+        condition: service_started
+    networks:
+    - flat_lab_net
+
+  scanopy-daemon:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/scanopy/scanopy/daemon:latest
+    container_name: scanopy-daemon
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+    - SCANOPY_LOG_LEVEL=info
+    - SCANOPY_SERVER_URL=http://127.0.0.1:10023
+    volumes:
+    - ${SCANOPY_DAEMON_CONFIG:-../services-data/system/scanopy/daemon}:/root/.config/scanopy/daemon
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:60073/api/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  scanopy-db:
+    labels:
+    - glance.hide=true
+    image: postgres:17-alpine
+    container_name: scanopy-db
+    restart: unless-stopped
+    environment:
+    - POSTGRES_DB=scanopy
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=${SCANOPY_DB_PASSWORD:?set SCANOPY_DB_PASSWORD in .env}
+    volumes:
+    - ${SCANOPY_DB_DATA:-../services-data/system/scanopy/postgres}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+    - flat_lab_net
+
+  tapmap:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Connection map
+    - homepage.icon=mdi-map
+    - homepage.href=https://tapmap.${DUCKDNS_DOMAIN:-localhost}
+    image: olalie/tapmap:latest
+    container_name: tapmap
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    environment:
+    - TAPMAP_IN_DOCKER=1
+    - TAPMAP_PORT=8050
+    - TAPMAP_HOST=0.0.0.0
+    - TAPMAP_DATA_DIR=/data
+    volumes:
+    - ${TAPMAP_DATA:-../services-data/system/tapmap}:/data
+
+  kept-db:
+    labels:
+    - glance.hide=true
+    image: pgvector/pgvector:0.8.6-pg18-bookworm
+    container_name: kept-db
+    restart: unless-stopped
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=${KEPT_DB_SUPERUSER_PASSWORD:-}
+    - POSTGRES_DB=kept
+    - TZ=UTC
+    volumes:
+    - kept-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d kept"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+    - flat_lab_net
+
+  kept-bootstrap:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/keptinventory/kept:1.13.1
+    container_name: kept-bootstrap
+    restart: "no"
+    entrypoint: ["kept"]
+    command: ["bootstrap"]
+    environment:
+    - PGHOST=kept-db
+    - PGPORT=5432
+    - PGUSER=postgres
+    - PGDATABASE=kept
+    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
+    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
+    volumes:
+    - kept-config:/config
+    - kept-owner:/owner
+    depends_on:
+      kept-db:
+        condition: service_healthy
+    networks:
+    - flat_lab_net
+
+  kept-migrate:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/keptinventory/kept:1.13.1
+    container_name: kept-migrate
+    restart: "no"
+    entrypoint: ["kept"]
+    command: ["migrate"]
+    environment:
+    - KEPT_OWNER_DATABASE_URL=postgres://kept_owner:${KEPT_DB_SUPERUSER_PASSWORD:?set KEPT_DB_SUPERUSER_PASSWORD in .env}@kept-db:5432/kept
+    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
+    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
+    volumes:
+    - kept-data:/data
+    - kept-config:/config:ro
+    - kept-owner:/owner:ro
+    depends_on:
+      kept-db:
+        condition: service_healthy
+      kept-bootstrap:
+        condition: service_completed_successfully
+    networks:
+    - flat_lab_net
+
+  kept:
+    labels:
+    - homepage.group=Development
+    - homepage.name=Kept
+    - homepage.icon=mdi-book-multiple
+    - homepage.href=https://kept.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/keptinventory/kept:1.13.1
+    container_name: kept
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+    - /tmp
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    environment:
+    - KEPT_PUBLIC_URL=https://kept.${DUCKDNS_DOMAIN:-localhost}
+    - KEPT_TRUSTED_PROXIES=${KEPT_TRUSTED_PROXIES:-172.29.72.200}
+    - KEPT_DATABASE_URL=postgres://kept_app:${KEPT_DB_SUPERUSER_PASSWORD}@kept-db:5432/kept
+    - KEPT_AUTH_DATABASE_URL=postgres://kept_auth:${KEPT_DB_SUPERUSER_PASSWORD}@kept-db:5432/kept
+    - KEPT_SYSTEM_DATABASE_URL=postgres://kept_system:${KEPT_DB_SUPERUSER_PASSWORD}@kept-db:5432/kept
+    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
+    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
+    - KEPT_DB_APP_PASSWORD_FILE=/config/database/kept_app
+    - KEPT_DB_AUTH_PASSWORD_FILE=/config/database/kept_auth
+    - KEPT_DB_SYSTEM_PASSWORD_FILE=/config/database/kept_system
+    volumes:
+    - kept-data:/data
+    - kept-config:/config
+    depends_on:
+      kept-db:
+        condition: service_healthy
+      kept-migrate:
+        condition: service_completed_successfully
+    networks:
+    - flat_lab_net
+
+  lantern:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Wake-on-LAN
+    - homepage.icon=mdi-power
+    - homepage.href=https://wol.${DUCKDNS_DOMAIN:-localhost}
+    image: lantern:local
+    build:
+      context: ${LANTERN_SOURCE:-./src/containers/LANtern}
+    container_name: lantern
+    restart: unless-stopped
+    profiles: ["build-only"]
+    network_mode: host
+    environment:
+    - PORT=${LANTERN_PORT:-3000}
+    - DEVICES_FILE=/config/devices.json
+    - CONFIG_FILE=/config/config.json
+    volumes:
+    - ${LANTERN_CONFIG:-../services-data/system/lantern}:/config
+
+  rackdaddy:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=RackDaddy
+    - homepage.icon=mdi-server
+    - homepage.href=https://rack.${DUCKDNS_DOMAIN:-localhost}
+    image: rackdaddy:local
+    build:
+      context: ${RACKDADDY_SOURCE:-./upstream/RackDaddy-Lab}
+    container_name: rack
+    restart: unless-stopped
+    profiles: ["build-only"]
+    environment:
+    - APP_NAME=RackDaddy
+    - DATABASE_URL=postgresql://rackdaddy:${RACKDADDY_DB_PASSWORD:?set RACKDADDY_DB_PASSWORD in .env}@rackdaddy-db:5432/rackdaddy
+    - PORT=3002
+    - NODE_ENV=production
+    - SITE_DEFAULT=MAIN
+    - SITE_NAME=Lab
+    - SITES_REGISTRY_FILE=/app/uploads/sites.json
+    - LOCAL_USERS_FILE=/app/uploads/users.json
+    - API_TOKENS_FILE=/app/uploads/api-tokens.json
+    - LOCAL_AUTH_USER=${RACKDADDY_AUTH_USER:-admin}
+    - LOCAL_AUTH_PASSWORD_HASH=${RACKDADDY_AUTH_PASSWORD_HASH:?set RACKDADDY_AUTH_PASSWORD_HASH in .env}
+    - LOCAL_AUTH_SECRET=${RACKDADDY_AUTH_SECRET:?set RACKDADDY_AUTH_SECRET in .env}
+    - LOCAL_AUTH_ROLE=admin
+    volumes:
+    - rackdaddy-uploads:/app/uploads
+    - rackdaddy-devicetype-library:/opt/devicetype-library
+    depends_on:
+      rackdaddy-db:
+        condition: service_healthy
+    ports:
+    - "10066:3002"
+    networks:
+    - flat_lab_net
+
+  rackdaddy-frontend:
+    labels:
+    - glance.hide=true
+    image: rackdaddy-frontend:local
+    build:
+      context: ${RACKDADDY_SOURCE:-./upstream/RackDaddy-Lab}
+      dockerfile: client/Dockerfile
+    container_name: rackdaddy-frontend
+    restart: unless-stopped
+    profiles: ["build-only"]
+    depends_on:
+    - rackdaddy
+    ports:
+    - "10067:80"
+    networks:
+    - flat_lab_net
+
+  rackdaddy-db:
+    labels:
+    - glance.hide=true
+    image: postgres:16-alpine
+    container_name: rackdaddy-db
+    restart: unless-stopped
+    profiles: ["build-only"]
+    environment:
+    - POSTGRES_DB=rackdaddy
+    - POSTGRES_USER=rackdaddy
+    - POSTGRES_PASSWORD=${RACKDADDY_DB_PASSWORD:?set RACKDADDY_DB_PASSWORD in .env}
+    volumes:
+    - rackdaddy-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rackdaddy -d rackdaddy"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
     - flat_lab_net
 
@@ -433,3 +922,12 @@ networks:
   flat_lab_net:
     name: flat_lab_net
     external: true
+
+volumes:
+  kept-db: {}
+  kept-data: {}
+  kept-config: {}
+  kept-owner: {}
+  rackdaddy-uploads: {}
+  rackdaddy-devicetype-library: {}
+  rackdaddy-pgdata: {}

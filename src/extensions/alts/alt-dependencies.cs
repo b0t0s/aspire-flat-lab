@@ -114,6 +114,9 @@ internal static class TechnicalServices
         _ = Redis("kutt-redis");
 
         // Knowledge
+
+        _ = Postgres("keila-db", "16-alpine", "keila", "keila", "KEILA_DB_PASSWORD",
+            settings.Knowledge.DataPath("KEILA_DB_DATA", "../services-data/system/keila/postgres"));
         _ = Add("ghost-db", "mysql", "8.0")
             .WithEnvironment("MYSQL_ROOT_PASSWORD", settings.Secret("GHOST_DB_ROOT_PASS"))
             .WithEnvironment("MYSQL_DATABASE", "ghost")

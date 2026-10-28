@@ -52,8 +52,17 @@ internal static class TechnicalServices
         // Smarthome
 
         // Development
+        _ = Postgres("atuin-db", "16-alpine", "atuin", "atuin", "ATUIN_DB_PASSWORD",
+            settings.Development.DataPath("ATUIN_DB_DATA", "../services-data/system/atuin/postgres"));
+        _ = Postgres("ideon-db", "18-alpine", "ideon", "ideon", "IDEON_DB_PASSWORD",
+            settings.Development.DataPath("IDEON_DB_DATA", "../services-data/system/ideon/postgres"));
+        _ = Postgres("usertour-db", "16-alpine", "usertour", "postgres", "USERTOUR_DB_PASSWORD",
+            settings.Development.DataPath("USERTOUR_DB_DATA", "../services-data/system/usertour/postgres"));
+        _ = Redis("usertour-redis", settings.Development.DataPath("USERTOUR_REDIS_DATA", "../services-data/system/usertour/redis"));
 
         // Knowledge
+        _ = Postgres("vaultisse-db", "16-alpine", "vaultisse", "vaultisse", "VAULTISSE_DB_PASSWORD",
+            settings.Knowledge.DataPath("VAULTISSE_DB_DATA", "../services-data/system/vaultisse/postgres"));
         _ = Add("ghost-db", "mysql", "8.0")
             .WithEnvironment("MYSQL_ROOT_PASSWORD", settings.Secret("GHOST_DB_ROOT_PASS"))
             .WithEnvironment("MYSQL_DATABASE", "ghost")
@@ -64,13 +73,23 @@ internal static class TechnicalServices
         _ = Postgres("paperless-db", "16-alpine", "paperless", "paperless", "PAPERLESS_DB_PASSWORD",
             settings.Knowledge.DataPath("PAPERLESS_DB_DATA", "../services-data/system/paperless/postgres"));
         _ = Redis("paperless-redis", settings.Knowledge.DataPath("PAPERLESS_REDIS_DATA", "../services-data/system/paperless/redis"));
-        _ = Postgres("keila-db", "16-alpine", "keila", "keila", "KEILA_DB_PASSWORD",
-            settings.Knowledge.DataPath("KEILA_DB_DATA", "../services-data/system/keila/postgres"));
 
         // Secrets
         _ = Postgres("infisical-db", "16-alpine", "infisical", "infisical", "INFISICAL_DB_PASSWORD",
             settings.Secrets.DataPath("INFISICAL_DB_DATA", "../services-data/system/infisical/postgres"));
         _ = Redis("infisical-redis");
+
+        // Media
+        _ = Postgres("piped-db", "16-alpine", "piped", "piped", "PIPED_DB_PASSWORD",
+            settings.Media.DataPath("PIPED_DB_DATA", "../services-data/system/piped/postgres"));
+
+        // Irl
+        _ = Postgres("healthlog-db", "16-alpine", "healthlog", "healthlog", "HEALTHLOG_DB_PASSWORD",
+            settings.Irl.DataPath("HEALTHLOG_DB_DATA", "../services-data/system/healthlog/postgres"));
+        _ = Postgres("medikeep-db", "16-alpine", "medical_records", "medapp", "MEDIKEEP_DB_PASSWORD",
+            settings.Irl.DataPath("MEDIKEEP_DB_DATA", "../services-data/system/medikeep/postgres"));
+        _ = Postgres("tradetally-db", "16-alpine", "tradetally", "trader", "TRADETALLY_DB_PASSWORD",
+            settings.Irl.DataPath("TRADETALLY_DB_DATA", "../services-data/system/tradetally/postgres"));
 
         return resources;
     }

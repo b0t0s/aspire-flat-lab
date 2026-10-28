@@ -1,4 +1,5 @@
 using apphost.cs.src;
+using static EnvironmentSettings;
 
 /// <summary>Homepage group "Entertainment" - host ports 14xxx (docs/ports.md).</summary>
 internal static class EntertainmentServices
@@ -93,5 +94,34 @@ internal static class EntertainmentServices
             .WithBindMount(settings.Entertainment.DataPath("PHOTOVIEW_CACHE", "../services-data/system/photoview/cache"), "/app/cache")
             .WithLabPort(80, "photoview")
             .WithHomepage("Entertainment", "Gallery", "mdi-image-search", href: $"https://gallery.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("resonand", "ghcr.io/resonand-app/resonand", "0.1.0")
+            .WithContainerName("resonand")
+            .WithStartPolicy(settings.Entertainment.StartByDefault)
+            .WithEnvironment("RESONAND_SECRET_KEY", settings.Secret("RESONAND_SECRET_KEY", SecretKind.Hex32))
+            .WithBindMount(settings.Entertainment.DataPath("RESONAND_DATA", "../services-data/system/resonand"), "/data")
+            .WithLabPort(8000, "resonand")
+            .WithHomepage("Entertainment", "Resonand", "mdi-voicemail", "Voice archive", $"https://resonand.{settings.Shared.DuckDnsDomain}");
+
+        if (Directory.Exists(Path.Combine(builder.AppHostDirectory, settings.Entertainment.Value("GRAVITY_SOURCE", "./upstream/Gravity"))))
+        {
+            _ = builder.AddDockerfile("gravity", settings.Entertainment.Value("GRAVITY_SOURCE", "./upstream/Gravity"), "Dockerfile", "runner")
+                .WithContainerName("gravity")
+                .WithStartPolicy(settings.Entertainment.StartByDefault)
+                .WithLabPort(80, "gravity")
+                .WithHomepage("Entertainment", "Gravity", "mdi-space-invaders", "Solar system simulator", $"https://gravity.{settings.Shared.DuckDnsDomain}");
+        }
+
+        if (Directory.Exists(Path.Combine(builder.AppHostDirectory, settings.Entertainment.Value("SOLAR_SYSTEM_SOURCE", "./upstream/solar-system-map-builder"))))
+        {
+            _ = builder.AddDockerfile("solar-system", settings.Entertainment.Value("SOLAR_SYSTEM_SOURCE", "./upstream/solar-system-map-builder"))
+                .WithContainerName("solar")
+                .WithStartPolicy(settings.Entertainment.StartByDefault)
+                .WithArgs("python", "server.py", "--config", "/config/config.yaml", "--cache", "/cache", "--port", "80")
+                .WithConfigFile("configs/solar-system/config.yaml", "/config/config.yaml")
+                .WithBindMount(settings.Entertainment.DataPath("SOLAR_SYSTEM_CACHE", "../services-data/system/solar-system"), "/cache")
+                .WithLabPort(80, "solar-system")
+                .WithHomepage("Entertainment", "Solar map", "mdi-earth", "Solar system maps", $"https://solarmap.{settings.Shared.DuckDnsDomain}");
+        }
     }
 }

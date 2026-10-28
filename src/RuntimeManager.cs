@@ -340,6 +340,12 @@ internal static class ContainerConventions
                 }
             });
 
+            var dns = new[] { builder.Configuration["DNS1"], builder.Configuration["DNS2"] }.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            if (dns.Count > 0)
+            {
+                _ = resource.WithDns(dns.ToArray());
+            }
+
             _ = resource.PublishAsDockerComposeService((_, service) =>
             {
                 service.Restart = lab.Restart;

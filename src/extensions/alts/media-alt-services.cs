@@ -39,6 +39,21 @@ internal static class MediaAltServices
             .WithHomepage("Media", "Indexer Music", "mdi-album", "Music library", $"https://lidarr.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("lidarr", "http://indexer-music:8686", key: HomepageVar("LIDARR_WIDGET_KEY"));
 
+        _ = builder.AddContainer("ytdlp-web-player", "matszwe02/ytdlp_web_player", "stable")
+            .WithContainerName("ytdl-player")
+            .WithStartPolicy(settings.Media.StartByDefault)
+            .WithLabPort(5000, "ytdlp-web-player")
+            .WithHomepage("Media", "YT player", "mdi-play-box", "ytdlp web player", $"https://ytdl-player.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("pinchflat-ngx", "ghcr.io/thebadfella/pinchflat-ngx", "latest")
+            .WithContainerName("youtube")
+            .WithStartPolicy(settings.Media.StartByDefault)
+            .WithEnvironment("TZ", settings.Shared.TimeZone)
+            .WithBindMount(settings.Media.DataPath("PINCHFLAT_NGX_CONFIG", "../services-data/system/pinchflat-ngx/config"), "/config")
+            .WithBindMount(settings.Media.DataPath("PINCHFLAT_NGX_DATA", "../services-data/public/videos/youtube"), "/downloads")
+            .WithLabPort(8945, "pinchflat-ngx")
+            .WithHomepage("Media", "YouTube", "mdi-youtube", "Pinchflat-NGX media manager", $"https://youtube.{settings.Shared.DuckDnsDomain}");
+
         _ = builder.AddContainer("ryot", "ignisda/ryot", "v10")
             .WithContainerName("ryot")
             .WithStartPolicy(settings.Media.StartByDefault)

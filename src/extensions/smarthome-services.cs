@@ -1,24 +1,10 @@
+using apphost.cs.src;
 using static EnvironmentSettings;
 
 internal static class SmartHomeServices
 {
     public static void AddSmartHomeServices(this IDistributedApplicationBuilder builder, EnvironmentSettings settings)
     {
-        _ = builder.AddContainer("netalertx", "jokobsk/netalertx", "latest")
-            .WithContainerName("network")
-            .WithStartPolicy(settings.SmartHome.StartByDefault)
-            .WithEnvironment("TZ", settings.Shared.TimeZone)
-            .WithEnvironment("GR_TZ", settings.Shared.TimeZone)
-            .WithBindMount(settings.SmartHome.DataPath("NETALERTX_DATA_PATH", "../services-data/system/netalertx"), "/data")
-            .WithHostNetwork()
-            .WithLab(lab =>
-            {
-                lab.Privileged = true;
-                lab.Tmpfs.Add("/tmp:rw,nosuid,nodev,size=256m");
-            })
-            .WithHomepage("Infrastructure", "Network", "mdi-network", href: $"https://network.{settings.Shared.DuckDnsDomain}")
-            .WithHomepageWidget("netalertx", "http://host.docker.internal:20211", key: HomepageVar("NETALERTX_WIDGET_KEY"), version: HomepageVar("NETALERTX_WIDGET_VERSION"));
-
         var mySpeedHostPort = int.Parse(settings.SmartHome.Value("MYSPEED_PORT", "5216"), System.Globalization.CultureInfo.InvariantCulture);
         _ = builder.AddContainer("myspeed", "germannewsmaker/myspeed", "latest")
             .WithContainerName("speed")
@@ -27,33 +13,6 @@ internal static class SmartHomeServices
             .WithPublishedPort(mySpeedHostPort, 5216)
             .WithHomepage("Infrastructure", "Speed", "mdi-speedometer", href: $"https://speed.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("myspeed", "http://speed:5216");
-
-        _ = builder.AddContainer("radicale", "ghcr.io/kozea/radicale", "stable")
-            .WithContainerName("phonebook")
-            .WithStartPolicy(true)
-            .WithConfigFile("configs/radicale/config", "/etc/radicale/config", Path.Combine(settings.SmartHome.DataPath("RADICALE_CONFIG", "../services-data/system/radicale/config"), "config"))
-            .WithBindMount(settings.SmartHome.DataPath("RADICALE_CONFIG", "../services-data/system/radicale/config"), "/etc/radicale")
-            .WithBindMount(settings.SmartHome.DataPath("RADICALE_DATA", "../services-data/system/radicale/data"), "/var/lib/radicale")
-            .WithLabPort(5232, "radicale")
-            .WithHomepage("Household", "Phonebook", "mdi-calendar-clock", href: $"https://phonebook.{settings.Shared.DuckDnsDomain}");
-
-        _ = builder.AddContainer("home-assistant", "ghcr.io/home-assistant/home-assistant", "stable")
-            .WithContainerName("home-assistant")
-            .WithStartPolicy(true)
-            .WithEnvironment("TZ", settings.Shared.TimeZone)
-            .WithBindMount(settings.SmartHome.DataPath("HOME_ASSISTANT_DATA", "../services-data/system/home-assistant"), "/config")
-            .WithConfigFile("configs/home-assistant/configuration.yaml", "/config/configuration.yaml")
-            .WithBindMount("/etc/localtime", "/etc/localtime", isReadOnly: true)
-            .WithBindMount("/run/dbus", "/run/dbus", isReadOnly: true)
-            .WithHostNetwork()
-            .WithLab(lab =>
-            {
-                lab.Privileged = true;
-                lab.CapAdd.Add("NET_ADMIN");
-                lab.CapAdd.Add("NET_RAW");
-            })
-            .WithHomepage("Household", "Home Assistant", "mdi-home-automation", href: $"https://home-assistant.{settings.Shared.DuckDnsDomain}")
-            .WithHomepageWidget("homeassistant", "http://host.docker.internal:8123", key: HomepageVar("HOMEASSISTANT_WIDGET_KEY"));
 
         _ = builder.AddContainer("homebox", "sysadminsmedia/homebox", "latest")
             .WithStartPolicy(true)
@@ -67,5 +26,95 @@ internal static class SmartHomeServices
             .WithHomepageWidget("homebox", "http://inventory:7745",
                 username: HomepageVar("HOMEBOX_WIDGET_USERNAME"),
                 password: HomepageVar("HOMEBOX_WIDGET_PASSWORD"));
+
+        var termixDataPath = settings.SmartHome.DataPath("TERMIX_DATA", "../services-data/system/termix");
+
+        var guacd = builder.AddContainer("guacd", "guacamole/guacd", "1.6.0")
+            .WithContainerName("guacd")
+            .WithStartPolicy(settings.SmartHome.StartByDefault)
+            .WithBindMount(termixDataPath, "/termix-data");
+
+        _ = builder.AddContainer("termix", "ghcr.io/termix-ssh/termix", "latest")
+            .WithContainerName("termix")
+            .WithStartPolicy(settings.SmartHome.StartByDefault)
+            .WithEnvironment("PORT", "8080")
+            .WithEnvironment("GUACD_HOST", "guacd")
+            .WithEnvironment("GUACD_TUNNEL_HOST", "termix")
+            .WithEnvironment("GUACD_RECORDING_PATH", "/termix-data/session_recordings/guacamole")
+            .WithEnvironment("GUACD_DRIVE_PATH", "/termix-data/rdp-drive")
+            .WithBindMount(termixDataPath, "/app/data")
+            .WithBindMount(termixDataPath, "/termix-data")
+            .WithLabPort(8080, "termix")
+            .WaitFor(guacd)
+            .WithHomepage("Infrastructure", "SSH terminal", "mdi-console", "Termix web terminal", $"https://termix.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("degoog", "ghcr.io/degoog-org/degoog", "latest")
+            .WithContainerName("degoog")
+            .WithStartPolicy(settings.SmartHome.StartByDefault)
+            .WithEnvironment("TZ", settings.Shared.TimeZone)
+            .WithEnvironment("PUID", settings.Shared.Uid)
+            .WithEnvironment("PGID", settings.Shared.Gid)
+            .WithEnvironment("DEGOOG_SETTINGS_PASSWORDS", settings.Secret("DEGOOG_SETTINGS_PASSWORDS", SecretKind.Manual))
+            .WithBindMount(settings.SmartHome.DataPath("DEGOOG_DATA", "../services-data/system/degoog"), "/app/data")
+            .WithLabPort(4444, "degoog")
+            .WithHomepage("Infrastructure", "DeGoog", "mdi-magnify-expand", "Search aggregator", $"https://degoog.{settings.Shared.DuckDnsDomain}");
+
+        if (Directory.Exists(Path.Combine(builder.AppHostDirectory, settings.SmartHome.Value("HOUSE_PLANNER_SOURCE", "./upstream/house-planner"))))
+        {
+            _ = builder.AddDockerfile("house-planner", settings.SmartHome.Value("HOUSE_PLANNER_SOURCE", "./upstream/house-planner"))
+                .WithContainerName("floorplan")
+                .WithStartPolicy(settings.SmartHome.StartByDefault)
+                .WithEnvironment("HOUSE_PASSWORD", settings.Secret("HOUSE_PLANNER_PASSWORD"))
+                .WithEnvironment("HOUSE_SETUP_KEY", settings.SmartHome.Value("HOUSE_PLANNER_SETUP_KEY"))
+                .WithEnvironment("HOUSE_DEMO", settings.SmartHome.Value("HOUSE_PLANNER_DEMO"))
+                .WithBindMount(settings.SmartHome.DataPath("HOUSE_PLANNER_DATA", "../services-data/system/house-planner"), "/var/lib/house-planner")
+                .WithLabPort(8080, "house-planner")
+                .WithHomepage("Household", "Floor plan", "mdi-home-floor-a", "House planner", $"https://floorplan.{settings.Shared.DuckDnsDomain}");
+        }
+
+        if (Directory.Exists(Path.Combine(builder.AppHostDirectory, settings.SmartHome.Value("WORLDMONITOR_SOURCE", "./upstream/worldmonitor"))))
+        {
+            var worldmonitorSource = settings.SmartHome.Value("WORLDMONITOR_SOURCE", "./upstream/worldmonitor");
+
+            var worldmonitorRedis = builder.AddContainer("worldmonitor-redis", "redis", "7-alpine")
+                .WithContainerName("worldmonitor-redis")
+                .WithStartPolicy(settings.SmartHome.StartByDefault)
+                .WithArgs("redis-server", "--requirepass", settings.Secret("WORLDMONITOR_REDIS_PASSWORD"), "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru")
+                .WithBindMount(settings.SmartHome.DataPath("WORLDMONITOR_REDIS_DATA", "../services-data/system/worldmonitor/redis"), "/data");
+
+            var worldmonitorRedisRest = builder.AddDockerfile("worldmonitor-redis-rest", worldmonitorSource, "docker/Dockerfile.redis-rest")
+                .WithContainerName("worldmonitor-redis-rest")
+                .WithStartPolicy(settings.SmartHome.StartByDefault)
+                .WithEnvironment("SRH_TOKEN", settings.Secret("WORLDMONITOR_REDIS_TOKEN"))
+                .WithEnvironment("SRH_CONNECTION_STRING", ReferenceExpression.Create($"redis://:{settings.Secret("WORLDMONITOR_REDIS_PASSWORD")}@worldmonitor-redis:6379"))
+                .WaitFor(worldmonitorRedis);
+
+            var worldmonitorRelay = builder.AddDockerfile("worldmonitor-ais-relay", worldmonitorSource, "Dockerfile.relay")
+                .WithContainerName("worldmonitor-ais-relay")
+                .WithStartPolicy(settings.SmartHome.StartByDefault)
+                .WithEnvironment("RELAY_SHARED_SECRET", settings.Secret("WORLDMONITOR_RELAY_SHARED_SECRET"))
+                .WithEnvironment("UPSTASH_REDIS_REST_URL", "http://worldmonitor-redis-rest:80")
+                .WithEnvironment("UPSTASH_REDIS_REST_TOKEN", settings.Secret("WORLDMONITOR_REDIS_TOKEN"))
+                .WithEnvironment("UPSTASH_ALLOW_INSECURE_HTTP", "true")
+                .WithEnvironment("API_BASE_URL", "http://worldmonitor:8080")
+                .WithEnvironment("PORT", "3004")
+                .WaitFor(worldmonitorRedisRest);
+
+            _ = builder.AddDockerfile("worldmonitor", worldmonitorSource)
+                .WithContainerName("worldmonitor")
+                .WithStartPolicy(settings.SmartHome.StartByDefault)
+                .WithEnvironment("UPSTASH_REDIS_REST_URL", "http://worldmonitor-redis-rest:80")
+                .WithEnvironment("UPSTASH_REDIS_REST_TOKEN", settings.Secret("WORLDMONITOR_REDIS_TOKEN"))
+                .WithEnvironment("WM_SESSION_SECRET", settings.Secret("WORLDMONITOR_SESSION_SECRET", SecretKind.Hex32))
+                .WithEnvironment("LOCAL_API_PORT", "46123")
+                .WithEnvironment("LOCAL_API_MODE", "docker")
+                .WithEnvironment("LOCAL_API_CLOUD_FALLBACK", "false")
+                .WithEnvironment("WS_RELAY_URL", "http://worldmonitor-ais-relay:3004")
+                .WithEnvironment("RELAY_SHARED_SECRET", settings.Secret("WORLDMONITOR_RELAY_SHARED_SECRET"))
+                .WithLabPort(8080, "worldmonitor")
+                .WaitFor(worldmonitorRedisRest)
+                .WaitFor(worldmonitorRelay)
+                .WithHomepage("Entertainment", "WorldMonitor", "mdi-earth-box", "Global intelligence dashboard", $"https://worldmonitor.{settings.Shared.DuckDnsDomain}");
+        }
     }
 }

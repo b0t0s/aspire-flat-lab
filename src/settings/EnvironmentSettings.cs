@@ -12,6 +12,7 @@ internal sealed class EnvironmentSettings(IDistributedApplicationBuilder builder
     public CategoryEnvironmentSettings SmartHome { get; } = new(builder.Configuration, builder.AppHostDirectory, "SMARTHOME");
     public CategoryEnvironmentSettings Development { get; } = new(builder.Configuration, builder.AppHostDirectory, "DEVELOPMENT");
     public CategoryEnvironmentSettings Entertainment { get; } = new(builder.Configuration, builder.AppHostDirectory, "ENTERTAINMENT");
+    public CategoryEnvironmentSettings Irl { get; } = new(builder.Configuration, builder.AppHostDirectory, "IRL");
 
     public IResourceBuilder<ParameterResource> Secret(string key, SecretKind kind = SecretKind.Password,
         string? legacyFile = null, params string[] aliases)
@@ -31,8 +32,10 @@ internal sealed class EnvironmentSettings(IDistributedApplicationBuilder builder
         if (Any(resourceName, "passbolt-", "psono-", "infisical-", "documenso-")) return Secrets.StartByDefault;
         if (Any(resourceName, "ghost-", "affine-", "karakeep-", "linkwarden-", "paperless-", "outline-", "bookstack-", "keila-")) return Knowledge.StartByDefault;
         if (Any(resourceName, "gramps-", "openemr-", "plausible-", "beszel-")) return SmartHome.StartByDefault;
-        if (Any(resourceName, "ryot-", "kutt-")) return Development.StartByDefault;
+        if (Any(resourceName, "ryot-", "kutt-", "atuin-", "excalidash-", "ideon-", "usertour-")) return Development.StartByDefault;
         if (Any(resourceName, "miniflux-", "rsshub", "minecraft", "jellyfin-", "navidrome-", "photoview-", "kavita-")) return Entertainment.StartByDefault;
+        if (Any(resourceName, "piped-", "sound-vault", "slskd")) return Media.StartByDefault;
+        if (Any(resourceName, "healthlog-", "medikeep-", "tradetally-")) return Irl.StartByDefault;
 
         return false;
     }

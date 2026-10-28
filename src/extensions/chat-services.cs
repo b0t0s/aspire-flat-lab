@@ -1,4 +1,5 @@
 using apphost.cs.src;
+using static EnvironmentSettings;
 
 /// <summary>Homepage group "Messaging" - host ports 17xxx; IRC/XMPP/Matrix-federation/TURN keep their standard ports (docs/ports.md).</summary>
 internal static class ChatServices
@@ -78,5 +79,15 @@ internal static class ChatServices
             .WithLabPort(9000, "thelounge")
             .WaitFor(ergochat)
             .WithHomepage("Messaging", "IRC", "mdi-chat", href: $"https://irc.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("smp-server", "simplexchat/smp-server", "latest")
+            .WithContainerName("smp-server")
+            .WithStartPolicy(settings.Chat.StartByDefault)
+            .WithEnvironment("ADDR", settings.Chat.Value("SMP_SERVER_ADDR", settings.Shared.DuckDnsDomain))
+            .WithEnvironment("PASS", settings.Secret("SMP_SERVER_PASS", SecretKind.Manual))
+            .WithBindMount(settings.Chat.DataPath("SMP_SERVER_CONFIG", "../services-data/system/smp-server/config"), "/etc/opt/simplex")
+            .WithBindMount(settings.Chat.DataPath("SMP_SERVER_LOGS", "../services-data/system/smp-server/logs"), "/var/opt/simplex")
+            .WithPublishedPort(5223, 5223)
+            .WithHomepage("Messaging", "SimpleX relay", "mdi-lock", href: $"https://simplex.{settings.Shared.DuckDnsDomain}");
     }
 }

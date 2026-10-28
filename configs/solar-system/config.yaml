@@ -1,0 +1,634 @@
+
+defaults:
+  maps:
+    tick_params:
+      axis: both
+      which: both
+      bottom: false
+      top: false
+      left: false
+      right: false
+      labelbottom: false
+      labelleft: false
+
+    aspect:
+      aspect: equal
+      adjustable: datalim
+
+    grid:
+      visible: false
+
+    spines:
+      top: true
+      right: true
+      bottom: true
+      left: true
+
+    facecolor: [1, 1, 1, 1]
+
+    title_style:
+      family: Unica One
+      size: 30
+
+    adjust_text:
+      force_static: 400
+      force_texts: 200
+      force_explode: 1
+      time_lim: 1.0
+      ensure_inside_axes: true
+      pull_threshold: 100
+
+    center:
+      name: Sun
+      command: 500@0
+      marker_style:
+        color: yellow
+        s: 100
+      label_style: null
+
+  objects:
+
+    trajectory_past:
+      enabled: true
+      style:
+        color: '0.8'
+        linewidth: 1
+
+    trajectory_future:
+      enabled: false
+      style:
+        color: '0.8'
+        linestyle: "--"
+
+    label_style:
+      family: Roboto Mono
+      ha: "center"
+      va: "top"
+
+    marker_style:
+      color: black
+      edgecolors: black
+      s: 50
+      zorder: 999
+
+definitions:
+
+    inner_planets: &inner_planet_default
+      ephemeris_file:
+        minimum_ephemeris_request:
+          time_step: 1 day
+          start_epoch: "2000-01-01"
+          stop_epoch: "2050-12-31"
+        max_interpolation_interval: 2 days
+        cache_expiration_time: 10 days
+      trajectory_past:
+        duration: 80D
+        time_step: 1 days
+      trajectory_future:
+        duration: 10D
+        time_step: 1 days
+
+    outer_planets: &outer_planet_default
+      ephemeris_file:
+        minimum_ephemeris_request:
+          time_step: 200 days
+          start_epoch: "2000-01-01"
+          stop_epoch: "2050-12-31"
+        max_interpolation_interval: 300 days
+        cache_expiration_time: 10 days
+      trajectory_past:
+        duration: 4000 days
+        time_step: 50 days
+      trajectory_future:
+        enabled: false
+
+    moons: &moon_default
+      ephemeris_file:
+        minimum_ephemeris_request:
+          time_step: 1 hour
+          start_epoch: "-20 days"
+          stop_epoch: "20 days"
+        max_interpolation_interval: 1 hour
+        cache_expiration_time: 10 days
+      trajectory_past:
+        duration: 1 days
+        time_step: 1 hour
+      trajectory_future:
+        enabled: false
+      marker_style:
+        color: black
+        s: 30
+
+    probes: &probe_default
+      ephemeris_file:
+        minimum_request:
+          time_step: 1 day
+          start_epoch: "-80 days"
+          stop_epoch: "80 days"
+        max_interpolation_interval: 1 day
+        cache_expiration_time: 10 days
+      trajectory_past:
+        duration: 80 days
+        time_step: 1 days
+        style:
+          linewidth: 1
+          linestyle: '--'
+      trajectory_future:
+        enabled: false
+      marker_style:
+        color: lightblue
+        marker: D
+        s: 20
+
+
+title:
+  text: THE SOLAR SYSTEM
+  style:
+    family: Unica One
+    size: 60
+
+figure:
+  figsize: [19.2, 10.80]
+  dpi: 100
+
+gridspec:
+  ncols: 8
+  nrows: 4
+  hspace: 0
+  wspace: 0
+  left: 0.02
+  right: 0.98
+  top: 0.9
+  bottom: 0.02
+
+maps:
+
+  - gridspec:
+      rows: "0:4"
+      columns: "0:4"
+
+    axis:
+      xlim: [-500000000, 500000000]
+      ylim: [-500000000, 500000000]
+
+    objects:
+      - name: Mercury
+        <<: *inner_planet_default
+        command: '199'
+        marker_style:
+          color: lightgrey
+
+      - name: Venus
+        <<: *inner_planet_default
+        command: '299'
+        marker_style:
+          color: wheat
+
+      - name: Earth
+        <<: *inner_planet_default
+        command: '399'
+        marker_style:
+          color: blue
+
+      - name: Mars
+        <<: *inner_planet_default
+        command: '499'
+        marker_style:
+          color: lightcoral
+
+      - name: Ceres
+        <<: *inner_planet_default
+        command: 'Ceres'
+        marker_style:
+          s: 30
+          color: lightgray
+
+      - name: Vesta
+        <<: *inner_planet_default
+        command: 'Vesta'
+        marker_style:
+          s: 30
+          color: lightgray
+
+      - name: Hayabusa 2
+        <<: *probe_default
+
+      - name: OSIRIS-APEX
+        <<: *probe_default
+        command: 2016-055A
+
+      - name: Psyche
+        <<: *probe_default
+        command: 2023-157A
+
+      - name: Hera
+        <<: *probe_default
+
+      - name: Parker Solar Probe
+        <<: *probe_default
+
+      - name: JUICE
+        <<: *probe_default
+
+      - name: Europa Clipper
+        <<: *probe_default
+
+  - axis:
+      xlim: [-5000000000, 5000000000]
+      ylim: [-5000000000, 5000000000]
+    gridspec:
+      rows: "0:2"
+      columns: "4:6"
+    spines:
+      left: true
+      right: true
+      top: true
+      bottom: true
+    objects:
+      - name: Jupiter
+        <<: *outer_planet_default
+        command: '599'
+        marker_style:
+          color: salmon
+
+      - name: Saturn
+        <<: *outer_planet_default
+        command: '699'
+        marker_style:
+          color: navajowhite
+
+      - name: Uranus
+        <<: *outer_planet_default
+        command: '799'
+        marker_style:
+          color: mediumaquamarine
+
+      - name: Neptune
+        <<: *outer_planet_default
+        command: '899'
+        marker_style:
+          color: paleturquoise
+
+      - name: Halley's comet
+        <<: *outer_planet_default
+        command: '90000030'
+        trajectory_past:
+          duration: 3000 days
+          time_step: 200 days
+        trajectory_future:
+          enabled: false
+        marker_style:
+          color: black
+          s: 10
+          marker: x
+
+
+  - gridspec:
+      rows: "0:-1"
+      columns: "6:"
+    axis:
+      xlim: [-10000000000, 10000000000]
+    defaults:
+      objects:
+        trajectory_past:
+          duration: 45000 days
+          time_step: 1000 days
+        trajectory_future:
+          enabled: false
+
+    objects:
+      - name: Neptune
+        <<: *outer_planet_default
+        command: '899'
+        marker_style:
+          color: paleturquoise
+
+      - name: Pluto
+        <<: *outer_planet_default
+        command: '999'
+        marker_style:
+          color: tan
+          marker: $♥$
+
+      - name: Eris
+        <<: *outer_planet_default
+        command: '20136199'
+        marker_style:
+          color: darkgray
+
+      - name: Gonggong
+        <<: *outer_planet_default
+        command: 'Gonggong'
+        marker_style:
+          color: darkgray
+
+      - name: Makemake
+        <<: *outer_planet_default
+        command: 'Makemake'
+        marker_style:
+          color: darkgray
+
+      - name: Sedna
+        <<: *outer_planet_default
+        marker_style:
+          color: darkgray
+
+      - name: "1I/'Oumuamua"
+        <<: *outer_planet_default
+        command: "2017 U1"
+        marker_style:
+          color: brown
+          marker: "_"
+
+      - name: Voyager 1
+        <<: *probe_default
+        trajectory_past:
+          duration: 6000 days
+          time_step: 200 days
+          style:
+            color: '0.8'
+            linestyle: "--"
+        trajectory_future:
+          enabled: false
+
+      - name: Voyager 2
+        <<: *probe_default
+        trajectory_past:
+          duration: 6000 days
+          time_step: 200 days
+          style:
+            color: '0.8'
+            linestyle: "--"
+        trajectory_future:
+          enabled: false
+
+      - name: Pioneer 10
+        <<: *probe_default
+        trajectory_past:
+          duration: 6000 days
+          time_step: 200 days
+          style:
+            color: '0.8'
+            linestyle: "--"
+        trajectory_future:
+          enabled: false
+
+      - name: Pioneer 11
+        <<: *probe_default
+        trajectory_past:
+          duration: 6000 days
+          time_step: 200 days
+          style:
+            color: '0.8'
+            linestyle: "--"
+        trajectory_future:
+          enabled: false
+
+
+      - name: New Horizons
+        <<: *probe_default
+        command: 2006-001A
+        trajectory_past:
+          duration: 6000 days
+          time_step: 200 days
+          style:
+            color: '0.8'
+            linestyle: "--"
+        trajectory_future:
+          enabled: false
+        ephemeris_file:
+          minimum_request:
+            start_epoch: '2006-01-20'
+            time_step: 100 days
+          max_interpolation_duration: 300 days
+
+
+  - gridspec:
+      rows: "2:3"
+      columns: "4:5"
+    aspect:
+      aspect: equal
+      adjustable: datalim
+    center:
+      name: Jupiter
+      command: 500@5
+      marker_style:
+        ignore_defaults: True
+        marker: +
+
+    objects:
+      - name: Jupiter
+        <<: *moon_default
+        command: '599'
+        trajectory_past:
+          duration: 20 days
+          time_step: 1 days
+        trajectory_future:
+          enabled: false
+        label_style: null
+        marker_style:
+          color: salmon
+          s: 50
+      - name: Ganymede
+        <<: *moon_default
+
+      - name: Io
+        command: '501'
+        <<: *moon_default
+
+      - name: Europa
+        <<: *moon_default
+        command: '502'
+        trailing_days: 1
+
+      - name: Callisto
+        command: '504'
+        <<: *moon_default
+
+
+  - gridspec:
+      rows: "2:3"
+      columns: "5:6"
+    aspect:
+      aspect: equal
+      adjustable: datalim
+    center:
+      name: Saturn
+      command: "500@6"
+      marker_style:
+        ignore_defaults: true
+        marker: +
+
+    objects:
+      - name: Saturn
+        <<: *moon_default
+        command: '699'
+        trajectory_past:
+          duration: 20 days
+          time_step: 1 days
+        trajectory_future:
+          enabled: false
+        label_style: null
+        marker_style:
+          color: navajowhite
+          s: 50
+      - name: Titan
+        <<: *moon_default
+        command: "606"
+      - name: Rhea
+        <<: *moon_default
+        command: "605"
+      - name: Dione
+        <<: *moon_default
+        command: "604"
+      - name: Enceladus
+        <<: *moon_default
+        command: "602"
+
+
+
+  - gridspec:
+      rows: "3:4"
+      columns: "4:6"
+    aspect:
+      aspect: equal
+      adjustable: datalim
+    center:
+      name: Uranus
+      command: "500@7"
+      marker_style:
+        ignore_defaults: true
+        marker: +
+    objects:
+      - name: Uranus
+        <<: *moon_default
+        command: '799'
+        trajectory_past:
+          duration: 20 days
+          time_step: 1 days
+        trajectory_future:
+          enabled: false
+        label_style: null
+        marker_style:
+          color: mediumaquamarine
+          s: 50
+      - name: Miranda
+        <<: *moon_default
+        command: "705"
+      - name: Ariel
+        <<: *moon_default
+        command: "701"
+      - name: Umbriel
+        <<: *moon_default
+        command: "702"
+      - name: Titania
+        <<: *moon_default
+        command: "703"
+      - name: Oberon
+        <<: *moon_default
+        command: "704"
+
+
+  - gridspec:
+      rows: "3:4"
+      columns: "6:7"
+    center:
+      name: Neptune
+      command: "500@8"
+      marker_style:
+        ignore_defaults: true
+        marker: +
+    objects:
+      - name: Neptune
+        <<: *moon_default
+        command: '899'
+        trajectory_past:
+          duration: 20 days
+          time_step: 1 days
+        trajectory_future:
+          enabled: false
+        label_style: null
+        marker_style:
+          color: paleturquoise
+          s: 50
+      - name: Triton
+        <<: *moon_default
+        command: "801"
+      - name: Proteus
+        <<: *moon_default
+        command: "808"
+
+  - gridspec:
+      rows: "3:4"
+      columns: "0:1"
+    axis:
+      xlim: [-400000, 400000]
+      ylim: [-400000, 400000]
+
+    center:
+      name: Earth
+      command: 500@3
+      marker_style:
+        color: blue
+        s: 50
+      label_style: null
+    objects:
+      - name: Moon
+        command: '301'
+        <<: *moon_default
+
+  - gridspec:
+      rows: "3:4"
+      columns: "3:4"
+    aspect:
+      aspect: equal
+      adjustable: datalim
+    center:
+      name: Mars
+      command: 500@4
+      marker_style:
+        color: lightcoral
+        s: 50
+      label_style: null
+    objects:
+      - name: Phobos
+        command: '401'
+        <<: *moon_default
+        ephemeris_file:
+          max_interpolation_interval: 1 min
+        trajectory_past:
+          duration: 5 hours
+          time_step: 3 minutes
+      - name: Deimos
+        command: '402'
+        <<: *moon_default
+        ephemeris_file:
+          max_interpolation_interval: 1 min
+        trajectory_past:
+          duration: 5 hours
+          time_step: 3 minutes
+
+  - gridspec:
+      rows: "3:4"
+      columns: "7:8"
+    aspect:
+      aspect: equal
+      adjustable: datalim
+    center:
+      name: Pluto
+      command: 500@9
+      marker_style:
+        marker: +
+        color: black
+        s: 50
+      label_style: null
+    objects:
+      - name: Pluto
+        command: '999'
+        <<: *moon_default
+        marker_style:
+          color: tan
+          marker: $♥$
+      - name: Charon
+        command: '901'
+        <<: *moon_default
