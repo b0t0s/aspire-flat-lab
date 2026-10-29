@@ -6,34 +6,56 @@ Caddy reaches every service by `container_name:container port` on `flat_lab_net`
 Web ports are `prefix * 1000 + position` in declaration order per homepage group; move a whole group with `PORT_PREFIX_<GROUP>` in `.env`.
 `10000-10099` belongs to `docker-compose.yml` (infra layer), `19000-19005` to the Aspire dashboard (`apphost.run.json`).
 
+## Infrastructure
+
+| Host port | Container | Container port | Resource / endpoint |
+|---|---|---|---|
+| 10100/tcp | `registry` | 3000 | container-hub / container-hub |
+| 10101/tcp | `termix` | 8080 | termix / termix |
+| 10102/tcp | `degoog` | 4444 | degoog / degoog |
+
 ## Development
 
 | Host port | Container | Container port | Resource / endpoint |
 |---|---|---|---|
+| 11000/tcp | `signature` | 80 | email-signature / email-signature |
 | 11001/tcp | `projects` | 6610 | onedev / onedev-http |
 | 11002/tcp | `projects` | 6611 | onedev / onedev-agent |
 | 11003/tcp | `snippets` | 6157 | opengist / opengist |
+| 11004/tcp | `atuin` | 8888 | atuin / atuin |
 | 11005/tcp | `toolbox` | 80 | it-tools / it-tools |
+| 11006/tcp | `excalidash-backend` | 8000 | excalidash-backend / excalidash-backend |
+| 11007/tcp | `excalidash` | 8080 | excalidash / excalidash |
 | 11008/tcp | `converter` | 3000 | convertx / convertx |
+| 11009/tcp | `ideon` | 3000 | ideon / ideon |
 | 11010/tcp | `whiteboard` | 80 | excalidraw / excalidraw |
+| 11011/tcp | `usertour` | 80 | usertour / usertour |
+| 11012/tcp | `lightpanda` | 9222 | lightpanda / lightpanda |
+| 11013/tcp | `obscura` | 9222 | obscura / obscura |
+| 11014/tcp | `panel` | 8000 | calagopus / calagopus |
 
 ## Knowledge
 
 | Host port | Container | Container port | Resource / endpoint |
 |---|---|---|---|
 | 12000/tcp | `documents` | 8000 | paperless-ngx / paperless-ngx |
+| 12001/tcp | `nostos` | 8080 | nostos / nostos |
 | 12002/tcp | `favourites` | 5230 | memos / memos |
 | 12003/tcp | `blog` | 2368 | ghost / ghost |
 | 12004/tcp | `bookmarks` | 80 | faved / faved |
-| 12011/tcp | `news` | 4000 | keila / keila |
+| 12005/tcp | `vaultisse` | 3000 | vaultisse / vaultisse |
+| 12006/tcp | `zensical` | 8000 | zensical / zensical |
 
 ## Media
 
 | Host port | Container | Container port | Resource / endpoint |
 |---|---|---|---|
+| 13000/tcp | `piped-frontend` | 80 | piped-frontend / piped-frontend |
+| 13001/tcp | `cliparr` | 7171 | cliparr / cliparr |
 | 13002/tcp | `ytdl` | 8081 | metube / metube |
 | 13003/tcp | `torrent` | 8080 | qbittorrent / qbittorrent-web |
 | 13004/tcp | `indexer` | 9696 | prowlarr / prowlarr |
+| 13005/tcp | `soundvault` | 8080 | sound-vault / sound-vault |
 
 ## Entertainment
 
@@ -44,12 +66,18 @@ Web ports are `prefix * 1000 + position` in declaration order per homepage group
 | 14002/tcp | `music` | 4533 | navidrome / navidrome |
 | 14003/tcp | `videos` | 8096 | jellyfin / jellyfin |
 | 14004/tcp | `gallery` | 80 | photoview / photoview |
+| 14005/tcp | `resonand` | 8000 | resonand / resonand |
+| 14006/tcp | `gravity` | 80 | gravity / gravity |
+| 14007/tcp | `solar` | 80 | solar-system / solar-system |
+| 14008/tcp | `worldmonitor` | 8080 | worldmonitor / worldmonitor |
+| 14009/tcp | `parenthese` | 80 | parenthese-aio / parenthese-aio |
 
 ## Household
 
 | Host port | Container | Container port | Resource / endpoint |
 |---|---|---|---|
 | 15000/tcp | `phonebook` | 5232 | radicale / radicale |
+| 15001/tcp | `floorplan` | 8080 | house-planner / house-planner |
 | 15003/tcp | `inventory` | 7745 | homebox / homebox |
 
 ## Secrets
@@ -58,6 +86,7 @@ Web ports are `prefix * 1000 + position` in declaration order per homepage group
 |---|---|---|---|
 | 16000/tcp | `twofauth` | 8000 | twofauth / twofauth |
 | 16001/tcp | `passwords` | 80 | vaultwarden / vaultwarden |
+| 16002/tcp | `origami` | 8080 | origamivault / origamivault |
 | 16006/tcp | `infisical` | 80 | infisical / infisical |
 
 ## Messaging
@@ -68,16 +97,29 @@ Web ports are `prefix * 1000 + position` in declaration order per homepage group
 | 17004/tcp | `irc-server` | 8080 | irc-ergochat / irc-web |
 | 17005/tcp | `irc` | 9000 | irc-thelounge / thelounge |
 
+## Irl
+
+| Host port | Container | Container port | Resource / endpoint |
+|---|---|---|---|
+| 18000/tcp | `medikeep` | 8000 | medikeep / medikeep |
+| 18001/tcp | `healthlog` | 3000 | healthlog / healthlog |
+| 18002/tcp | `tradetally` | 80 | tradetally / tradetally |
+| 18003/tcp | `hiking` | 80 | trailkeepr / trailkeepr |
+
 ## Standard protocol ports
 
 | Host port | Container | Container port | Resource / endpoint |
 |---|---|---|---|
+| 5030/tcp | `slskd` | 5030 | slskd / published |
 | 5216/tcp | `speed` | 5216 | myspeed / published |
+| 5223/tcp | `smp-server` | 5223 | smp-server / published |
 | 6667/tcp | `irc-server` | 6667 | irc-ergochat / irc |
 | 6881/tcp | `torrent` | 6881 | qbittorrent / published |
 | 6881/udp | `torrent` | 6881 | qbittorrent / published |
 | 10004/tcp | `rsshub` | 1200 | rsshub / rsshub |
 | 10007/tcp | `llm` | 8080 | open-webui / open-webui |
+| 10031/tcp | `panel` | 2022 | calagopus / published |
 | 11434/tcp | `ollama` | 11434 | ollama / published |
 | 25565/tcp | `minecraft` | 25565 | minecraft / minecraft |
+| 50300/tcp | `slskd` | 50300 | slskd / published |
 

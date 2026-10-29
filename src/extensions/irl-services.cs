@@ -74,33 +74,30 @@ internal static class IrlServices
             .WithLabPort(5232, "radicale")
             .WithHomepage("Household", "Phonebook", "mdi-calendar-clock", href: $"https://phonebook.{settings.Shared.DuckDnsDomain}");
 
-        var trailkeeprSource = settings.Irl.Value("TRAILKEEPR_SOURCE", "./upstream/Trailkeepr");
-        if (Directory.Exists(Path.Combine(builder.AppHostDirectory, trailkeeprSource)))
-        {
-            var hikingDb = builder.AddDockerfile("trailkeepr-db", trailkeeprSource, "init/Dockerfile")
-                .WithContainerName("hiking-db")
-                .WithStartPolicy(settings.Irl.StartByDefault)
-                .WithEnvironment("POSTGRES_USER", "postgres")
-                .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("TRAILKEEPR_DB_PASSWORD"))
-                .WithEnvironment("POSTGRES_DB", "hiking")
-                .WithBindMount(settings.Irl.DataPath("TRAILKEEPR_DB_DATA", "../services-data/system/trailkeepr/postgres"), "/var/lib/postgresql/data")
-                .WithHealthcheck("pg_isready -U postgres");
+        var trailkeeprBuild = builder.RepoPath("src/containers/trailkeepr");
+        var hikingDb = builder.AddDockerfile("trailkeepr-db", trailkeeprBuild, "Dockerfile.db")
+            .WithContainerName("postgis")
+            .WithStartPolicy(settings.Irl.StartByDefault)
+            .WithEnvironment("POSTGRES_USER", "postgres")
+            .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("TRAILKEEPR_DB_PASSWORD"))
+            .WithEnvironment("POSTGRES_DB", "hiking")
+            .WithBindMount(settings.Irl.DataPath("TRAILKEEPR_DB_DATA", "../services-data/system/trailkeepr/postgres"), "/var/lib/postgresql/data")
+            .WithHealthcheck("pg_isready -U postgres");
 
-            var hikingApi = builder.AddDockerfile("trailkeepr-api", $"{trailkeeprSource}/api")
-                .WithContainerName("hiking-api")
-                .WithStartPolicy(settings.Irl.StartByDefault)
-                .WithEnvironment("POSTGRES_USER", "postgres")
-                .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("TRAILKEEPR_DB_PASSWORD"))
-                .WithEnvironment("POSTGRES_DB", "hiking")
-                .WithBindMount(settings.Irl.DataPath("TRAILKEEPR_UPLOADS", "../services-data/system/trailkeepr/uploads"), "/app/uploads")
-                .WaitFor(hikingDb);
+        var hikingApi = builder.AddDockerfile("trailkeepr-api", trailkeeprBuild, "Dockerfile.api")
+            .WithContainerName("hiking-api")
+            .WithStartPolicy(settings.Irl.StartByDefault)
+            .WithEnvironment("POSTGRES_USER", "postgres")
+            .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("TRAILKEEPR_DB_PASSWORD"))
+            .WithEnvironment("POSTGRES_DB", "hiking")
+            .WithBindMount(settings.Irl.DataPath("TRAILKEEPR_UPLOADS", "../services-data/system/trailkeepr/uploads"), "/app/uploads")
+            .WaitFor(hikingDb);
 
-            _ = builder.AddDockerfile("trailkeepr", $"{trailkeeprSource}/ui")
-                .WithContainerName("hiking")
-                .WithStartPolicy(settings.Irl.StartByDefault)
-                .WithLabPort(80, "trailkeepr")
-                .WaitFor(hikingApi)
-                .WithHomepage("Irl", "Hiking", "hiking", "Trailkeepr hike tracker", $"https://hiking.{settings.Shared.DuckDnsDomain}");
-        }
+        _ = builder.AddDockerfile("trailkeepr", trailkeeprBuild, "Dockerfile.ui")
+            .WithContainerName("hiking")
+            .WithStartPolicy(settings.Irl.StartByDefault)
+            .WithLabPort(80, "trailkeepr")
+            .WaitFor(hikingApi)
+            .WithHomepage("Irl", "Hiking", "hiking", "Trailkeepr hike tracker", $"https://hiking.{settings.Shared.DuckDnsDomain}");
     }
 }

@@ -7,24 +7,24 @@
 # See docs/services/README.md ("House style") for the long version.
 #
 # Containerised ZeroTier One for Docker-only Linux hosts (Pi, etc.).
-# Updated to debian:bullseye-slim to resolve upstream repository 404 errors (Buster EOL).
+# Use Debian Bookworm for current security package indexes and ZeroTier packages.
 #
 # Listens on UDP 9993 for planet/moon traffic.
 # Requires NET_ADMIN and /dev/net/tun on the host (compose grants both).
 
-FROM debian:bullseye-slim AS builder
+FROM debian:bookworm-slim AS builder
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl gnupg ca-certificates \
  && curl -fsSL https://raw.githubusercontent.com/zerotier/ZeroTierOne/main/doc/contact%40zerotier.com.gpg \
     | gpg --dearmor -o /usr/share/keyrings/zerotier.gpg \
- && echo "deb [signed-by=/usr/share/keyrings/zerotier.gpg] http://download.zerotier.com/debian/bullseye bullseye main" \
+ && echo "deb [signed-by=/usr/share/keyrings/zerotier.gpg] https://download.zerotier.com/debian/bookworm bookworm main" \
     > /etc/apt/sources.list.d/zerotier.list \
  && apt-get update \
  && apt-get install -y --no-install-recommends zerotier-one \
  && rm -rf /var/lib/apt/lists/*
 
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 LABEL description="Containerized ZeroTier One for use on Docker-only Linux hosts (Pi)."
 

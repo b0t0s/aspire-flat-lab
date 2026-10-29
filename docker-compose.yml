@@ -19,7 +19,7 @@ services:
 
   zerotier:
     build:
-      context: ./src/additional-software/zerotier
+      context: ./src/containers/zerotier
       dockerfile: Dockerfile
     container_name: zerotier
     restart: unless-stopped
@@ -109,6 +109,36 @@ services:
     - "10001:3000/tcp"
     environment:
       - HOMEPAGE_ALLOWED_HOSTS=${DUCKDNS_DOMAIN:-localhost}
+    networks:
+    - flat_lab_net
+
+  rustdesk-hbbs:
+    image: rustdesk/rustdesk-server:latest
+    container_name: rustdesk-hbbs
+    restart: unless-stopped
+    labels:
+    - glance.hide=true
+    command: hbbs
+    volumes:
+    - ${RUSTDESK_DATA_PATH:-../services-data/system/rustdesk}:/root
+    ports:
+    - "21115:21115"
+    - "21116:21116"
+    - "21116:21116/udp"
+    - "21118:21118"
+    networks:
+    - flat_lab_net
+
+  rustdesk-hbbr:
+    image: rustdesk/rustdesk-server:latest
+    container_name: rustdesk-hbbr
+    restart: unless-stopped
+    command: hbbr
+    volumes:
+    - ${RUSTDESK_DATA_PATH:-../services-data/system/rustdesk}:/root
+    ports:
+    - "21117:21117"
+    - "21119:21119"
     networks:
     - flat_lab_net
 
@@ -210,6 +240,17 @@ services:
     - ${NTFY_CACHE:-../services-data/system/ntfy/cache}:/var/cache/ntfy
     ports:
     - "10010:80"
+    networks:
+    - flat_lab_net
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    environment:
+    - LOG_LEVEL=info
+    ports:
+    - "10009:8191"
     networks:
     - flat_lab_net
 
@@ -337,6 +378,119 @@ services:
     environment:
     - TZ=${TZ:-Europe/Kyiv}
 
+  kept:
+    labels:
+    - homepage.group=Development
+    - homepage.name=Kept
+    - homepage.icon=mdi-book-multiple
+    - homepage.href=https://kept.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/keptinventory/kept:1.13.1
+    container_name: kept
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+    - /tmp
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    environment:
+    - KEPT_PUBLIC_URL=https://kept.${DUCKDNS_DOMAIN:-localhost}
+    - KEPT_TRUSTED_PROXIES=${KEPT_TRUSTED_PROXIES:-172.29.72.200}
+    - KEPT_DATABASE_URL=postgres://kept_app@kept-db:5432/kept
+    - KEPT_AUTH_DATABASE_URL=postgres://kept_auth@kept-db:5432/kept
+    - KEPT_SYSTEM_DATABASE_URL=postgres://kept_system@kept-db:5432/kept
+    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
+    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
+    - KEPT_DB_APP_PASSWORD_FILE=/config/database/kept_app
+    - KEPT_DB_AUTH_PASSWORD_FILE=/config/database/kept_auth
+    - KEPT_DB_SYSTEM_PASSWORD_FILE=/config/database/kept_system
+    volumes:
+    - kept-data:/data
+    - kept-config:/config
+    depends_on:
+      kept-db:
+        condition: service_healthy
+      kept-migrate:
+        condition: service_completed_successfully
+    networks:
+    - flat_lab_net
+
+  kept-db:
+    labels:
+    - glance.hide=true
+    image: pgvector/pgvector:0.8.6-pg18-bookworm
+    container_name: kept-db
+    restart: unless-stopped
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=${KEPT_DB_SUPERUSER_PASSWORD:-}
+    - POSTGRES_DB=kept
+    - TZ=UTC
+    volumes:
+    - kept-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d kept"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+    - flat_lab_net
+
+  kept-bootstrap:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/keptinventory/kept:1.13.1
+    container_name: kept-bootstrap
+    restart: "no"
+    entrypoint: ["kept"]
+    command: ["bootstrap"]
+    environment:
+    - PGHOST=kept-db
+    - PGPORT=5432
+    - PGUSER=postgres
+    - PGDATABASE=kept
+    - PGPASSWORD=${KEPT_DB_SUPERUSER_PASSWORD:?set KEPT_DB_SUPERUSER_PASSWORD in .env}
+    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
+    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
+    - KEPT_DB_OWNER_PASSWORD_FILE=/owner/kept_owner
+    - KEPT_DB_APP_PASSWORD_FILE=/config/database/kept_app
+    - KEPT_DB_AUTH_PASSWORD_FILE=/config/database/kept_auth
+    - KEPT_DB_SYSTEM_PASSWORD_FILE=/config/database/kept_system
+    volumes:
+    - kept-config:/config
+    - kept-owner:/owner
+    depends_on:
+      kept-db:
+        condition: service_healthy
+    networks:
+    - flat_lab_net
+
+  kept-migrate:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/keptinventory/kept:1.13.1
+    container_name: kept-migrate
+    restart: "no"
+    entrypoint: ["kept"]
+    command: ["migrate"]
+    environment:
+    - KEPT_OWNER_DATABASE_URL=postgres://kept_owner@kept-db:5432/kept
+    - KEPT_DB_OWNER_PASSWORD_FILE=/owner/kept_owner
+    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
+    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
+    volumes:
+    - kept-data:/data
+    - kept-config:/config:ro
+    - kept-owner:/owner:ro
+    depends_on:
+      kept-db:
+        condition: service_healthy
+      kept-bootstrap:
+        condition: service_completed_successfully
+    networks:
+    - flat_lab_net
+
   seafile:
     labels:
     - homepage.group=Household
@@ -410,100 +564,112 @@ services:
     depends_on:
       - seafile
 
-  flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
-    restart: unless-stopped
-    environment:
-    - LOG_LEVEL=info
-    ports:
-    - "10009:8191"
-    networks:
-    - flat_lab_net
-
-  rustdesk-hbbs:
-    image: rustdesk/rustdesk-server:latest
-    container_name: rustdesk-hbbs
-    restart: unless-stopped
-    labels:
-    - glance.hide=true
-    command: hbbs
-    volumes:
-    - ${RUSTDESK_DATA_PATH:-../services-data/system/rustdesk}:/root
-    ports:
-    - "21115:21115"
-    - "21116:21116"
-    - "21116:21116/udp"
-    - "21118:21118"
-    networks:
-    - flat_lab_net
-
-  rustdesk-hbbr:
-    image: rustdesk/rustdesk-server:latest
-    container_name: rustdesk-hbbr
-    restart: unless-stopped
-    command: hbbr
-    volumes:
-    - ${RUSTDESK_DATA_PATH:-../services-data/system/rustdesk}:/root
-    ports:
-    - "21117:21117"
-    - "21119:21119"
-    networks:
-    - flat_lab_net
-
-  dockflare:
+  tapmap:
     labels:
     - homepage.group=Infrastructure
-    - homepage.name=DockFlare
-    - homepage.icon=mdi-cloud
-    - homepage.href=https://dockflare.${DUCKDNS_DOMAIN:-localhost}
-    image: alplat/dockflare:stable
-    container_name: dockflare
+    - homepage.name=Connections
+    - homepage.icon=mdi-map
+    - homepage.href=https://connections.${DUCKDNS_DOMAIN:-localhost}
+    image: olalie/tapmap:latest
+    container_name: tapmap
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    environment:
+    - TAPMAP_IN_DOCKER=1
+    - TAPMAP_PORT=8050
+    - TAPMAP_HOST=0.0.0.0
+    - TAPMAP_DATA_DIR=/data
+    volumes:
+    - ${TAPMAP_DATA:-../services-data/system/tapmap}:/data
+
+  lantern:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Wake-on-LAN
+    - homepage.icon=mdi-power
+    - homepage.href=https://wol.${DUCKDNS_DOMAIN:-localhost}
+    image: lantern:local
+    build:
+      context: ./src/containers/LANtern
+      dockerfile: Dockerfile
+    container_name: lantern
+    restart: unless-stopped
+    profiles: ["build-only"]
+    network_mode: host
+    environment:
+    - PORT=${LANTERN_PORT:-3000}
+    - DEVICES_FILE=/config/devices.json
+    - CONFIG_FILE=/config/config.json
+    volumes:
+    - ${LANTERN_CONFIG:-../services-data/system/lantern}:/config
+
+  scanopy:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Networks
+    - homepage.icon=mdi-radar
+    - homepage.href=https://networks.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/scanopy/scanopy/server:latest
+    container_name: scanopy
     restart: unless-stopped
     environment:
-    - REDIS_URL=redis://dockflare-redis:6379/0
-    - DOCKER_HOST=tcp://docker-socket-proxy:2375
-    - INTERNAL_BOOTSTRAP_SECRET=${DOCKFLARE_INTERNAL_BOOTSTRAP_SECRET:?set DOCKFLARE_INTERNAL_BOOTSTRAP_SECRET in .env}
+    - SCANOPY_LOG_LEVEL=info
+    - SCANOPY_DATABASE_URL=postgresql://postgres:${SCANOPY_DB_PASSWORD}@scanopy-db:5432/scanopy
+    - SCANOPY_WEB_EXTERNAL_PATH=/app/static
+    - SCANOPY_PUBLIC_URL=https://networks.${DUCKDNS_DOMAIN:-localhost}
+    - SCANOPY_INTEGRATED_DAEMON_URL=http://host.docker.internal:60073
     volumes:
-    - ${DOCKFLARE_DATA:-../services-data/system/dockflare}:/app/data
+    - ${SCANOPY_DATA:-../services-data/system/scanopy/data}:/data
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
     ports:
-    - "10020:5000"
+    - "10023:60072"
     depends_on:
-    - dockflare-redis
-    - docker-socket-proxy
+      scanopy-db:
+        condition: service_healthy
+      scanopy-daemon:
+        condition: service_started
     networks:
     - flat_lab_net
 
-  dockflare-redis:
+  scanopy-daemon:
     labels:
     - glance.hide=true
-    image: redis:7-alpine
-    container_name: dockflare-redis
+    image: ghcr.io/scanopy/scanopy/daemon:latest
+    container_name: scanopy-daemon
     restart: unless-stopped
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
-    networks:
-    - flat_lab_net
-
-  docker-socket-proxy:
-    labels:
-    - glance.hide=true
-    image: tecnativa/docker-socket-proxy:v0.4.1
-    container_name: docker-socket-proxy
-    restart: unless-stopped
-    logging:
-      driver: "none"
+    privileged: true
+    network_mode: host
     environment:
-    - DOCKER_HOST=unix:///var/run/docker.sock
-    - CONTAINERS=1
-    - EVENTS=1
-    - NETWORKS=1
-    - IMAGES=1
-    - POST=1
-    - PING=1
-    - INFO=1
-    - EXEC=1
+    - SCANOPY_LOG_LEVEL=info
+    - SCANOPY_SERVER_URL=http://127.0.0.1:10023
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
+    - ${SCANOPY_DAEMON_CONFIG:-../services-data/system/scanopy/daemon}:/root/.config/scanopy/daemon
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:60073/api/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  scanopy-db:
+    labels:
+    - glance.hide=true
+    image: postgres:17-alpine
+    container_name: scanopy-db
+    restart: unless-stopped
+    environment:
+    - POSTGRES_DB=scanopy
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=${SCANOPY_DB_PASSWORD:?set SCANOPY_DB_PASSWORD in .env}
+    volumes:
+    - ${SCANOPY_DB_DATA:-../services-data/system/scanopy/postgres}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
     - flat_lab_net
 
@@ -572,286 +738,16 @@ services:
       retries: 6
       start_period: 60s
 
-  homelable:
-    labels:
-    - homepage.group=Infrastructure
-    - homepage.name=Diagrams
-    - homepage.icon=mdi-sitemap
-    - homepage.href=https://diagrams.${DUCKDNS_DOMAIN:-localhost}
-    image: ghcr.io/pouzor/homelable-frontend:latest
-    container_name: diagrams
-    restart: unless-stopped
-    environment:
-    - BACKEND_UPSTREAM=homelable-backend:8000
-    ports:
-    - "10021:80"
-    networks:
-    - flat_lab_net
-
-  homelable-backend:
-    labels:
-    - glance.hide=true
-    image: ghcr.io/pouzor/homelable-backend:latest
-    container_name: homelable-backend
-    restart: unless-stopped
-    environment:
-    - SECRET_KEY=${HOMELABLE_SECRET_KEY:?set HOMELABLE_SECRET_KEY in .env}
-    - SQLITE_PATH=/app/data/homelab.db
-    - CORS_ORIGINS=["https://diagrams.${DUCKDNS_DOMAIN:-localhost}"]
-    - AUTH_MODE=local
-    - AUTH_USERNAME=${HOMELABLE_AUTH_USERNAME:-admin}
-    - AUTH_PASSWORD_HASH=${HOMELABLE_AUTH_PASSWORD_HASH:?set HOMELABLE_AUTH_PASSWORD_HASH in .env}
-    - SCANNER_RANGES=${HOMELABLE_SCANNER_RANGES:-["192.168.1.0/24"]}
-    - MCP_API_KEY=${HOMELABLE_MCP_API_KEY}
-    - MCP_SERVICE_KEY=${HOMELABLE_MCP_SERVICE_KEY}
-    volumes:
-    - ${HOMELABLE_DATA:-../services-data/system/homelable}:/app/data
-    cap_add:
-    - NET_RAW
-    networks:
-    - flat_lab_net
-
-  homelable-mcp:
-    labels:
-    - glance.hide=true
-    image: ghcr.io/pouzor/homelable-mcp:latest
-    container_name: homelable-mcp
-    restart: unless-stopped
-    environment:
-    - BACKEND_URL=http://homelable-backend:8000
-    - MCP_API_KEY=${HOMELABLE_MCP_API_KEY}
-    - MCP_SERVICE_KEY=${HOMELABLE_MCP_SERVICE_KEY}
-    ports:
-    - "10022:8001"
-    depends_on:
-    - homelable-backend
-    networks:
-    - flat_lab_net
-
-  scanopy:
-    labels:
-    - homepage.group=Infrastructure
-    - homepage.name=Scanner
-    - homepage.icon=mdi-radar
-    - homepage.href=https://scanopy.${DUCKDNS_DOMAIN:-localhost}
-    image: ghcr.io/scanopy/scanopy/server:latest
-    container_name: scanopy
-    restart: unless-stopped
-    environment:
-    - SCANOPY_LOG_LEVEL=info
-    - SCANOPY_DATABASE_URL=postgresql://postgres:${SCANOPY_DB_PASSWORD}@scanopy-db:5432/scanopy
-    - SCANOPY_WEB_EXTERNAL_PATH=/app/static
-    - SCANOPY_PUBLIC_URL=https://scanopy.${DUCKDNS_DOMAIN:-localhost}
-    - SCANOPY_INTEGRATED_DAEMON_URL=http://host.docker.internal:60073
-    volumes:
-    - ${SCANOPY_DATA:-../services-data/system/scanopy/data}:/data
-    extra_hosts:
-    - "host.docker.internal:host-gateway"
-    ports:
-    - "10023:60072"
-    depends_on:
-      scanopy-db:
-        condition: service_healthy
-      scanopy-daemon:
-        condition: service_started
-    networks:
-    - flat_lab_net
-
-  scanopy-daemon:
-    labels:
-    - glance.hide=true
-    image: ghcr.io/scanopy/scanopy/daemon:latest
-    container_name: scanopy-daemon
-    restart: unless-stopped
-    privileged: true
-    network_mode: host
-    environment:
-    - SCANOPY_LOG_LEVEL=info
-    - SCANOPY_SERVER_URL=http://127.0.0.1:10023
-    volumes:
-    - ${SCANOPY_DAEMON_CONFIG:-../services-data/system/scanopy/daemon}:/root/.config/scanopy/daemon
-    - /var/run/docker.sock:/var/run/docker.sock:ro
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:60073/api/health || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 15
-
-  scanopy-db:
-    labels:
-    - glance.hide=true
-    image: postgres:17-alpine
-    container_name: scanopy-db
-    restart: unless-stopped
-    environment:
-    - POSTGRES_DB=scanopy
-    - POSTGRES_USER=postgres
-    - POSTGRES_PASSWORD=${SCANOPY_DB_PASSWORD:?set SCANOPY_DB_PASSWORD in .env}
-    volumes:
-    - ${SCANOPY_DB_DATA:-../services-data/system/scanopy/postgres}:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-    - flat_lab_net
-
-  tapmap:
-    labels:
-    - homepage.group=Infrastructure
-    - homepage.name=Connection map
-    - homepage.icon=mdi-map
-    - homepage.href=https://tapmap.${DUCKDNS_DOMAIN:-localhost}
-    image: olalie/tapmap:latest
-    container_name: tapmap
-    restart: unless-stopped
-    network_mode: host
-    pid: host
-    environment:
-    - TAPMAP_IN_DOCKER=1
-    - TAPMAP_PORT=8050
-    - TAPMAP_HOST=0.0.0.0
-    - TAPMAP_DATA_DIR=/data
-    volumes:
-    - ${TAPMAP_DATA:-../services-data/system/tapmap}:/data
-
-  kept-db:
-    labels:
-    - glance.hide=true
-    image: pgvector/pgvector:0.8.6-pg18-bookworm
-    container_name: kept-db
-    restart: unless-stopped
-    environment:
-    - POSTGRES_USER=postgres
-    - POSTGRES_PASSWORD=${KEPT_DB_SUPERUSER_PASSWORD:-}
-    - POSTGRES_DB=kept
-    - TZ=UTC
-    volumes:
-    - kept-db:/var/lib/postgresql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d kept"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-    networks:
-    - flat_lab_net
-
-  kept-bootstrap:
-    labels:
-    - glance.hide=true
-    image: ghcr.io/keptinventory/kept:1.13.1
-    container_name: kept-bootstrap
-    restart: "no"
-    entrypoint: ["kept"]
-    command: ["bootstrap"]
-    environment:
-    - PGHOST=kept-db
-    - PGPORT=5432
-    - PGUSER=postgres
-    - PGDATABASE=kept
-    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
-    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
-    volumes:
-    - kept-config:/config
-    - kept-owner:/owner
-    depends_on:
-      kept-db:
-        condition: service_healthy
-    networks:
-    - flat_lab_net
-
-  kept-migrate:
-    labels:
-    - glance.hide=true
-    image: ghcr.io/keptinventory/kept:1.13.1
-    container_name: kept-migrate
-    restart: "no"
-    entrypoint: ["kept"]
-    command: ["migrate"]
-    environment:
-    - KEPT_OWNER_DATABASE_URL=postgres://kept_owner:${KEPT_DB_SUPERUSER_PASSWORD:?set KEPT_DB_SUPERUSER_PASSWORD in .env}@kept-db:5432/kept
-    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
-    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
-    volumes:
-    - kept-data:/data
-    - kept-config:/config:ro
-    - kept-owner:/owner:ro
-    depends_on:
-      kept-db:
-        condition: service_healthy
-      kept-bootstrap:
-        condition: service_completed_successfully
-    networks:
-    - flat_lab_net
-
-  kept:
-    labels:
-    - homepage.group=Development
-    - homepage.name=Kept
-    - homepage.icon=mdi-book-multiple
-    - homepage.href=https://kept.${DUCKDNS_DOMAIN:-localhost}
-    image: ghcr.io/keptinventory/kept:1.13.1
-    container_name: kept
-    restart: unless-stopped
-    read_only: true
-    tmpfs:
-    - /tmp
-    cap_drop:
-    - ALL
-    security_opt:
-    - no-new-privileges:true
-    environment:
-    - KEPT_PUBLIC_URL=https://kept.${DUCKDNS_DOMAIN:-localhost}
-    - KEPT_TRUSTED_PROXIES=${KEPT_TRUSTED_PROXIES:-172.29.72.200}
-    - KEPT_DATABASE_URL=postgres://kept_app:${KEPT_DB_SUPERUSER_PASSWORD}@kept-db:5432/kept
-    - KEPT_AUTH_DATABASE_URL=postgres://kept_auth:${KEPT_DB_SUPERUSER_PASSWORD}@kept-db:5432/kept
-    - KEPT_SYSTEM_DATABASE_URL=postgres://kept_system:${KEPT_DB_SUPERUSER_PASSWORD}@kept-db:5432/kept
-    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
-    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
-    - KEPT_DB_APP_PASSWORD_FILE=/config/database/kept_app
-    - KEPT_DB_AUTH_PASSWORD_FILE=/config/database/kept_auth
-    - KEPT_DB_SYSTEM_PASSWORD_FILE=/config/database/kept_system
-    volumes:
-    - kept-data:/data
-    - kept-config:/config
-    depends_on:
-      kept-db:
-        condition: service_healthy
-      kept-migrate:
-        condition: service_completed_successfully
-    networks:
-    - flat_lab_net
-
-  lantern:
-    labels:
-    - homepage.group=Infrastructure
-    - homepage.name=Wake-on-LAN
-    - homepage.icon=mdi-power
-    - homepage.href=https://wol.${DUCKDNS_DOMAIN:-localhost}
-    image: lantern:local
-    build:
-      context: ${LANTERN_SOURCE:-./src/containers/LANtern}
-    container_name: lantern
-    restart: unless-stopped
-    profiles: ["build-only"]
-    network_mode: host
-    environment:
-    - PORT=${LANTERN_PORT:-3000}
-    - DEVICES_FILE=/config/devices.json
-    - CONFIG_FILE=/config/config.json
-    volumes:
-    - ${LANTERN_CONFIG:-../services-data/system/lantern}:/config
-
   rackdaddy:
     labels:
     - homepage.group=Infrastructure
-    - homepage.name=RackDaddy
+    - homepage.name=Rack
     - homepage.icon=mdi-server
     - homepage.href=https://rack.${DUCKDNS_DOMAIN:-localhost}
     image: rackdaddy:local
     build:
-      context: ${RACKDADDY_SOURCE:-./upstream/RackDaddy-Lab}
+      context: ./src/containers/rackdaddy
+      dockerfile: Dockerfile.backend
     container_name: rack
     restart: unless-stopped
     profiles: ["build-only"]
@@ -885,8 +781,8 @@ services:
     - glance.hide=true
     image: rackdaddy-frontend:local
     build:
-      context: ${RACKDADDY_SOURCE:-./upstream/RackDaddy-Lab}
-      dockerfile: client/Dockerfile
+      context: ./src/containers/rackdaddy
+      dockerfile: Dockerfile.frontend
     container_name: rackdaddy-frontend
     restart: unless-stopped
     profiles: ["build-only"]
@@ -917,6 +813,118 @@ services:
       retries: 10
     networks:
     - flat_lab_net
+
+  # homelable:
+  #   labels:
+  #   - homepage.group=Infrastructure
+  #   - homepage.name=Diagrams
+  #   - homepage.icon=mdi-sitemap
+  #   - homepage.href=https://diagrams.${DUCKDNS_DOMAIN:-localhost}
+  #   image: ghcr.io/pouzor/homelable-frontend:latest
+  #   container_name: diagrams
+  #   restart: unless-stopped
+  #   environment:
+  #   - BACKEND_UPSTREAM=homelable-backend:8000
+  #   ports:
+  #   - "10021:80"
+  #   networks:
+  #   - flat_lab_net
+
+  # homelable-backend:
+  #   labels:
+  #   - glance.hide=true
+  #   image: ghcr.io/pouzor/homelable-backend:latest
+  #   container_name: homelable-backend
+  #   restart: unless-stopped
+  #   environment:
+  #   - SECRET_KEY=${HOMELABLE_SECRET_KEY:?set HOMELABLE_SECRET_KEY in .env}
+  #   - SQLITE_PATH=/app/data/homelab.db
+  #   - CORS_ORIGINS=["https://diagrams.${DUCKDNS_DOMAIN:-localhost}"]
+  #   - AUTH_MODE=local
+  #   - AUTH_USERNAME=${HOMELABLE_AUTH_USERNAME:-admin}
+  #   - AUTH_PASSWORD_HASH=${HOMELABLE_AUTH_PASSWORD_HASH:?set HOMELABLE_AUTH_PASSWORD_HASH in .env}
+  #   - SCANNER_RANGES=${HOMELABLE_SCANNER_RANGES:-["192.168.1.0/24"]}
+  #   - MCP_API_KEY=${HOMELABLE_MCP_API_KEY}
+  #   - MCP_SERVICE_KEY=${HOMELABLE_MCP_SERVICE_KEY}
+  #   volumes:
+  #   - ${HOMELABLE_DATA:-../services-data/system/homelable}:/app/data
+  #   cap_add:
+  #   - NET_RAW
+  #   networks:
+  #   - flat_lab_net
+
+  # homelable-mcp:
+  #   labels:
+  #   - glance.hide=true
+  #   image: ghcr.io/pouzor/homelable-mcp:latest
+  #   container_name: homelable-mcp
+  #   restart: unless-stopped
+  #   environment:
+  #   - BACKEND_URL=http://homelable-backend:8000
+  #   - MCP_API_KEY=${HOMELABLE_MCP_API_KEY}
+  #   - MCP_SERVICE_KEY=${HOMELABLE_MCP_SERVICE_KEY}
+  #   ports:
+  #   - "10022:8001"
+  #   depends_on:
+  #   - homelable-backend
+  #   networks:
+  #   - flat_lab_net
+
+  # dockflare:
+  #   labels:
+  #   - homepage.group=Infrastructure
+  #   - homepage.name=DockFlare
+  #   - homepage.icon=mdi-cloud
+  #   - homepage.href=https://dockflare.${DUCKDNS_DOMAIN:-localhost}
+  #   image: alplat/dockflare:stable
+  #   container_name: dockflare
+  #   restart: unless-stopped
+  #   environment:
+  #   - REDIS_URL=redis://dockflare-redis:6379/0
+  #   - DOCKER_HOST=tcp://docker-socket-proxy:2375
+  #   - INTERNAL_BOOTSTRAP_SECRET=${DOCKFLARE_INTERNAL_BOOTSTRAP_SECRET:?set DOCKFLARE_INTERNAL_BOOTSTRAP_SECRET in .env}
+  #   volumes:
+  #   - ${DOCKFLARE_DATA:-../services-data/system/dockflare}:/app/data
+  #   ports:
+  #   - "10020:5000"
+  #   depends_on:
+  #   - dockflare-redis
+  #   - docker-socket-proxy
+  #   networks:
+  #   - flat_lab_net
+
+  # dockflare-redis:
+  #   labels:
+  #   - glance.hide=true
+  #   image: redis:7-alpine
+  #   container_name: dockflare-redis
+  #   restart: unless-stopped
+  #   command: ["redis-server", "--save", "", "--appendonly", "no"]
+  #   networks:
+  #   - flat_lab_net
+
+  # docker-socket-proxy:
+  #   labels:
+  #   - glance.hide=true
+  #   image: tecnativa/docker-socket-proxy:v0.4.1
+  #   container_name: docker-socket-proxy
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: "none"
+  #   environment:
+  #   - DOCKER_HOST=unix:///var/run/docker.sock
+  #   - CONTAINERS=1
+  #   - EVENTS=1
+  #   - NETWORKS=1
+  #   - IMAGES=1
+  #   - POST=1
+  #   - PING=1
+  #   - INFO=1
+  #   - EXEC=1
+  #   volumes:
+  #   - /var/run/docker.sock:/var/run/docker.sock
+  #   networks:
+  #   - flat_lab_net
 
 networks:
   flat_lab_net:

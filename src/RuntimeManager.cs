@@ -38,6 +38,15 @@ internal sealed record LabHealthcheck(string Command, string Interval = "10s", s
 
 internal static class ContainerConventions
 {
+    private sealed record GitDockerBuild(string Context, string Dockerfile);
+
+    private static readonly Dictionary<string, GitDockerBuild> GitDockerBuilds = new(StringComparer.Ordinal)
+    {
+        ["worldmonitor"] = new("https://github.com/koala73/worldmonitor.git#f2d2def104b7622e5cd64d96bef719dafc8da2ac", "Dockerfile"),
+        ["worldmonitor-ais-relay"] = new("https://github.com/koala73/worldmonitor.git#f2d2def104b7622e5cd64d96bef719dafc8da2ac", "Dockerfile.relay"),
+        ["worldmonitor-redis-rest"] = new("https://github.com/koala73/worldmonitor.git#f2d2def104b7622e5cd64d96bef719dafc8da2ac", "docker/Dockerfile.redis-rest"),
+    };
+
     public static LabContainerAnnotation GetLabSettings(this IResource resource)
     {
         var settings = resource.Annotations.OfType<LabContainerAnnotation>().FirstOrDefault();
@@ -415,7 +424,16 @@ internal static class ContainerConventions
                     }
                 }
 
-                if (container.Annotations.OfType<DockerfileBuildAnnotation>().FirstOrDefault() is { } build)
+                if (GitDockerBuilds.TryGetValue(container.Name, out var gitBuild))
+                {
+                    service.Image = $"flat-lab/{container.Name}:local";
+                    service.Build = new Build
+                    {
+                        Context = gitBuild.Context,
+                        Dockerfile = gitBuild.Dockerfile,
+                    };
+                }
+                else if (container.Annotations.OfType<DockerfileBuildAnnotation>().FirstOrDefault() is { } build)
                 {
                     service.Image = $"flat-lab/{container.Name}:local";
                     service.Build = new Build
@@ -424,6 +442,7 @@ internal static class ContainerConventions
                         Dockerfile = Path.GetRelativePath(build.ContextPath, build.DockerfilePath).Replace('\\', '/'),
                     };
                 }
+
             });
         }
 

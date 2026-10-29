@@ -1,0 +1,23 @@
+FROM alpine:3.21 AS source
+
+RUN apk add --no-cache git
+ARG SOURCE_COMMIT=626b6a238f2f1f3d45f8a9faa8bea9b3cba46769
+RUN git init /source \
+    && git -C /source remote add origin https://github.com/TheoFABIEN/Trailkeepr.git \
+    && git -C /source fetch --depth 1 origin "$SOURCE_COMMIT" \
+    && git -C /source checkout --detach FETCH_HEAD
+
+FROM node:lts-alpine AS builder
+
+WORKDIR /app
+COPY --from=source /source/ui/ ./
+RUN npm install && npm run build
+
+FROM httpd:2.4-alpine
+
+COPY --from=builder /app/dist /usr/local/apache2/htdocs
+RUN sed -i 's/#LoadModule proxy_module/LoadModule proxy_module/' /usr/local/apache2/conf/httpd.conf \
+    && sed -i 's/#LoadModule proxy_http_module/LoadModule proxy_http_module/' /usr/local/apache2/conf/httpd.conf \
+    && printf '\nProxyPass /api http://hiking-api:8000\nProxyPassReverse /api http://hiking-api:8000\nProxyPass /uploads http://hiking-api:8000/uploads\nProxyPassReverse /uploads http://hiking-api:8000/uploads\n' >> /usr/local/apache2/conf/httpd.conf
+
+EXPOSE 80

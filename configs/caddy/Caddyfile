@@ -550,9 +550,9 @@
         reverse_proxy rsshub:1200
     }
 
-    @scanopy host scanopy.{$DUCKDNS_DOMAIN}
-    handle @scanopy {
-        reverse_proxy scanopy:60072
+    @networks host networks.{$DUCKDNS_DOMAIN}
+    handle @networks {
+        reverse_proxy networks:60072
     }
 
     @search host search.{$DUCKDNS_DOMAIN}
@@ -623,8 +623,8 @@
         reverse_proxy subscriptions:80
     }
 
-    @tapmap host tapmap.{$DUCKDNS_DOMAIN}
-    handle @tapmap {
+    @connections host connections.{$DUCKDNS_DOMAIN}
+    handle @connections {
         reverse_proxy host.docker.internal:8050
     }
 

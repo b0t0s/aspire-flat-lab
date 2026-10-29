@@ -1,0 +1,18 @@
+FROM alpine:3.21 AS source
+
+RUN apk add --no-cache git
+ARG SOURCE_COMMIT=626b6a238f2f1f3d45f8a9faa8bea9b3cba46769
+RUN git init /source \
+    && git -C /source remote add origin https://github.com/TheoFABIEN/Trailkeepr.git \
+    && git -C /source fetch --depth 1 origin "$SOURCE_COMMIT" \
+    && git -C /source checkout --detach FETCH_HEAD
+
+FROM python:3.12-slim
+
+WORKDIR /app
+COPY --from=source /source/api/ ./
+RUN pip install --no-cache-dir -r requirements.txt \
+    && mkdir -p /app/uploads
+
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

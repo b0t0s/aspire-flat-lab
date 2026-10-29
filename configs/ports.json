@@ -1,34 +1,65 @@
 {
   "Development": {
+    "atuin/atuin": 4,
+    "calagopus/calagopus": 14,
     "convertx/convertx": 8,
+    "email-signature/email-signature": 0,
+    "excalidash-backend/excalidash-backend": 6,
+    "excalidash/excalidash": 7,
     "excalidraw/excalidraw": 10,
+    "ideon/ideon": 9,
     "it-tools/it-tools": 5,
+    "lightpanda/lightpanda": 12,
+    "obscura/obscura": 13,
     "onedev/onedev-agent": 2,
     "onedev/onedev-http": 1,
-    "opengist/opengist": 3
+    "opengist/opengist": 3,
+    "usertour/usertour": 11
   },
   "Entertainment": {
+    "gravity/gravity": 6,
     "jellyfin/jellyfin": 3,
     "kavita/kavita": 1,
     "miniflux/miniflux": 0,
     "navidrome/navidrome": 2,
-    "photoview/photoview": 4
+    "parenthese-aio/parenthese-aio": 9,
+    "photoview/photoview": 4,
+    "resonand/resonand": 5,
+    "solar-system/solar-system": 7,
+    "worldmonitor/worldmonitor": 8
   },
   "Household": {
     "homebox/homebox": 3,
+    "house-planner/house-planner": 1,
     "radicale/radicale": 0
+  },
+  "Infrastructure": {
+    "container-hub/container-hub": 0,
+    "degoog/degoog": 2,
+    "termix/termix": 1
+  },
+  "Irl": {
+    "healthlog/healthlog": 1,
+    "medikeep/medikeep": 0,
+    "tradetally/tradetally": 2,
+    "trailkeepr/trailkeepr": 3
   },
   "Knowledge": {
     "faved/faved": 4,
     "ghost/ghost": 3,
-    "keila/keila": 11,
     "memos/memos": 2,
-    "paperless-ngx/paperless-ngx": 0
+    "nostos/nostos": 1,
+    "paperless-ngx/paperless-ngx": 0,
+    "vaultisse/vaultisse": 5,
+    "zensical/zensical": 6
   },
   "Media": {
+    "cliparr/cliparr": 1,
     "metube/metube": 2,
+    "piped-frontend/piped-frontend": 0,
     "prowlarr/prowlarr": 4,
-    "qbittorrent/qbittorrent-web": 3
+    "qbittorrent/qbittorrent-web": 3,
+    "sound-vault/sound-vault": 5
   },
   "Messaging": {
     "irc-ergochat/irc-web": 4,
@@ -37,6 +68,7 @@
   },
   "Secrets": {
     "infisical/infisical": 6,
+    "origamivault/origamivault": 2,
     "twofauth/twofauth": 0,
     "vaultwarden/vaultwarden": 1
   }
