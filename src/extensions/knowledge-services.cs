@@ -61,6 +61,8 @@ internal static class KnowledgeServices
             .WaitFor(dependencies["ghost-db"])
             .WithHomepage("Knowledge", "Blog", "si-ghost", "Blog and posts", $"https://blog.{settings.Shared.DuckDnsDomain}");
 
+        // DO AFTER START: chown -R 1654:1654 ../services-data/system/nostos
+        // (image runs as the dotnet 'app' user and needs /data writable by it - do not override the container user)
         _ = builder.AddContainer("nostos", "ghcr.io/christian-gennari/nostos", "latest")
             .WithContainerName("nostos")
             .WithStartPolicy(settings.Knowledge.StartByDefault)

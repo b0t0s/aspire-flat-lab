@@ -25,12 +25,17 @@ internal static class TechnicalServices
         IResourceBuilder<ContainerResource> Postgres(string name, string tag, string database, string user, string passwordKey, string dataPath,
             string dataTarget = "/var/lib/postgresql/data", params string[] passwordAliases)
         {
-            return Add(name, "postgres", tag)
+            var container = Add(name, "postgres", tag)
                 .WithEnvironment("POSTGRES_DB", database)
                 .WithEnvironment("POSTGRES_USER", user)
                 .WithEnvironment("POSTGRES_PASSWORD", settings.Secret(passwordKey, aliases: passwordAliases))
                 .WithBindMount(dataPath, dataTarget)
                 .WithHealthcheck(PgIsReady);
+            if (int.TryParse(tag.Split('-')[0], out var major) && major >= 18)
+            {
+                container = container.WithEnvironment("PGDATA", dataTarget);
+            }
+            return container;
         }
 
         IResourceBuilder<ContainerResource> MariaDb(string name, string tag, string database, string user, string passwordKey, string dataPath)

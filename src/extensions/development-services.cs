@@ -58,7 +58,9 @@ internal static class DevelopmentServices
             .WaitFor(dependencies["atuin-db"])
             .WithHomepage("Development", "Atuin", "mdi-console-line", "Shell history sync", $"https://atuin.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("excalidash-backend", "zimengxiong/excalidash-backend", "latest")
+        // DO AFTER START: chown -R 1001:1001 ../services-data/system/excalidash
+        // (image runs as uid 1001 and rewrites its Prisma client files at boot - do not override the container user)
+        var excalidashBackend = builder.AddContainer("excalidash-backend", "zimengxiong/excalidash-backend", "latest")
             .WithContainerName("excalidash-backend")
             .WithStartPolicy(settings.Development.StartByDefault)
             .WithEnvironment("DATABASE_PROVIDER", "sqlite")
@@ -79,6 +81,7 @@ internal static class DevelopmentServices
             .WithEnvironment("BACKEND_URL", "excalidash-backend:8000")
             .WithConfigFile("configs/excalidash/nginx.conf.template", "/etc/nginx/nginx.conf.template")
             .WithLabPort(8080, "excalidash")
+            .WaitFor(excalidashBackend)
             .WithHomepage("Development", "ExcaliDash UI", "mdi-view-dashboard", "Whiteboard dashboard", $"https://dashboards.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("ideon", "ghcr.io/3xpyth0n/ideon", "latest")
