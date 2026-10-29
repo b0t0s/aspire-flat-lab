@@ -77,6 +77,7 @@ internal static class DevelopmentServices
             .WithContainerName("excalidash")
             .WithStartPolicy(settings.Development.StartByDefault)
             .WithEnvironment("BACKEND_URL", "excalidash-backend:8000")
+            .WithConfigFile("configs/excalidash/nginx.conf.template", "/etc/nginx/nginx.conf.template")
             .WithLabPort(8080, "excalidash")
             .WithHomepage("Development", "ExcaliDash UI", "mdi-view-dashboard", "Whiteboard dashboard", $"https://dashboards.{settings.Shared.DuckDnsDomain}");
 

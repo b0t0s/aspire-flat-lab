@@ -380,7 +380,7 @@ services:
 
   kept:
     labels:
-    - homepage.group=Development
+    - homepage.group=Household
     - homepage.name=Kept
     - homepage.icon=mdi-book-multiple
     - homepage.href=https://kept.${DUCKDNS_DOMAIN:-localhost}
@@ -611,7 +611,7 @@ services:
     - homepage.icon=mdi-radar
     - homepage.href=https://networks.${DUCKDNS_DOMAIN:-localhost}
     image: ghcr.io/scanopy/scanopy/server:latest
-    container_name: scanopy
+    container_name: networks
     restart: unless-stopped
     environment:
     - SCANOPY_LOG_LEVEL=info
@@ -637,7 +637,7 @@ services:
     labels:
     - glance.hide=true
     image: ghcr.io/scanopy/scanopy/daemon:latest
-    container_name: scanopy-daemon
+    container_name: networks-daemon
     restart: unless-stopped
     privileged: true
     network_mode: host
@@ -657,7 +657,7 @@ services:
     labels:
     - glance.hide=true
     image: postgres:17-alpine
-    container_name: scanopy-db
+    container_name: networks-db
     restart: unless-stopped
     environment:
     - POSTGRES_DB=scanopy

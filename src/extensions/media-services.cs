@@ -45,20 +45,7 @@ internal static class MediaServices
             .WithHomepage("Media", "Indexer", "mdi-magnify", "", $"https://indexer.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("prowlarr", "http://indexer:9696", key: HomepageVar("PROWLARR_WIDGET_KEY"));
 
-        _ = builder.AddContainer("piped-frontend", "1337kavin/piped-frontend", "latest")
-            .WithContainerName("piped-frontend")
-            .WithStartPolicy(settings.Media.StartByDefault)
-            .WithEnvironment("BACKEND_HOSTNAME", $"pipedapi.{settings.Shared.DuckDnsDomain}")
-            .WithEnvironment("HTTP_MODE", "https")
-            .WithLabPort(80, "piped-frontend")
-            .WithHomepage("Media", "Piped", "mdi-youtube", "Privacy YouTube frontend", $"https://piped.{settings.Shared.DuckDnsDomain}");
-
-        _ = builder.AddContainer("piped-proxy", "1337kavin/piped-proxy", "latest")
-            .WithContainerName("piped-proxy")
-            .WithStartPolicy(settings.Media.StartByDefault)
-            .WithHomepage("Media", "Piped proxy", "mdi-google-drive", "Piped video proxy", $"https://pipedproxy.{settings.Shared.DuckDnsDomain}");
-
-        _ = builder.AddContainer("piped-backend", "1337kavin/piped", "latest")
+        var pipedBackend = builder.AddContainer("piped-backend", "1337kavin/piped", "latest")
             .WithContainerName("piped-backend")
             .WithStartPolicy(settings.Media.StartByDefault)
             .WithConfigTemplate("configs/piped/config.properties.template", "/app", "config.properties", new Dictionary<string, object>
@@ -68,8 +55,24 @@ internal static class MediaServices
                 ["FRONTEND_URL"] = $"https://piped.{settings.Shared.DuckDnsDomain}",
                 ["PIPED_DB_PASSWORD"] = settings.Secret("PIPED_DB_PASSWORD"),
             })
+            .WithLabPort(8080, "piped-backend")
             .WaitFor(dependencies["piped-db"])
             .WithHomepage("Media", "Piped API", "mdi-youtube", "Piped backend", $"https://pipedapi.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("piped-frontend", "1337kavin/piped-frontend", "latest")
+            .WithContainerName("piped-frontend")
+            .WithStartPolicy(settings.Media.StartByDefault)
+            .WithEnvironment("BACKEND_HOSTNAME", $"pipedapi.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("HTTP_MODE", "https")
+            .WithLabPort(80, "piped-frontend")
+            .WaitFor(pipedBackend)
+            .WithHomepage("Media", "Piped", "mdi-youtube", "Privacy YouTube frontend", $"https://piped.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("piped-proxy", "1337kavin/piped-proxy", "latest")
+            .WithContainerName("piped-proxy")
+            .WithStartPolicy(settings.Media.StartByDefault)
+            .WithLabPort(8080, "piped-proxy")
+            .WithHomepage("Media", "Piped proxy", "mdi-google-drive", "Piped video proxy", $"https://pipedproxy.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("cliparr", "ghcr.io/techsquidtv/cliparr", "latest")
             .WithContainerName("cliparr")

@@ -86,6 +86,8 @@ internal static class KnowledgeServices
             .WithStartPolicy(settings.Knowledge.StartByDefault)
             .WithArgs("serve", "--dev-addr=0.0.0.0:8000")
             .WithBindMount(settings.Knowledge.DataPath("ZENSICAL_DOCS", "../services-data/public/docs2"), "/docs")
+            .WithConfigFile("configs/zensical/mkdocs.yml", "/docs/mkdocs.yml")
+            .WithConfigFile("configs/zensical/index.md", "/docs/docs/index.md")
             .WithLabPort(8000, "zensical")
             .WithHomepage("Knowledge", "Zensical", "mdi-book-open-page-variant", "Docs server", $"https://docs2.{settings.Shared.DuckDnsDomain}");
     }

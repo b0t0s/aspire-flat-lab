@@ -115,6 +115,6 @@ internal static class EntertainmentServices
             .WithConfigFile("configs/solar-system/config.yaml", "/config/config.yaml")
             .WithBindMount(settings.Entertainment.DataPath("SOLAR_SYSTEM_CACHE", "../services-data/system/solar-system"), "/cache")
             .WithLabPort(80, "solar-system")
-            .WithHomepage("Entertainment", "Solar map", "mdi-earth", "Solar system maps", $"https://solarmap.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Entertainment", "Solar map", "mdi-earth", "Solar system maps", $"https://solarmap.{settings.Shared.DuckDnsDomain}/?epoch={DateTime.UtcNow:yyyy-MM-dd}%20{DateTime.UtcNow:HH:mm}:00");
     }
 }
