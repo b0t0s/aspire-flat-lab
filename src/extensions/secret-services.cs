@@ -8,7 +8,6 @@ internal static class SecretServices
     {
         _ = builder.AddContainer("twofauth", "2fauth/2fauth", "latest")
             .WithContainerName("twofauth")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
             .WithEnvironment("APP_ENV", "production")
             .WithEnvironment("APP_KEY", settings.Secret("TWOFAUTH_APP_KEY", SecretKind.LaravelKey))
             .WithEnvironment("APP_URL", $"https://2fa.{settings.Shared.DuckDnsDomain}")
@@ -20,7 +19,6 @@ internal static class SecretServices
 
         _ = builder.AddContainer("vaultwarden", "vaultwarden/server", "latest")
             .WithContainerName("passwords")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
             .WithEnvironment("DOMAIN", $"https://passwords.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("SIGNUPS_ALLOWED", settings.Secrets.Value("VAULTWARDEN_SIGNUPS_ALLOWED", "true"))
             .WithEnvironment("INVITATIONS_ALLOWED", "true")
@@ -39,7 +37,6 @@ internal static class SecretServices
 
         _ = builder.AddContainer("infisical", "infisical/infisical", "latest")
             .WithContainerName("infisical")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
             .WithEnvironment("SITE_URL", $"https://secrets.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("DB_CONNECTION_URI", ReferenceExpression.Create($"postgres://infisical:{settings.Secret("INFISICAL_DB_PASSWORD")}@infisical-db:5432/infisical"))
             .WithEnvironment("REDIS_URL", "redis://infisical-redis:6379")
@@ -53,16 +50,18 @@ internal static class SecretServices
             .WaitFor(dependencies["infisical-redis"])
             .WithHomepage("Secrets", "Infisical", "mdi-key-variant", "Secrets manager", $"https://secrets.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("email-signature", "ghcr.io/clarkemedia/email-signature-generator", "latest")
+        _ = builder.AddContainer("docuseal", "docuseal/docuseal", "latest")
             .WithContainerName("signature")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
-            .WithLabPort(80, "email-signature")
-            .WithHomepage("Development", "Signature", "mdi-email-edit", "Email signature generator", $"https://signature.{settings.Shared.DuckDnsDomain}");
+            .WithEnvironment("DATABASE_URL", "sqlite3:///data/docuseal.sqlite3")
+            .WithEnvironment("SECRET_KEY_BASE", settings.Secret("DOCUSEAL_SECRET", SecretKind.LongPassword))
+            .WithEnvironment("HOST", $"https://signature.{settings.Shared.DuckDnsDomain}")
+            .WithBindMount(settings.Secrets.DataPath("DOCUSEAL_DATA", "../services-data/system/docuseal"), "/data")
+            .WithLabPort(3000, "docuseal")
+            .WithHomepage("Secrets", "Signature", "mdi-file-sign", "", $"https://signature.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("origamivault", "ghcr.io/origamivault/origamivault", "latest")
-            .WithContainerName("origami")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
-            .WithLabPort(8080, "origamivault")
-            .WithHomepage("Secrets", "OrigamiVault", "mdi-file-lock", "Paper backup of secrets", $"https://origami.{settings.Shared.DuckDnsDomain}");
+        _ = builder.AddContainer("email-signature", "ghcr.io/clarkemedia/email-signature-generator", "latest")
+            .WithContainerName("email-signature-generator")
+            .WithLabPort(80, "email-signature")
+            .WithHomepage("Secrets", "Email Signature Generator", "mdi-email-edit", "Email signature generator", $"https://email-signature-generator.{settings.Shared.DuckDnsDomain}");
     }
 }

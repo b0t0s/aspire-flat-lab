@@ -16,7 +16,7 @@ internal static class ChatServices
         //   nousresearch/hermes-agent setup
         _ = builder.AddContainer("hermes", "nousresearch/hermes-agent", "latest")
             .WithContainerName("hermes")
-            .WithStartPolicy(true)
+            .WithDefaultMode(LabMode.Auto)
             .WithArgs("gateway", "run")
             .WithEnvironment("HERMES_DASHBOARD", "1")
             .WithEnvironment("HERMES_DASHBOARD_HOST", "0.0.0.0")
@@ -43,7 +43,6 @@ internal static class ChatServices
 
         _ = builder.AddContainer("open-webui", "ghcr.io/open-webui/open-webui", "main")
             .WithContainerName("llm")
-            .WithStartPolicy(settings.Chat.StartByDefault)
             .WithEnvironment("TZ", settings.Shared.TimeZone)
             .WithEnvironment("ENABLE_SIGNUP", "True")
             .WithEnvironment("OLLAMA_BASE_URL", "http://ollama:11434")
@@ -54,7 +53,7 @@ internal static class ChatServices
 
         _ = builder.AddContainer("pingvin-share", "stonith404/pingvin-share", "latest")
             .WithContainerName("sharing")
-            .WithStartPolicy(true)
+            .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("TZ", settings.Shared.TimeZone)
             .WithBindMount(settings.Chat.DataPath("PINGVIN_DATA", "../services-data/system/pingvin-share"), "/app/backend/pingvin-share-data")
             .WithBindMount(Path.Combine(settings.Chat.DataPath("PINGVIN_DATA", "../services-data/system/pingvin-share"), "data"), "/opt/app/backend/data")
@@ -64,14 +63,12 @@ internal static class ChatServices
         // IRC
         var ergochat = builder.AddContainer("irc-ergochat", "ghcr.io/ergochat/ergo", "latest")
             .WithContainerName("irc-server")
-            .WithStartPolicy(settings.Chat.StartByDefault)
             .WithEndpoint(6667, 6667, name: "irc")
             .WithLabPort(8080, "irc-web")
             .WithHomepage("Messaging", "IRC", "mdi-server-network", "SERVER", $"https://irc.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("irc-thelounge", "ghcr.io/thelounge/thelounge", "latest")
             .WithContainerName("irc")
-            .WithStartPolicy(settings.Chat.StartByDefault)
             .WithEnvironment("HOST", "0.0.0.0")
             .WithEnvironment("PORT", "9000")
             .WithBindMount(settings.Chat.DataPath("THELOUNGE_DATA", "../services-data/system/thelounge"), "/var/opt/thelounge")
@@ -82,7 +79,6 @@ internal static class ChatServices
 
         _ = builder.AddContainer("smp-server", "simplexchat/smp-server", "latest")
             .WithContainerName("smp-server")
-            .WithStartPolicy(settings.Chat.StartByDefault)
             .WithEnvironment("ADDR", settings.Chat.Value("SMP_SERVER_ADDR", settings.Shared.DuckDnsDomain))
             .WithEnvironment("PASS", settings.Secret("SMP_SERVER_PASS", SecretKind.Manual))
             .WithBindMount(settings.Chat.DataPath("SMP_SERVER_CONFIG", "../services-data/system/smp-server/config"), "/etc/opt/simplex")

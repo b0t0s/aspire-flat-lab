@@ -8,7 +8,6 @@ internal static class SecretAltServices
     {
         _ = builder.AddContainer("aliasvault", "aliasvault/aliasvault", "latest")
             .WithContainerName("aliases")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
             .WithEnvironment("PUBLIC_URL", $"https://aliases.{settings.Shared.DuckDnsDomain}")
             .WithBindMount(settings.Secrets.DataPath("ALIASVAULT_DATA", "../services-data/system/aliasvault"), "/app/data")
             .WithLabPort(80, "aliasvault")
@@ -16,7 +15,6 @@ internal static class SecretAltServices
 
         _ = builder.AddContainer("privatebin", "privatebin/nginx-fpm-alpine", "stable")
             .WithContainerName("privatebin")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
             .WithEnvironment("TZ", settings.Shared.TimeZone)
             .WithEnvironment("PHP_TZ", settings.Shared.TimeZone)
             .WithBindMount(settings.Secrets.DataPath("PRIVATEBIN_DATA", "../services-data/system/privatebin"), "/srv/data")
@@ -29,9 +27,13 @@ internal static class SecretAltServices
             })
             .WithHomepage("Secrets", "PrivateBin", "mdi-content-paste", "Zero-knowledge pastebin", $"https://paste.{settings.Shared.DuckDnsDomain}");
 
+        _ = builder.AddContainer("origamivault", "ghcr.io/origamivault/origamivault", "latest")
+            .WithContainerName("origami")
+            .WithLabPort(8080, "origamivault")
+            .WithHomepage("Secrets", "OrigamiVault", "mdi-file-lock", "Paper backup of secrets", $"https://origami.{settings.Shared.DuckDnsDomain}");
+
         _ = builder.AddContainer("passbolt", "passbolt/passbolt", "latest")
             .WithContainerName("passbolt")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
             .WithEnvironment("APP_FULL_BASE_URL", $"https://pass.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("DATASOURCES_DEFAULT_HOST", "passbolt-db")
             .WithEnvironment("DATASOURCES_DEFAULT_PORT", "3306")
@@ -47,7 +49,6 @@ internal static class SecretAltServices
 
         _ = builder.AddContainer("psono-server", "psono/psono-server", "latest")
             .WithContainerName("psono-server")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
             .WithEnvironment("DEBUG", "False")
             .WithEnvironment("ALLOWED_HOSTS", $"psono.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("DB_TYPE", "mysql")
@@ -62,19 +63,8 @@ internal static class SecretAltServices
             .WaitFor(dependencies["psono-db"])
             .WithLab(lab => lab.PortGroup = "Secrets");
 
-        _ = builder.AddContainer("docuseal", "docuseal/docuseal", "latest")
-            .WithContainerName("docuseal")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
-            .WithEnvironment("DATABASE_URL", "sqlite3:///data/docuseal.sqlite3")
-            .WithEnvironment("SECRET_KEY_BASE", settings.Secret("DOCUSEAL_SECRET", SecretKind.LongPassword))
-            .WithEnvironment("HOST", $"https://esign.{settings.Shared.DuckDnsDomain}")
-            .WithBindMount(settings.Secrets.DataPath("DOCUSEAL_DATA", "../services-data/system/docuseal"), "/data")
-            .WithLabPort(3000, "docuseal")
-            .WithHomepage("Messaging", "DocuSeal", "mdi-file-sign", "E-signatures", $"https://esign.{settings.Shared.DuckDnsDomain}");
-
         _ = builder.AddContainer("documenso", "documenso/documenso", "latest")
             .WithContainerName("documenso")
-            .WithStartPolicy(settings.Secrets.StartByDefault)
             .WithEnvironment("NEXTAUTH_SECRET", settings.Secret("DOCUMENSO_SECRET", SecretKind.LongPassword))
             .WithEnvironment("NEXTAUTH_URL", $"https://sign.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://documenso:{settings.Secret("DOCUMENSO_DB_PASSWORD")}@documenso-db:5432/documenso"))

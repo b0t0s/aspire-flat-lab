@@ -8,7 +8,6 @@ internal static class EntertainmentServices
     {
         _ = builder.AddContainer("minecraft", "itzg/minecraft-server", "latest")
             .WithContainerName("minecraft")
-            .WithStartPolicy(settings.Entertainment.StartByDefault)
             .WithEnvironment("EULA", "TRUE")
             .WithEnvironment("TYPE", "PAPER")
             .WithEnvironment("DIFFICULTY", "hard")
@@ -31,6 +30,7 @@ internal static class EntertainmentServices
 
         _ = builder.AddContainer("miniflux", "miniflux/miniflux", "latest")
             .WithContainerName("feed")
+            .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://miniflux:{settings.Secret("MINIFLUX_DB_PASSWORD")}@miniflux-db:5432/miniflux?sslmode=disable"))
             .WithEnvironment("RUN_MIGRATIONS", "1")
             .WithEnvironment("LISTEN_ADDR", ":8080")
@@ -47,6 +47,7 @@ internal static class EntertainmentServices
 
         _ = builder.AddContainer("navidrome", "deluan/navidrome", "latest")
             .WithContainerName("music")
+            .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("ND_SCANSCHEDULE", "1h")
             .WithEnvironment("ND_LOGLEVEL", "info")
             .WithEnvironment("ND_BASEURL", "/")
@@ -62,6 +63,7 @@ internal static class EntertainmentServices
 
         _ = builder.AddContainer("jellyfin", "jellyfin/jellyfin", "latest")
             .WithContainerName("videos")
+            .WithDefaultMode(LabMode.Auto)
             .WithBindMount(settings.Entertainment.DataPath("JELLYFIN_CONFIG", "../services-data/system/jellyfin/config"), "/config")
             .WithBindMount(settings.Entertainment.DataPath("JELLYFIN_CACHE", "../services-data/system/jellyfin/cache"), "/cache")
             .WithBindMount(settings.Entertainment.DataPath("MEDIA_FOLDERS", "../services-data/public/movies"), "/media", isReadOnly: false)
@@ -71,6 +73,7 @@ internal static class EntertainmentServices
 
         _ = builder.AddContainer("kavita", "jvmilazz0/kavita", "latest")
             .WithContainerName("books")
+            .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("TZ", settings.Shared.TimeZone)
             .WithBindMount(settings.Entertainment.DataPath("KAVITA_DATA", "../services-data/system/kavita"), "/kavita/config")
             .WithBindMount(settings.Entertainment.DataPath("KAVITA_LIBRARY", "../services-data/public/books"), "/books", isReadOnly: true)
@@ -84,6 +87,7 @@ internal static class EntertainmentServices
         // chown -R 999:999 ../services-data/system/photoview
         _ = builder.AddContainer("photoview", "photoview/photoview", "latest")
             .WithContainerName("gallery")
+            .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("PHOTOVIEW_DATABASE_DRIVER", "sqlite")
             .WithEnvironment("PHOTOVIEW_SQLITE_PATH", "/app/db/photoview.db")
             .WithEnvironment("PHOTOVIEW_MEDIA_CACHE", "/app/cache")
@@ -95,23 +99,13 @@ internal static class EntertainmentServices
             .WithLabPort(80, "photoview")
             .WithHomepage("Entertainment", "Gallery", "mdi-image-search", href: $"https://gallery.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("resonand", "ghcr.io/resonand-app/resonand", "0.1.0")
-            .WithContainerName("resonand")
-            .WithStartPolicy(settings.Entertainment.StartByDefault)
-            .WithEnvironment("RESONAND_SECRET_KEY", settings.Secret("RESONAND_SECRET_KEY", SecretKind.Hex32))
-            .WithBindMount(settings.Entertainment.DataPath("RESONAND_DATA", "../services-data/system/resonand"), "/data")
-            .WithLabPort(8000, "resonand")
-            .WithHomepage("Entertainment", "Resonand", "mdi-voicemail", "Voice archive", $"https://resonand.{settings.Shared.DuckDnsDomain}");
-
         _ = builder.AddDockerfile("gravity", builder.RepoPath("src/containers/Gravity"), "Dockerfile", "runner")
             .WithContainerName("gravity")
-            .WithStartPolicy(settings.Entertainment.StartByDefault)
             .WithLabPort(80, "gravity")
             .WithHomepage("Entertainment", "Gravity", "mdi-space-invaders", "Solar system simulator", $"https://gravity.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddDockerfile("solar-system", builder.RepoPath("src/containers/solar-system-map-builder"))
             .WithContainerName("solar")
-            .WithStartPolicy(settings.Entertainment.StartByDefault)
             .WithConfigFile("configs/solar-system/config.yaml", "/config/config.yaml")
             .WithBindMount(settings.Entertainment.DataPath("SOLAR_SYSTEM_CACHE", "../services-data/system/solar-system"), "/cache")
             .WithLabPort(80, "solar-system")

@@ -66,12 +66,6 @@ internal static class ContainerConventions
         return resource;
     }
 
-    public static IResourceBuilder<T> WithStartPolicy<T>(this IResourceBuilder<T> resource, bool startByDefault)
-        where T : ContainerResource
-    {
-        return startByDefault ? resource : resource.WithExplicitStart();
-    }
-
     public static IResourceBuilder<T> WithRestart<T>(this IResourceBuilder<T> resource, string policy)
         where T : ContainerResource
     {
@@ -494,11 +488,13 @@ internal static class ContainerConventions
             })
             .ToList();
 
+        // Slots of services that are off stay in the lock, so switching them back on keeps their port.
+        foreach (var (group, known) in previous) slots[group] = new SortedDictionary<string, int>(known, StringComparer.Ordinal);
+
         foreach (var byGroup in declared.GroupBy(d => d.Group))
         {
-            var known = previous.GetValueOrDefault(byGroup.Key) ?? [];
-            var groupSlots = new SortedDictionary<string, int>(StringComparer.Ordinal);
-            foreach (var entry in byGroup.Where(e => known.ContainsKey(e.Key))) groupSlots[entry.Key] = known[entry.Key];
+            var groupSlots = slots.GetValueOrDefault(byGroup.Key) ?? new SortedDictionary<string, int>(StringComparer.Ordinal);
+            var known = groupSlots.ToDictionary(StringComparer.Ordinal);
             foreach (var entry in byGroup.Where(e => !known.ContainsKey(e.Key)))
             {
                 var used = groupSlots.Values.ToHashSet();
@@ -573,7 +569,7 @@ internal static class ContainerConventions
             _ = text.AppendLine();
         }
 
-        WriteIfChanged(Path.Combine(builder.AppHostDirectory, "docs", "ports.md"), text.ToString().Replace("\r\n", "\n"));
+        WriteIfChanged(Path.Combine(builder.AppHostDirectory, "docs", "ignored", "ports.md"), text.ToString().Replace("\r\n", "\n"));
     }
 
     private static void WriteIfChanged(string path, string content)

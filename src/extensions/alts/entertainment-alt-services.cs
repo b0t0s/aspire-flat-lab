@@ -4,11 +4,10 @@ using static EnvironmentSettings;
 /// <summary>Homepage group "Entertainment" - host ports 14xxx (docs/ports.md).</summary>
 internal static class EntertainmentAltServices
 {
-    public static void AddAltEntertainmentServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddEntertainmentAltServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("dm-hero", "ghcr.io/flo0806/dm-hero", "latest")
             .WithContainerName("dm-hero")
-            .WithStartPolicy(settings.Entertainment.StartByDefault)
             .WithEnvironment("NODE_ENV", "production")
             .WithEnvironment("NITRO_PORT", "3000")
             .WithEnvironment("NITRO_HOST", "0.0.0.0")

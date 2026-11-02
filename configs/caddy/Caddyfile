@@ -56,9 +56,9 @@
         }
     }
 
-    @atuin host atuin.{$DUCKDNS_DOMAIN}
-    handle @atuin {
-        reverse_proxy atuin:8888
+    @shell-history host shell-history.{$DUCKDNS_DOMAIN}
+    handle @shell-history {
+        reverse_proxy shell-history:8888
     }
 
 
@@ -180,9 +180,9 @@
         reverse_proxy pdf:8080
     }
 
-    @esign host esign.{$DUCKDNS_DOMAIN}
-    handle @esign {
-        reverse_proxy docuseal:3000
+    @signature host signature.{$DUCKDNS_DOMAIN}
+    handle @signature {
+        reverse_proxy signature:3000
     }
 
     @familytree host familytree.{$DUCKDNS_DOMAIN}
@@ -593,9 +593,9 @@
         reverse_proxy documenso:3500
     }
 
-    @signature host signature.{$DUCKDNS_DOMAIN}
-    handle @signature {
-        reverse_proxy signature:80
+    @email-signature-generator host email-signature-generator.{$DUCKDNS_DOMAIN}
+    handle @email-signature-generator {
+        reverse_proxy email-signature-generator:80
     }
 
     @snippets host snippets.{$DUCKDNS_DOMAIN}

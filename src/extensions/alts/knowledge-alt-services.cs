@@ -3,11 +3,10 @@ using static EnvironmentSettings;
 
 internal static class KnowledgeAltServices
 {
-    internal static void AddKnowledgeAltServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddKnowledgeAltServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("calibre-web", "lscr.io/linuxserver/calibre-web", "latest")
             .WithContainerName("archive")
-            .WithStartPolicy(settings.Knowledge.StartByDefault)
             .WithEnvironment("PUID", settings.Shared.Uid)
             .WithEnvironment("PGID", settings.Shared.Gid)
             .WithEnvironment("TZ", settings.Shared.TimeZone)
@@ -21,13 +20,20 @@ internal static class KnowledgeAltServices
 
         _ = builder.AddContainer("archivebox", "archivebox/archivebox", "latest")
             .WithContainerName("history")
-            .WithStartPolicy(settings.Knowledge.StartByDefault)
             .WithEnvironment("ALLOWED_HOSTS", "*")
             .WithEnvironment("ADMIN_USERNAME", settings.Knowledge.Value("ARCHIVEBOX_ADMIN_USER"))
             .WithEnvironment("ADMIN_PASSWORD", settings.Secret("ARCHIVEBOX_ADMIN_PASS"))
             .WithBindMount(settings.Knowledge.DataPath("ARCHIVEBOX_DATA", "../services-data/system/archivebox"), "/data")
             .WithLabPort(8000, "archivebox")
             .WithHomepage("Knowledge", "History", "mdi-archive", href: $"https://history.{settings.Shared.DuckDnsDomain}");
+
+        // DO AFTER START: chown -R 1654:1654 ../services-data/system/nostos
+        // (image runs as the dotnet 'app' user and needs /data writable by it - do not override the container user)
+        _ = builder.AddContainer("nostos", "ghcr.io/christian-gennari/nostos", "latest")
+            .WithContainerName("nostos")
+            .WithBindMount(settings.Knowledge.DataPath("NOSTOS_DATA", "../services-data/system/nostos"), "/data")
+            .WithLabPort(8080, "nostos")
+            .WithHomepage("Knowledge", "Nostos", "mdi-book-open-variant", "", $"https://nostos.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("siyuan", "b3log/siyuan", "latest")
             .WithContainerName("notes")
@@ -42,7 +48,6 @@ internal static class KnowledgeAltServices
 
         _ = builder.AddContainer("affine", "ghcr.io/toeverything/affine", "stable")
             .WithContainerName("affine")
-            .WithStartPolicy(settings.Knowledge.StartByDefault)
             .WithEnvironment("NODE_ENV", "production")
             .WithEnvironment("PORT", "3010")
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://affine:{settings.Secret("AFFINE_DB_PASSWORD")}@affine-db:5432/affine"))
@@ -51,9 +56,17 @@ internal static class KnowledgeAltServices
             .WaitFor(dependencies["affine-db"])
             .WithHomepage("Knowledge", "Affine", "mdi-notebook", "Team foundation server", $"https://affine.{settings.Shared.DuckDnsDomain}");
 
+        _ = builder.AddContainer("zensical", "zensical/zensical", "latest")
+            .WithContainerName("zensical")
+            .WithArgs("serve", "--dev-addr=0.0.0.0:8000")
+            .WithBindMount(settings.Knowledge.DataPath("ZENSICAL_DOCS", "../services-data/public/docs2"), "/docs")
+            .WithConfigFile("configs/zensical/mkdocs.yml", "/docs/mkdocs.yml")
+            .WithConfigFile("configs/zensical/index.md", "/docs/docs/index.md")
+            .WithLabPort(8000, "zensical")
+            .WithHomepage("Knowledge", "Zensical", "mdi-book-open-page-variant", "Docs server", $"https://docs2.{settings.Shared.DuckDnsDomain}");
+
         _ = builder.AddContainer("karakeep", "ghcr.io/karakeep-dev/karakeep", "latest")
             .WithContainerName("cabinet")
-            .WithStartPolicy(settings.Knowledge.StartByDefault)
             .WithEnvironment("NODE_ENV", "production")
             .WithEnvironment("PORT", "3000")
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://karakeep:{settings.Secret("KARAKEEP_DB_PASSWORD")}@karakeep-db:5432/karakeep"))
@@ -72,7 +85,6 @@ internal static class KnowledgeAltServices
 
         _ = builder.AddContainer("linkwarden", "ghcr.io/linkwarden/linkwarden", "latest")
             .WithContainerName("pocket")
-            .WithStartPolicy(settings.Knowledge.StartByDefault)
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgresql://linkwarden:{settings.Secret("LINKWARDEN_DB_PASSWORD")}@linkwarden-db:5432/linkwarden"))
             .WithEnvironment("MEILI_HOST", "http://linkwarden-meilisearch:7700")
             .WithEnvironment("MEILI_URL", "http://linkwarden-meilisearch:7700")
@@ -90,7 +102,6 @@ internal static class KnowledgeAltServices
         var outlineSecrets = settings.Knowledge.DataPath("OUTLINE_SECRETS", "../services-data/system/outline/secrets");
         _ = builder.AddContainer("outline", "outlinewiki/outline", "latest")
             .WithContainerName("dev-notes")
-            .WithStartPolicy(settings.Knowledge.StartByDefault)
             .WithEnvironment("NODE_ENV", "production")
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://outline:{settings.Secret("OUTLINE_DB_PASSWORD")}@outline-db:5432/outline?sslmode=disable"))
             .WithEnvironment("REDIS_URL", "redis://outline-redis:6379")
@@ -108,7 +119,6 @@ internal static class KnowledgeAltServices
 
         _ = builder.AddContainer("bookstack", "ghcr.io/linuxserver/bookstack", "latest")
             .WithContainerName("wiki")
-            .WithStartPolicy(settings.Knowledge.StartByDefault)
             .WithEnvironment("PUID", settings.Shared.Uid)
             .WithEnvironment("PGID", settings.Shared.Gid)
             .WithEnvironment("TZ", settings.Shared.TimeZone)
@@ -125,7 +135,6 @@ internal static class KnowledgeAltServices
 
         _ = builder.AddContainer("keila", "pentacent/keila", "latest")
             .WithContainerName("news")
-            .WithStartPolicy(settings.Knowledge.StartByDefault)
             .WithEnvironment("PHX_HOST", $"news.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"ecto://keila:{settings.Secret("KEILA_DB_PASSWORD")}@keila-db:5432/keila"))
             .WithEnvironment("SECRET_KEY_BASE", settings.Secret("KEILA_SECRET", SecretKind.LongPassword))

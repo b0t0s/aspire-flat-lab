@@ -5,39 +5,19 @@ internal sealed class EnvironmentSettings(IDistributedApplicationBuilder builder
     private readonly LabSecrets secrets = new(builder);
 
     public SharedEnvironmentSettings Shared { get; } = new(builder.Configuration, builder.AppHostDirectory);
-    public CategoryEnvironmentSettings Chat { get; } = new(builder.Configuration, builder.AppHostDirectory, "CHAT");
-    public CategoryEnvironmentSettings Media { get; } = new(builder.Configuration, builder.AppHostDirectory, "MEDIA");
-    public CategoryEnvironmentSettings Secrets { get; } = new(builder.Configuration, builder.AppHostDirectory, "SECRETS");
-    public CategoryEnvironmentSettings Knowledge { get; } = new(builder.Configuration, builder.AppHostDirectory, "KNOWLEDGE");
-    public CategoryEnvironmentSettings SmartHome { get; } = new(builder.Configuration, builder.AppHostDirectory, "SMARTHOME");
-    public CategoryEnvironmentSettings Development { get; } = new(builder.Configuration, builder.AppHostDirectory, "DEVELOPMENT");
-    public CategoryEnvironmentSettings Entertainment { get; } = new(builder.Configuration, builder.AppHostDirectory, "ENTERTAINMENT");
-    public CategoryEnvironmentSettings Irl { get; } = new(builder.Configuration, builder.AppHostDirectory, "IRL");
+    public CategoryEnvironmentSettings Chat { get; } = new(builder.Configuration, builder.AppHostDirectory);
+    public CategoryEnvironmentSettings Media { get; } = new(builder.Configuration, builder.AppHostDirectory);
+    public CategoryEnvironmentSettings Secrets { get; } = new(builder.Configuration, builder.AppHostDirectory);
+    public CategoryEnvironmentSettings Knowledge { get; } = new(builder.Configuration, builder.AppHostDirectory);
+    public CategoryEnvironmentSettings SmartHome { get; } = new(builder.Configuration, builder.AppHostDirectory);
+    public CategoryEnvironmentSettings Development { get; } = new(builder.Configuration, builder.AppHostDirectory);
+    public CategoryEnvironmentSettings Entertainment { get; } = new(builder.Configuration, builder.AppHostDirectory);
+    public CategoryEnvironmentSettings Irl { get; } = new(builder.Configuration, builder.AppHostDirectory);
 
     public IResourceBuilder<ParameterResource> Secret(string key, SecretKind kind = SecretKind.Password,
         string? legacyFile = null, params string[] aliases)
     {
         return secrets.Get(key, kind, legacyFile, aliases);
-    }
-
-    public bool StartByDefaultForResource(string resourceName)
-    {
-        static bool Any(string name, params string[] prefixes)
-        {
-            return prefixes.Any(p => name.StartsWith(p, StringComparison.Ordinal));
-        }
-
-        if (Any(resourceName, "synapse-", "lemmy-", "snikket-", "ollama")) return Chat.StartByDefault;
-        if (Any(resourceName, "immich-", "radarr-", "sonarr-")) return Media.StartByDefault;
-        if (Any(resourceName, "passbolt-", "psono-", "infisical-", "documenso-")) return Secrets.StartByDefault;
-        if (Any(resourceName, "ghost-", "affine-", "karakeep-", "linkwarden-", "paperless-", "outline-", "bookstack-", "keila-")) return Knowledge.StartByDefault;
-        if (Any(resourceName, "gramps-", "openemr-", "plausible-", "beszel-")) return SmartHome.StartByDefault;
-        if (Any(resourceName, "ryot-", "kutt-", "atuin-", "excalidash-", "ideon-", "usertour-")) return Development.StartByDefault;
-        if (Any(resourceName, "miniflux-", "rsshub", "minecraft", "jellyfin-", "navidrome-", "photoview-", "kavita-")) return Entertainment.StartByDefault;
-        if (Any(resourceName, "piped-", "sound-vault", "slskd")) return Media.StartByDefault;
-        if (Any(resourceName, "healthlog-", "medikeep-", "tradetally-")) return Irl.StartByDefault;
-
-        return false;
     }
 
     internal enum SecretKind
@@ -58,7 +38,7 @@ internal sealed class EnvironmentSettings(IDistributedApplicationBuilder builder
         Manual,
     }
 
-    internal sealed class CategoryEnvironmentSettings(IConfiguration configuration, string appHostDirectory, string category)
+    internal sealed class CategoryEnvironmentSettings(IConfiguration configuration, string appHostDirectory)
     {
         public string Value(string key, string fallback = "")
         {
@@ -69,8 +49,6 @@ internal sealed class EnvironmentSettings(IDistributedApplicationBuilder builder
         {
             return Path.GetFullPath(Value(key, fallback), appHostDirectory);
         }
-
-        public bool StartByDefault => bool.TryParse(configuration[$"ASPIRE_START_{category}_BY_DEFAULT"], out var enabled) && enabled;
     }
 
     internal sealed class SharedEnvironmentSettings(IConfiguration configuration, string appHostDirectory)
