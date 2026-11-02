@@ -31,12 +31,16 @@
   "Household": {
     "homebox/homebox": 3,
     "house-planner/house-planner": 1,
-    "radicale/radicale": 0
+    "radicale/radicale": 0,
+    "seafile/seafile": 2
   },
   "Infrastructure": {
+    "atuin/atuin": 3,
     "container-hub/container-hub": 0,
     "degoog/degoog": 2,
-    "termix/termix": 1
+    "ntfy/ntfy": 4,
+    "termix/termix": 1,
+    "zerobyte/zerobyte": 5
   },
   "Irl": {
     "healthlog/healthlog": 1,
@@ -45,30 +49,41 @@
     "trailkeepr/trailkeepr": 3
   },
   "Knowledge": {
+    "dawarich/dawarich": 7,
     "faved/faved": 4,
     "ghost/ghost": 3,
+    "joplin/joplin": 8,
     "memos/memos": 2,
     "nostos/nostos": 1,
+    "obsidian-couchdb/obsidian-couchdb": 9,
     "paperless-ngx/paperless-ngx": 0,
     "vaultisse/vaultisse": 5,
     "zensical/zensical": 6
   },
   "Media": {
     "cliparr/cliparr": 1,
+    "flaresolverr/flaresolverr": 7,
     "metube/metube": 2,
+    "pinchflat-ngx/pinchflat-ngx": 6,
     "piped-frontend/piped-frontend": 0,
     "prowlarr/prowlarr": 4,
     "qbittorrent/qbittorrent-web": 3,
     "sound-vault/sound-vault": 5
   },
   "Messaging": {
+    "continuwuity/continuwuity": 0,
     "irc-ergochat/irc-web": 4,
     "irc-thelounge/thelounge": 5,
-    "pingvin-share/pingvin-share": 3
+    "pingvin-share/pingvin-share": 3,
+    "stalwart/stalwart-web": 1
   },
   "Secrets": {
+    "docuseal/docuseal": 3,
+    "email-signature/email-signature": 4,
     "infisical/infisical": 6,
     "origamivault/origamivault": 2,
+    "pocket-id/pocket-id": 5,
+    "tinyauth/tinyauth": 7,
     "twofauth/twofauth": 0,
     "vaultwarden/vaultwarden": 1
   }

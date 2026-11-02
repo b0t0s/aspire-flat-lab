@@ -101,6 +101,9 @@ internal static class TechnicalServices
             settings.Knowledge.DataPath("PAPERLESS_DB_DATA", "../services-data/system/paperless/postgres"));
         _ = dependencies.Redis("paperless-redis", settings.Knowledge.DataPath("PAPERLESS_REDIS_DATA", "../services-data/system/paperless/redis"));
 
+        _ = dependencies.Postgres("joplin-db", "16-alpine", "joplin", "joplin", "JOPLIN_DB_PASSWORD",
+            settings.Knowledge.DataPath("JOPLIN_DB_DATA", "../services-data/system/joplin/postgres"));
+
         // Secrets
         _ = dependencies.Postgres("infisical-db", "16-alpine", "infisical", "infisical", "INFISICAL_DB_PASSWORD",
             settings.Secrets.DataPath("INFISICAL_DB_DATA", "../services-data/system/infisical/postgres"));

@@ -145,5 +145,19 @@ internal static class KnowledgeAltServices
             .WithLabPort(4000, "keila")
             .WaitFor(dependencies["keila-db"])
             .WithHomepage("Knowledge", "News", "mdi-email-newspaper", "Newsletter tool", $"https://news.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("joplin", "joplin/server", "latest")
+            .WithContainerName("joplin")
+            .WithEnvironment("APP_BASE_URL", $"https://joplin.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("APP_PORT", "22300")
+            .WithEnvironment("DB_CLIENT", "pg")
+            .WithEnvironment("POSTGRES_HOST", "joplin-db")
+            .WithEnvironment("POSTGRES_PORT", "5432")
+            .WithEnvironment("POSTGRES_DATABASE", "joplin")
+            .WithEnvironment("POSTGRES_USER", "joplin")
+            .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("JOPLIN_DB_PASSWORD"))
+            .WithLabPort(22300, "joplin")
+            .WaitFor(dependencies["joplin-db"])
+            .WithHomepage("Knowledge", "Joplin", "si-joplin", "Notes sync server", $"https://joplin.{settings.Shared.DuckDnsDomain}");
     }
 }

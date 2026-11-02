@@ -1,3 +1,11 @@
+# Put a login in front of a route: add `import tinyauth` as the first line inside its handle block.
+(tinyauth) {
+    forward_auth tinyauth:3000 {
+        uri /api/auth/caddy
+        copy_headers Remote-User Remote-Email Remote-Name Remote-Groups
+    }
+}
+
 *.{$DUCKDNS_DOMAIN} {
     tls {
         dns duckdns {$DUCKDNS_TOKEN}
@@ -733,6 +741,63 @@
     @ytdl-player host ytdl-player.{$DUCKDNS_DOMAIN}
     handle @ytdl-player {
         reverse_proxy ytdl-player:5000
+    }
+
+    @nextcloud host nextcloud.{$DUCKDNS_DOMAIN}
+    handle @nextcloud {
+        reverse_proxy nextcloud:80
+    }
+
+    @opencloud host opencloud.{$DUCKDNS_DOMAIN}
+    handle @opencloud {
+        reverse_proxy opencloud:9200
+    }
+
+    @oxicloud host oxicloud.{$DUCKDNS_DOMAIN}
+    handle @oxicloud {
+        reverse_proxy oxicloud:8086
+    }
+
+    @sync host sync.{$DUCKDNS_DOMAIN}
+    handle @sync {
+        reverse_proxy syncthing:8384 {
+            header_up Host {upstream_hostport}
+        }
+    }
+
+    @joplin host joplin.{$DUCKDNS_DOMAIN}
+    handle @joplin {
+        reverse_proxy joplin:22300
+    }
+
+    @trilium host trilium.{$DUCKDNS_DOMAIN}
+    handle @trilium {
+        reverse_proxy trilium:8080
+    }
+
+    @obsidian-sync host obsidian-sync.{$DUCKDNS_DOMAIN}
+    handle @obsidian-sync {
+        reverse_proxy obsidian-sync:5984
+    }
+
+    @backup host backup.{$DUCKDNS_DOMAIN}
+    handle @backup {
+        reverse_proxy zerobyte:4096
+    }
+
+    @mail host mail.{$DUCKDNS_DOMAIN}
+    handle @mail {
+        reverse_proxy mail:8080
+    }
+
+    @id host id.{$DUCKDNS_DOMAIN}
+    handle @id {
+        reverse_proxy pocket-id:1411
+    }
+
+    @auth host auth.{$DUCKDNS_DOMAIN}
+    handle @auth {
+        reverse_proxy tinyauth:3000
     }
 
     # Fallback

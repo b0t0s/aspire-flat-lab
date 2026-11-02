@@ -85,5 +85,26 @@ internal static class ChatServices
             .WithBindMount(settings.Chat.DataPath("SMP_SERVER_LOGS", "../services-data/system/smp-server/logs"), "/var/opt/simplex")
             .WithPublishedPort(5223, 5223)
             .WithHomepage("Messaging", "SimpleX relay", "mdi-lock", href: $"https://simplex.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("continuwuity", "forgejo.ellis.link/continuwuation/continuwuity", "latest")
+            .WithContainerName("matrix-server")
+            .WithEnvironment("CONTINUWUITY_SERVER_NAME", settings.Shared.DuckDnsDomain)
+            .WithEnvironment("CONTINUWUITY_DATABASE_PATH", "/var/lib/continuwuity")
+            .WithEnvironment("CONTINUWUITY_ADDRESS", "0.0.0.0")
+            .WithEnvironment("CONTINUWUITY_PORT", "8008")
+            .WithBindMount(settings.Chat.DataPath("CONTINUWUITY_DATA", "../services-data/system/continuwuity"), "/var/lib/continuwuity")
+            .WithLabPort(8008, "continuwuity")
+            .WithHomepage("Messaging", "Matrix", "mdi-server-network", "Continuwuity homeserver", $"https://matrix.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("stalwart", "stalwartlabs/stalwart", "v1")
+            .WithContainerName("mail")
+            .WithEnvironment("STALWART_RECOVERY_ADMIN", ReferenceExpression.Create($"admin:{settings.Secret("STALWART_ADMIN_PASSWORD")}"))
+            .WithBindMount(settings.Chat.DataPath("STALWART_DATA", "../services-data/system/stalwart/data"), "/var/lib/stalwart")
+            .WithBindMount(settings.Chat.DataPath("STALWART_CONFIG", "../services-data/system/stalwart/config"), "/etc/stalwart")
+            .WithEndpoint(25, 25, name: "smtp")
+            .WithEndpoint(465, 465, name: "smtps")
+            .WithEndpoint(993, 993, name: "imaps")
+            .WithLabPort(8080, "stalwart-web")
+            .WithHomepage("Messaging", "Mail", "mdi-email", "Stalwart mail server", $"https://mail.{settings.Shared.DuckDnsDomain}");
     }
 }

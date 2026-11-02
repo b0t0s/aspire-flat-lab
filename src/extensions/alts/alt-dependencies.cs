@@ -64,6 +64,13 @@ internal static class AltTechnicalServices
         _ = dependencies.Postgres("keila-db", "16-alpine", "keila", "keila", "KEILA_DB_PASSWORD",
             settings.Knowledge.DataPath("KEILA_DB_DATA", "../services-data/system/keila/postgres"));
 
+        // Files and notes sync
+        _ = dependencies.Postgres("nextcloud-db", "16-alpine", "nextcloud", "nextcloud", "NEXTCLOUD_DB_PASSWORD",
+            settings.SmartHome.DataPath("NEXTCLOUD_DB_DATA", "../services-data/system/nextcloud/postgres"));
+        _ = dependencies.Redis("nextcloud-redis");
+        _ = dependencies.Postgres("oxicloud-db", "16-alpine", "oxicloud", "oxicloud", "OXICLOUD_DB_PASSWORD",
+            settings.SmartHome.DataPath("OXICLOUD_DB_DATA", "../services-data/system/oxicloud/postgres"));
+
         // Media
         _ = dependencies.Postgres("ryot-db", "18-alpine", "postgres", "postgres", "RYOT_DB_PASSWORD",
             settings.Media.DataPath("RYOT_DB_DATA", "../services-data/system/ryot/postgres"), "/var/lib/postgresql");

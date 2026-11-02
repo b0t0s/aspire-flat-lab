@@ -167,7 +167,8 @@ if (( INFRA )); then
       docker rm -f "$name" >/dev/null
     fi
   done
-  docker compose up -d --build
+  # --remove-orphans: services moved to the AppHost must give up their container names (cloud, notifications, ...).
+  docker compose up -d --build --remove-orphans
 fi
 
 if (( APPS )); then

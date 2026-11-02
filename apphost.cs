@@ -31,7 +31,7 @@
 #:include src/extensions/alts/secret-alt-services.cs
 #:include src/extensions/alts/smarthome-alt-services.cs
 
-// Infra (caddy, zerotier, homepage, adguard, seafile, ...) lives in docker-compose.yml so it survives restarts of this app stack.
+// Infra (caddy, zerotier, homepage, adguard, home-assistant, ...) lives in docker-compose.yml so it survives restarts of this app stack.
 
 using apphost.cs.src;
 
@@ -47,7 +47,7 @@ builder
     .AddLabGroup(LabGroup.Media, LabRole.Main, b => b.AddMediaServices(dependencies, environmentSettings))
     .AddLabGroup(LabGroup.Chat, LabRole.Main, b => b.AddChatServices(dependencies, environmentSettings))
     .AddLabGroup(LabGroup.Development, LabRole.Main, b => b.AddDevelopmentServices(dependencies, environmentSettings))
-    .AddLabGroup(LabGroup.SmartHome, LabRole.Main, b => b.AddSmartHomeServices(environmentSettings))
+    .AddLabGroup(LabGroup.SmartHome, LabRole.Main, b => b.AddSmartHomeServices(dependencies, environmentSettings))
     .AddLabGroup(LabGroup.Knowledge, LabRole.Main, b => b.AddKnowledgeServices(dependencies, environmentSettings))
     .AddLabGroup(LabGroup.Irl, LabRole.Main, b => b.AddIrlServices(dependencies, environmentSettings))
     .AddLabGroup(LabGroup.Secrets, LabRole.Alt, b => b.AddSecretAltServices(dependencies, environmentSettings))

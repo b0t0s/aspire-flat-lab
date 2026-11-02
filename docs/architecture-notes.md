@@ -40,4 +40,4 @@ Trade-off: two files to read instead of one; `docs/ports.md` (generated) and the
 
 Anything a service cannot take from env vars is produced by the AppHost, not by a script: secrets are generated parameters persisted to `.env`, config files are rendered from templates and copied into the container with `WithContainerFiles`.
 One-off maintenance actions are dashboard commands (`WithDockerExecCommand`, e.g. "Update yt-dlp" on MeTube) or small scripts in `src/scripts/`.
-The Seafile auto-configurator stays an idempotent init container in the infra layer because it has to wait for Seafile to write its own settings first.
+The Seafile auto-configurator is an idempotent run-once container in the app layer (SmartHome group) because it has to wait for Seafile to write its own settings first.

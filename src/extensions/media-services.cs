@@ -95,5 +95,12 @@ internal static class MediaServices
             .WithBindMount(musicPath, "/media", isReadOnly: true)
             .WithHostNetwork()
             .WithHomepage("Media", "Music Assistant", "mdi-speaker", "Music library", $"https://music-assistant.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("flaresolverr", "ghcr.io/flaresolverr/flaresolverr", "latest")
+            .WithContainerName("flaresolverr")
+            .WithDefaultMode(LabMode.Auto)
+            .WithEnvironment("LOG_LEVEL", "info")
+            .WithLabPort(8191, "flaresolverr")
+            .WithLab(lab => lab.PortGroup = "Media");
     }
 }

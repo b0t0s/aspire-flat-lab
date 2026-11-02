@@ -5,6 +5,17 @@ internal static class DevelopmentServices
 {
     public static void AddDevelopmentServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
     {
+        _ = builder.AddContainer("zerobyte", "ghcr.io/nicotsx/zerobyte", "v0.44")
+            .WithContainerName("zerobyte")
+            .WithEnvironment("TZ", settings.Shared.TimeZone)
+            .WithEnvironment("BASE_URL", $"https://backup.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("APP_SECRET", settings.Secret("ZEROBYTE_APP_SECRET", SecretKind.Hex32))
+            .WithBindMount(settings.SmartHome.DataPath("ZEROBYTE_DATA", "../services-data/system/zerobyte"), "/var/lib/zerobyte")
+            .WithBindMount(settings.Shared.DataRoot, "/mydata/services-data", isReadOnly: true)
+            .WithBindMount(settings.SmartHome.DataPath("ZEROBYTE_REPOSITORIES", "../backups"), "/repositories")
+            .WithLabPort(4096, "zerobyte")
+            .WithHomepage("Infrastructure", "Backups", "mdi-backup-restore", "Restic backups of services-data", $"https://backup.{settings.Shared.DuckDnsDomain}");
+
         _ = builder.AddContainer("atuin", "ghcr.io/atuinsh/atuin", "latest")
             .WithContainerName("shell-history")
             .WithArgs("start")

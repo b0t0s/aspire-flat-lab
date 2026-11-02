@@ -63,5 +63,32 @@ internal static class SecretServices
             .WithContainerName("email-signature-generator")
             .WithLabPort(80, "email-signature")
             .WithHomepage("Secrets", "Email Signature Generator", "mdi-email-edit", "Email signature generator", $"https://email-signature-generator.{settings.Shared.DuckDnsDomain}");
+
+        // Single sign-on: Pocket ID is the passkey OIDC provider, Tinyauth puts a login in front of Caddy routes (import tinyauth in the Caddyfile).
+        _ = builder.AddContainer("pocket-id", "ghcr.io/pocket-id/pocket-id", "v2")
+            .WithContainerName("pocket-id")
+            .WithEnvironment("APP_URL", $"https://id.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("TRUST_PROXY", "true")
+            .WithEnvironment("ENCRYPTION_KEY", settings.Secret("POCKET_ID_ENCRYPTION_KEY", SecretKind.Base64))
+            .WithBindMount(settings.Secrets.DataPath("POCKET_ID_DATA", "../services-data/system/pocket-id"), "/app/data")
+            .WithLabPort(1411, "pocket-id")
+            .WithHomepage("Secrets", "Pocket ID", "mdi-passport", "Passkey login (OIDC)", $"https://id.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("tinyauth", "ghcr.io/tinyauthapp/tinyauth", "v5")
+            .WithContainerName("tinyauth")
+            .WithEnvironment("TINYAUTH_APPURL", $"https://auth.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("TINYAUTH_AUTH_USERS", settings.Secret("TINYAUTH_USERS", SecretKind.Manual))
+            .WithEnvironment("TINYAUTH_AUTH_TRUSTEDPROXIES", "172.16.0.0/12")
+            .WithEnvironment("TINYAUTH_OAUTH_PROVIDERS_POCKETID_NAME", "Pocket ID")
+            .WithEnvironment("TINYAUTH_OAUTH_PROVIDERS_POCKETID_CLIENTID", settings.Secrets.Value("TINYAUTH_POCKETID_CLIENT_ID"))
+            .WithEnvironment("TINYAUTH_OAUTH_PROVIDERS_POCKETID_CLIENTSECRET", settings.Secret("TINYAUTH_POCKETID_CLIENT_SECRET", SecretKind.Manual))
+            .WithEnvironment("TINYAUTH_OAUTH_PROVIDERS_POCKETID_AUTHURL", $"https://id.{settings.Shared.DuckDnsDomain}/authorize")
+            .WithEnvironment("TINYAUTH_OAUTH_PROVIDERS_POCKETID_TOKENURL", $"https://id.{settings.Shared.DuckDnsDomain}/api/oidc/token")
+            .WithEnvironment("TINYAUTH_OAUTH_PROVIDERS_POCKETID_USERINFOURL", $"https://id.{settings.Shared.DuckDnsDomain}/api/oidc/userinfo")
+            .WithEnvironment("TINYAUTH_OAUTH_PROVIDERS_POCKETID_REDIRECTURL", $"https://auth.{settings.Shared.DuckDnsDomain}/api/oauth/callback/pocketid")
+            .WithEnvironment("TINYAUTH_OAUTH_PROVIDERS_POCKETID_SCOPES", "openid email profile groups")
+            .WithBindMount(settings.Secrets.DataPath("TINYAUTH_DATA", "../services-data/system/tinyauth"), "/data")
+            .WithLabPort(3000, "tinyauth")
+            .WithHomepage("Secrets", "Tinyauth", "mdi-lock-check", "Login in front of services", $"https://auth.{settings.Shared.DuckDnsDomain}");
     }
 }
