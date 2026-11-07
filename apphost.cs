@@ -25,10 +25,7 @@
 #:include src/extensions/alts/alt-dependencies.cs
 #:include src/extensions/alts/chat-alt-services.cs
 #:include src/extensions/alts/development-alt-services.cs
-#:include src/extensions/alts/entertainment-alt-services.cs
 #:include src/extensions/alts/knowledge-alt-services.cs
-#:include src/extensions/alts/media-alt-services.cs
-#:include src/extensions/alts/secret-alt-services.cs
 #:include src/extensions/alts/smarthome-alt-services.cs
 
 // Infra (caddy, zerotier, homepage, adguard, home-assistant, ...) lives in docker-compose.yml so it survives restarts of this app stack.
@@ -50,9 +47,6 @@ builder
     .AddLabGroup(LabGroup.SmartHome, LabRole.Main, b => b.AddSmartHomeServices(dependencies, environmentSettings))
     .AddLabGroup(LabGroup.Knowledge, LabRole.Main, b => b.AddKnowledgeServices(dependencies, environmentSettings))
     .AddLabGroup(LabGroup.Irl, LabRole.Main, b => b.AddIrlServices(dependencies, environmentSettings))
-    .AddLabGroup(LabGroup.Secrets, LabRole.Alt, b => b.AddSecretAltServices(dependencies, environmentSettings))
-    .AddLabGroup(LabGroup.Entertainment, LabRole.Alt, b => b.AddEntertainmentAltServices(dependencies, environmentSettings))
-    .AddLabGroup(LabGroup.Media, LabRole.Alt, b => b.AddMediaAltServices(dependencies, environmentSettings))
     .AddLabGroup(LabGroup.Chat, LabRole.Alt, b => b.AddChatAltServices(dependencies, environmentSettings))
     .AddLabGroup(LabGroup.Development, LabRole.Alt, b => b.AddDevelopmentAltServices(dependencies, environmentSettings))
     .AddLabGroup(LabGroup.SmartHome, LabRole.Alt, b => b.AddSmartHomeAltServices(dependencies, environmentSettings))

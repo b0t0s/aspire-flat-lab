@@ -8,6 +8,7 @@ internal static class EntertainmentServices
     {
         _ = builder.AddContainer("minecraft", "itzg/minecraft-server", "latest")
             .WithContainerName("minecraft")
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("EULA", "TRUE")
             .WithEnvironment("TYPE", "PAPER")
             .WithEnvironment("DIFFICULTY", "hard")
@@ -23,6 +24,17 @@ internal static class EntertainmentServices
             .WithEndpoint(25565, 25565, name: "minecraft")
             .WithHomepage("Entertainment", "minecraft", "mdi-minecraft", "Game server")
             .WithHomepageWidget("minecraft", "udp://minecraft:25565");
+
+        _ = builder.AddContainer("dm-hero", "ghcr.io/flo0806/dm-hero", "latest")
+            .WithContainerName("dm-hero")
+            .WithDefaultMode(LabMode.Off)
+            .WithEnvironment("NODE_ENV", "production")
+            .WithEnvironment("NITRO_PORT", "3000")
+            .WithEnvironment("NITRO_HOST", "0.0.0.0")
+            .WithBindMount(settings.Entertainment.DataPath("DM_HERO_DATA", "../services-data/system/dm-hero/data"), "/app/data")
+            .WithBindMount(settings.Entertainment.DataPath("DM_HERO_UPLOADS", "../services-data/system/dm-hero/uploads"), "/app/.output/public/uploads")
+            .WithLabPort(3000, "dm-hero")
+            .WithHomepage("Entertainment", "DM Hero", "mdi-dice-d20", "D&D campaign manager", $"https://dm-hero.{settings.Shared.DuckDnsDomain}");
 
         _ = dependencies["rsshub"]
             .WithEndpoint(10004, 1200, name: "rsshub")
@@ -99,16 +111,18 @@ internal static class EntertainmentServices
             .WithLabPort(80, "photoview")
             .WithHomepage("Entertainment", "Gallery", "mdi-image-search", href: $"https://gallery.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddDockerfile("gravity", builder.RepoPath("src/containers/Gravity"), "Dockerfile", "runner")
-            .WithContainerName("gravity")
-            .WithLabPort(80, "gravity")
-            .WithHomepage("Entertainment", "Gravity", "mdi-space-invaders", "Solar system simulator", $"https://gravity.{settings.Shared.DuckDnsDomain}");
-
         _ = builder.AddDockerfile("solar-system", builder.RepoPath("src/containers/solar-system-map-builder"))
             .WithContainerName("solar")
+            .WithDefaultMode(LabMode.Auto)
             .WithConfigFile("configs/solar-system/config.yaml", "/config/config.yaml")
             .WithBindMount(settings.Entertainment.DataPath("SOLAR_SYSTEM_CACHE", "../services-data/system/solar-system"), "/cache")
             .WithLabPort(80, "solar-system")
             .WithHomepage("Entertainment", "Solar map", "mdi-earth", "Solar system maps", $"https://solarmap.{settings.Shared.DuckDnsDomain}/?epoch={DateTime.UtcNow:yyyy-MM-dd}%20{DateTime.UtcNow:HH:mm}:00");
+
+        _ = builder.AddDockerfile("gravity", builder.RepoPath("src/containers/Gravity"), "Dockerfile", "runner")
+            .WithContainerName("gravity")
+            .WithDefaultMode(LabMode.Manual)
+            .WithLabPort(80, "gravity")
+            .WithHomepage("Entertainment", "Gravity", "mdi-space-invaders", "Solar system simulator", $"https://gravity.{settings.Shared.DuckDnsDomain}");
     }
 }

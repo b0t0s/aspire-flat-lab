@@ -63,37 +63,11 @@ internal static class AltTechnicalServices
             settings.Knowledge.DataPath("BOOKSTACK_DB_DATA", "../services-data/system/bookstack/db"));
         _ = dependencies.Postgres("keila-db", "16-alpine", "keila", "keila", "KEILA_DB_PASSWORD",
             settings.Knowledge.DataPath("KEILA_DB_DATA", "../services-data/system/keila/postgres"));
+        _ = dependencies.Postgres("joplin-db", "16-alpine", "joplin", "joplin", "JOPLIN_DB_PASSWORD",
+            settings.Knowledge.DataPath("JOPLIN_DB_DATA", "../services-data/system/joplin/postgres"));
 
-        // Files and notes sync
-        _ = dependencies.Postgres("nextcloud-db", "16-alpine", "nextcloud", "nextcloud", "NEXTCLOUD_DB_PASSWORD",
-            settings.SmartHome.DataPath("NEXTCLOUD_DB_DATA", "../services-data/system/nextcloud/postgres"));
-        _ = dependencies.Redis("nextcloud-redis");
         _ = dependencies.Postgres("oxicloud-db", "16-alpine", "oxicloud", "oxicloud", "OXICLOUD_DB_PASSWORD",
             settings.SmartHome.DataPath("OXICLOUD_DB_DATA", "../services-data/system/oxicloud/postgres"));
-
-        // Media
-        _ = dependencies.Postgres("ryot-db", "18-alpine", "postgres", "postgres", "RYOT_DB_PASSWORD",
-            settings.Media.DataPath("RYOT_DB_DATA", "../services-data/system/ryot/postgres"), "/var/lib/postgresql");
-        _ = dependencies.Redis("immich-redis", settings.Media.DataPath("IMMICH_REDIS_DATA", "../services-data/system/immich/redis"));
-        _ = dependencies.Add("immich-postgres", "ghcr.io/immich-app/postgres", "16-vectorchord0.5.3-pgvector0.8.1")
-            .WithEnvironment("POSTGRES_USER", "immich")
-            .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("IMMICH_DB_PASSWORD"))
-            .WithEnvironment("POSTGRES_DB", "immich")
-            .WithBindMount(settings.Media.DataPath("IMMICH_PG_DATA", "../services-data/system/immich/postgres"), "/var/lib/postgresql/data")
-            .WithHealthcheck("pg_isready -U $POSTGRES_USER -d $POSTGRES_DB");
-        _ = dependencies.Add("immich-typesense", "typesense/typesense", "27.1")
-            .WithEnvironment("TYPESENSE_API_KEY", settings.Secret("IMMICH_TYPESENSE_KEY"))
-            .WithEnvironment("TYPESENSE_DATA_DIR", "/data")
-            .WithBindMount(settings.Media.DataPath("IMMICH_TYPESENSE_DATA", "../services-data/system/immich/typesense"), "/data");
-
-        // Secrets
-        _ = dependencies.MariaDb("passbolt-db", "11", "passbolt", "passbolt", "PASSBOLT_DB_PASSWORD",
-            settings.Secrets.DataPath("PASSBOLT_DB_DATA", "../services-data/system/passbolt/db"));
-        _ = dependencies.MariaDb("psono-db", "11", "psono", "psono", "PSONO_DB_PASSWORD",
-            settings.Secrets.DataPath("PSONO_DB_DATA", "../services-data/system/psono/db"));
-        _ = dependencies.Postgres("documenso-db", "16-alpine", "documenso", "documenso", "DOCUMENSO_DB_PASSWORD",
-            settings.Secrets.DataPath("DOCUMENSO_DB_DATA", "../services-data/system/documenso/postgres"));
-        _ = dependencies.Redis("documenso-redis");
 
         // Chat
         _ = dependencies.Postgres("synapse-db", "16-alpine", "synapse", "synapse", "SYNAPSE_DB_PASSWORD",

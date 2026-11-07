@@ -5,6 +5,17 @@ internal static class ChatAltServices
 {
     public static void AddChatAltServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
     {
+        _ = builder.AddContainer("open-webui", "ghcr.io/open-webui/open-webui", "main")
+            .WithContainerName("llm")
+            .WithDefaultMode(LabMode.Manual)
+            .WithEnvironment("TZ", settings.Shared.TimeZone)
+            .WithEnvironment("ENABLE_SIGNUP", "True")
+            .WithEnvironment("OLLAMA_BASE_URL", "http://ollama:11434")
+            .WithBindMount(settings.Chat.DataPath("OPEN_WEBUI_DATA", "../services-data/system/open-webui"), "/app/backend/data")
+            .WithEndpoint(10007, 8080, name: "open-webui")
+            .WaitFor(dependencies["ollama"])
+            .WithHomepage("Development", "LLM", "mdi-robot", href: $"https://llm.{settings.Shared.DuckDnsDomain}");
+
         // XMPP: Snikket (all-in-one) needs host networking for its own 80/443/5222/5269.
         var snikketDataPath = settings.Chat.DataPath("SNIKKET_DATA_PATH", "../services-data/system/snikket");
         var snikketAcmePath = Path.Combine(snikketDataPath, "acme-challenge");

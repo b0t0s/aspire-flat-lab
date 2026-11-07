@@ -7,6 +7,7 @@ internal static class DevelopmentServices
     {
         _ = builder.AddContainer("zerobyte", "ghcr.io/nicotsx/zerobyte", "v0.44")
             .WithContainerName("zerobyte")
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("TZ", settings.Shared.TimeZone)
             .WithEnvironment("BASE_URL", $"https://backup.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("APP_SECRET", settings.Secret("ZEROBYTE_APP_SECRET", SecretKind.Hex32))
@@ -14,10 +15,11 @@ internal static class DevelopmentServices
             .WithBindMount(settings.Shared.DataRoot, "/mydata/services-data", isReadOnly: true)
             .WithBindMount(settings.SmartHome.DataPath("ZEROBYTE_REPOSITORIES", "../backups"), "/repositories")
             .WithLabPort(4096, "zerobyte")
-            .WithHomepage("Infrastructure", "Backups", "mdi-backup-restore", "Restic backups of services-data", $"https://backup.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Infrastructure", "Backups", "mdi-backup-restore", "", $"https://backup.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("atuin", "ghcr.io/atuinsh/atuin", "latest")
             .WithContainerName("shell-history")
+            .WithDefaultMode(LabMode.Auto)
             .WithArgs("start")
             .WithEnvironment("ATUIN_HOST", "0.0.0.0")
             .WithEnvironment("ATUIN_OPEN_REGISTRATION", "true")
@@ -29,6 +31,7 @@ internal static class DevelopmentServices
 
         _ = builder.AddContainer("ideon", "ghcr.io/3xpyth0n/ideon", "latest")
             .WithContainerName("ideon")
+            .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("APP_URL", $"https://ideon.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("TIMEZONE", settings.Shared.TimeZone)
             .WithEnvironment("LOG_LEVEL", "info")
@@ -54,6 +57,7 @@ internal static class DevelopmentServices
 
         _ = builder.AddContainer("container-hub", "ghcr.io/eznix86/docker-registry-ui", "latest")
             .WithContainerName("registry")
+            .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("REGISTRY_URL", settings.Development.Value("REGISTRY_URL"))
             .WithEnvironment("REGISTRY_AUTH", settings.Development.Value("REGISTRY_AUTH"))
             .WithLabPort(3000, "container-hub")
@@ -63,10 +67,12 @@ internal static class DevelopmentServices
 
         var guacd = builder.AddContainer("guacd", "guacamole/guacd", "1.6.0")
             .WithContainerName("guacd")
+            .WithDefaultMode(LabMode.Auto)
             .WithBindMount(termixDataPath, "/termix-data");
 
         _ = builder.AddContainer("termix", "ghcr.io/termix-ssh/termix", "latest")
             .WithContainerName("termix")
+            .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("PORT", "8080")
             .WithEnvironment("GUACD_HOST", "guacd")
             .WithEnvironment("GUACD_TUNNEL_HOST", "termix")
@@ -98,14 +104,10 @@ internal static class DevelopmentServices
 
         _ = builder.AddContainer("convertx", "ghcr.io/c4illin/convertx", "latest")
             .WithContainerName("converter")
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("JWT_SECRET", settings.Secret("CONVERTX_JWT_SECRET"))
             .WithBindMount(settings.Development.DataPath("CONVERTX_DATA", "../services-data/system/convertx"), "/app/data")
             .WithLabPort(3000, "convertx")
             .WithHomepage("Development", "Converter", "mdi-file-convert", href: $"https://convert.{settings.Shared.DuckDnsDomain}");
-
-        _ = builder.AddContainer("lightpanda", "lightpanda/browser", "latest")
-            .WithContainerName("lightpanda")
-            .WithLabPort(9222, "lightpanda")
-            .WithHomepage("Development", "Lightpanda", "mdi-web", "Headless browser (CDP)", $"https://lightpanda.{settings.Shared.DuckDnsDomain}");
     }
 }

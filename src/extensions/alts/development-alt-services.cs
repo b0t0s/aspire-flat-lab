@@ -5,6 +5,12 @@ internal static class DevelopmentAltServices
 {
     public static void AddDevelopmentAltServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
     {
+        _ = builder.AddContainer("lightpanda", "lightpanda/browser", "latest")
+            .WithContainerName("lightpanda")
+            .WithDefaultMode(LabMode.Manual)
+            .WithLabPort(9222, "lightpanda")
+            .WithHomepage("Development", "Lightpanda", "mdi-web", "Headless browser (CDP)", $"https://lightpanda.{settings.Shared.DuckDnsDomain}");
+
         _ = builder.AddContainer("code-server", "linuxserver/code-server", "latest")
             .WithContainerName("ide")
             .WithEnvironment("PUID", settings.Shared.Uid)

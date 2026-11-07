@@ -6,6 +6,16 @@ internal static class KnowledgeServices
 {
     public static void AddKnowledgeServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
     {
+        _ = builder.AddContainer("trilium", "triliumnext/trilium", "latest")
+            .WithContainerName("trilium")
+            .WithDefaultMode(LabMode.Auto)
+            .WithEnvironment("TZ", settings.Shared.TimeZone)
+            .WithEnvironment("USER_UID", settings.Shared.Uid)
+            .WithEnvironment("USER_GID", settings.Shared.Gid)
+            .WithBindMount(settings.Knowledge.DataPath("TRILIUM_DATA", "../services-data/system/trilium"), "/home/node/trilium-data")
+            .WithLabPort(8080, "trilium")
+            .WithHomepage("Knowledge", "Trilium", "mdi-file-tree", "", $"https://trilium.{settings.Shared.DuckDnsDomain}");
+
         _ = builder.AddContainer("paperless-ngx", "ghcr.io/paperless-ngx/paperless-ngx", "latest")
             .WithContainerName("documents")
             .WithDefaultMode(LabMode.Auto)
@@ -48,6 +58,7 @@ internal static class KnowledgeServices
 
         _ = builder.AddContainer("ghost", "ghost", "5")
             .WithContainerName("blog")
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("database__client", "mysql")
             .WithEnvironment("database__connection__host", "ghost-db")
             .WithEnvironment("database__connection__user", "ghost")
@@ -61,6 +72,7 @@ internal static class KnowledgeServices
 
         _ = builder.AddContainer("vaultisse", "ghcr.io/albertamat/vaultisse", "latest")
             .WithContainerName("vaultisse")
+            .WithDefaultMode(LabMode.Off)
             .WithEnvironment("DB_HOST", "vaultisse-db")
             .WithEnvironment("DB_PORT", "5432")
             .WithEnvironment("DB_NAME", "vaultisse")
@@ -70,14 +82,5 @@ internal static class KnowledgeServices
             .WithLabPort(3000, "vaultisse")
             .WaitFor(dependencies["vaultisse-db"])
             .WithHomepage("Knowledge", "Book lending", "mdi-bookshelf", "", $"https://vaultisse.{settings.Shared.DuckDnsDomain}");
-
-        _ = builder.AddContainer("trilium", "triliumnext/trilium", "latest")
-            .WithContainerName("trilium")
-            .WithEnvironment("TZ", settings.Shared.TimeZone)
-            .WithEnvironment("USER_UID", settings.Shared.Uid)
-            .WithEnvironment("USER_GID", settings.Shared.Gid)
-            .WithBindMount(settings.Knowledge.DataPath("TRILIUM_DATA", "../services-data/system/trilium"), "/home/node/trilium-data")
-            .WithLabPort(8080, "trilium")
-            .WithHomepage("Knowledge", "Trilium", "mdi-file-tree", "", $"https://trilium.{settings.Shared.DuckDnsDomain}");
     }
 }

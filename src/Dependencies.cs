@@ -87,6 +87,10 @@ internal static class TechnicalServices
             settings.Development.DataPath("USERTOUR_DB_DATA", "../services-data/system/usertour/postgres"));
         _ = dependencies.Redis("usertour-redis", settings.Development.DataPath("USERTOUR_REDIS_DATA", "../services-data/system/usertour/redis"));
 
+        _ = dependencies.Postgres("nextcloud-db", "16-alpine", "nextcloud", "nextcloud", "NEXTCLOUD_DB_PASSWORD",
+            settings.SmartHome.DataPath("NEXTCLOUD_DB_DATA", "../services-data/system/nextcloud/postgres"));
+        _ = dependencies.Redis("nextcloud-redis");
+
         // Knowledge
         _ = dependencies.Postgres("vaultisse-db", "16-alpine", "vaultisse", "vaultisse", "VAULTISSE_DB_PASSWORD",
             settings.Knowledge.DataPath("VAULTISSE_DB_DATA", "../services-data/system/vaultisse/postgres"));
@@ -101,23 +105,29 @@ internal static class TechnicalServices
             settings.Knowledge.DataPath("PAPERLESS_DB_DATA", "../services-data/system/paperless/postgres"));
         _ = dependencies.Redis("paperless-redis", settings.Knowledge.DataPath("PAPERLESS_REDIS_DATA", "../services-data/system/paperless/redis"));
 
-        _ = dependencies.Postgres("joplin-db", "16-alpine", "joplin", "joplin", "JOPLIN_DB_PASSWORD",
-            settings.Knowledge.DataPath("JOPLIN_DB_DATA", "../services-data/system/joplin/postgres"));
-
         // Secrets
         _ = dependencies.Postgres("infisical-db", "16-alpine", "infisical", "infisical", "INFISICAL_DB_PASSWORD",
             settings.Secrets.DataPath("INFISICAL_DB_DATA", "../services-data/system/infisical/postgres"));
         _ = dependencies.Redis("infisical-redis");
+        _ = dependencies.MariaDb("passbolt-db", "11", "passbolt", "passbolt", "PASSBOLT_DB_PASSWORD",
+            settings.Secrets.DataPath("PASSBOLT_DB_DATA", "../services-data/system/passbolt/db"));
+        _ = dependencies.MariaDb("psono-db", "11", "psono", "psono", "PSONO_DB_PASSWORD",
+            settings.Secrets.DataPath("PSONO_DB_DATA", "../services-data/system/psono/db"));
+        _ = dependencies.Postgres("documenso-db", "16-alpine", "documenso", "documenso", "DOCUMENSO_DB_PASSWORD",
+            settings.Secrets.DataPath("DOCUMENSO_DB_DATA", "../services-data/system/documenso/postgres"));
+        _ = dependencies.Redis("documenso-redis");
 
         // Media
+        _ = dependencies.Postgres("ryot-db", "18-alpine", "postgres", "postgres", "RYOT_DB_PASSWORD",
+            settings.Media.DataPath("RYOT_DB_DATA", "../services-data/system/ryot/postgres"), "/var/lib/postgresql");
         _ = dependencies.Postgres("piped-db", "16-alpine", "piped", "piped", "PIPED_DB_PASSWORD",
             settings.Media.DataPath("PIPED_DB_DATA", "../services-data/system/piped/postgres"));
 
         // Irl
-        _ = dependencies.Postgres("healthlog-db", "16-alpine", "healthlog", "healthlog", "HEALTHLOG_DB_PASSWORD",
-            settings.Irl.DataPath("HEALTHLOG_DB_DATA", "../services-data/system/healthlog/postgres"));
         _ = dependencies.Postgres("medikeep-db", "16-alpine", "medical_records", "medapp", "MEDIKEEP_DB_PASSWORD",
             settings.Irl.DataPath("MEDIKEEP_DB_DATA", "../services-data/system/medikeep/postgres"));
+        _ = dependencies.Postgres("healthlog-db", "16-alpine", "healthlog", "healthlog", "HEALTHLOG_DB_PASSWORD",
+            settings.Irl.DataPath("HEALTHLOG_DB_DATA", "../services-data/system/healthlog/postgres"));
         _ = dependencies.Postgres("tradetally-db", "16-alpine", "tradetally", "trader", "TRADETALLY_DB_PASSWORD",
             settings.Irl.DataPath("TRADETALLY_DB_DATA", "../services-data/system/tradetally/postgres"));
 

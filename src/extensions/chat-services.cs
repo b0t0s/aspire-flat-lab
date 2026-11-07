@@ -41,16 +41,6 @@ internal static class ChatServices
             .WithBindMount(hermesPublicPath, "/public", isReadOnly: true)
             .WithHomepage("Messaging", "Agent", "mdi-robot", "", $"https://hermes.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("open-webui", "ghcr.io/open-webui/open-webui", "main")
-            .WithContainerName("llm")
-            .WithEnvironment("TZ", settings.Shared.TimeZone)
-            .WithEnvironment("ENABLE_SIGNUP", "True")
-            .WithEnvironment("OLLAMA_BASE_URL", "http://ollama:11434")
-            .WithBindMount(settings.Chat.DataPath("OPEN_WEBUI_DATA", "../services-data/system/open-webui"), "/app/backend/data")
-            .WithEndpoint(10007, 8080, name: "open-webui")
-            .WaitFor(dependencies["ollama"])
-            .WithHomepage("Development", "LLM", "mdi-robot", href: $"https://llm.{settings.Shared.DuckDnsDomain}");
-
         _ = builder.AddContainer("pingvin-share", "stonith404/pingvin-share", "latest")
             .WithContainerName("sharing")
             .WithDefaultMode(LabMode.Auto)
@@ -60,25 +50,9 @@ internal static class ChatServices
             .WithLabPort(3000, "pingvin-share")
             .WithHomepage("Messaging", "Sharing", "mdi-share-variant", href: $"https://sharing.{settings.Shared.DuckDnsDomain}");
 
-        // IRC
-        var ergochat = builder.AddContainer("irc-ergochat", "ghcr.io/ergochat/ergo", "latest")
-            .WithContainerName("irc-server")
-            .WithEndpoint(6667, 6667, name: "irc")
-            .WithLabPort(8080, "irc-web")
-            .WithHomepage("Messaging", "IRC", "mdi-server-network", "SERVER", $"https://irc.{settings.Shared.DuckDnsDomain}");
-
-        _ = builder.AddContainer("irc-thelounge", "ghcr.io/thelounge/thelounge", "latest")
-            .WithContainerName("irc")
-            .WithEnvironment("HOST", "0.0.0.0")
-            .WithEnvironment("PORT", "9000")
-            .WithBindMount(settings.Chat.DataPath("THELOUNGE_DATA", "../services-data/system/thelounge"), "/var/opt/thelounge")
-            .WithConfigFile("configs/thelounge/config.js", "/var/opt/thelounge/config.js", Path.Combine(settings.Chat.DataPath("THELOUNGE_DATA", "../services-data/system/thelounge"), "config.js"))
-            .WithLabPort(9000, "thelounge")
-            .WaitFor(ergochat)
-            .WithHomepage("Messaging", "IRC", "mdi-chat", href: $"https://irc.{settings.Shared.DuckDnsDomain}");
-
         _ = builder.AddContainer("smp-server", "simplexchat/smp-server", "latest")
             .WithContainerName("smp-server")
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("ADDR", settings.Chat.Value("SMP_SERVER_ADDR", settings.Shared.DuckDnsDomain))
             .WithEnvironment("PASS", settings.Secret("SMP_SERVER_PASS", SecretKind.Manual))
             .WithBindMount(settings.Chat.DataPath("SMP_SERVER_CONFIG", "../services-data/system/smp-server/config"), "/etc/opt/simplex")
@@ -88,16 +62,37 @@ internal static class ChatServices
 
         _ = builder.AddContainer("continuwuity", "forgejo.ellis.link/continuwuation/continuwuity", "latest")
             .WithContainerName("matrix-server")
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("CONTINUWUITY_SERVER_NAME", settings.Shared.DuckDnsDomain)
             .WithEnvironment("CONTINUWUITY_DATABASE_PATH", "/var/lib/continuwuity")
             .WithEnvironment("CONTINUWUITY_ADDRESS", "0.0.0.0")
             .WithEnvironment("CONTINUWUITY_PORT", "8008")
             .WithBindMount(settings.Chat.DataPath("CONTINUWUITY_DATA", "../services-data/system/continuwuity"), "/var/lib/continuwuity")
             .WithLabPort(8008, "continuwuity")
-            .WithHomepage("Messaging", "Matrix", "mdi-server-network", "Continuwuity homeserver", $"https://matrix.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Messaging", "Matrix", "mdi-server-network", "", $"https://matrix.{settings.Shared.DuckDnsDomain}");
+
+        // IRC
+        var ergochat = builder.AddContainer("ergochat", "ghcr.io/ergochat/ergo", "latest")
+            .WithContainerName("irc-server")
+            .WithDefaultMode(LabMode.Manual)
+            .WithEndpoint(6667, 6667, name: "irc")
+            .WithLabPort(8080, "irc-web")
+            .WithHomepage("Messaging", "IRC", "mdi-server-network", "SERVER", $"https://irc.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("thelounge", "ghcr.io/thelounge/thelounge", "latest")
+            .WithContainerName("irc")
+            .WithDefaultMode(LabMode.Manual)
+            .WithEnvironment("HOST", "0.0.0.0")
+            .WithEnvironment("PORT", "9000")
+            .WithBindMount(settings.Chat.DataPath("THELOUNGE_DATA", "../services-data/system/thelounge"), "/var/opt/thelounge")
+            .WithConfigFile("configs/thelounge/config.js", "/var/opt/thelounge/config.js", Path.Combine(settings.Chat.DataPath("THELOUNGE_DATA", "../services-data/system/thelounge"), "config.js"))
+            .WithLabPort(9000, "thelounge")
+            .WaitFor(ergochat)
+            .WithHomepage("Messaging", "IRC", "mdi-chat", href: $"https://irc.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("stalwart", "stalwartlabs/stalwart", "v1")
             .WithContainerName("mail")
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("STALWART_RECOVERY_ADMIN", ReferenceExpression.Create($"admin:{settings.Secret("STALWART_ADMIN_PASSWORD")}"))
             .WithBindMount(settings.Chat.DataPath("STALWART_DATA", "../services-data/system/stalwart/data"), "/var/lib/stalwart")
             .WithBindMount(settings.Chat.DataPath("STALWART_CONFIG", "../services-data/system/stalwart/config"), "/etc/stalwart")
@@ -106,5 +101,11 @@ internal static class ChatServices
             .WithEndpoint(993, 993, name: "imaps")
             .WithLabPort(8080, "stalwart-web")
             .WithHomepage("Messaging", "Mail", "mdi-email", "Stalwart mail server", $"https://mail.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("email-signature", "ghcr.io/clarkemedia/email-signature-generator", "latest")
+            .WithContainerName("email-signature-generator")
+            .WithDefaultMode(LabMode.Manual)
+            .WithLabPort(80, "email-signature")
+            .WithHomepage("Messaging", "Email Signature Generator", "mdi-email-edit", "Email signature generator", $"https://email-signature-generator.{settings.Shared.DuckDnsDomain}");
     }
 }
