@@ -3,7 +3,7 @@ using static EnvironmentSettings;
 
 internal static class KnowledgeAltServices
 {
-    public static void AddKnowledgeAltServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddKnowledgeAltServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("calibre-web", "lscr.io/linuxserver/calibre-web", "latest")
             .WithContainerName("archive")
@@ -53,7 +53,7 @@ internal static class KnowledgeAltServices
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://affine:{settings.Secret("AFFINE_DB_PASSWORD")}@affine-db:5432/affine"))
             .WithBindMount(settings.Knowledge.DataPath("AFFINE_DATA", "../services-data/system/affine"), "/data")
             .WithLabPort(3010, "affine")
-            .WaitFor(dependencies["affine-db"])
+            .WaitFor(dependencies.AffineDb)
             .WithHomepage("Knowledge", "Affine", "mdi-notebook", "Team foundation server", $"https://affine.{settings.Shared.DuckDnsDomain}");
 
         var outlineSecrets = settings.Knowledge.DataPath("OUTLINE_SECRETS", "../services-data/system/outline/secrets");
@@ -70,8 +70,8 @@ internal static class KnowledgeAltServices
             .WithLabPort(3000, "outline")
             .WithEnvironment("SECRET_KEY", settings.Secret("OUTLINE_SECRET_KEY", SecretKind.Hex32, Path.Combine(outlineSecrets, "outline_secret_key")))
             .WithEnvironment("UTILS_SECRET", settings.Secret("OUTLINE_UTILS_SECRET_KEY", SecretKind.Hex32, Path.Combine(outlineSecrets, "outline_utils_secret")))
-            .WaitFor(dependencies["outline-db"])
-            .WaitFor(dependencies["outline-redis"])
+            .WaitFor(dependencies.OutlineDb)
+            .WaitFor(dependencies.OutlineRedis)
             .WithHomepage("Knowledge", "Dev notes", "mdi-file-document-multiple", href: $"https://docs.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("bookstack", "ghcr.io/linuxserver/bookstack", "latest")
@@ -87,7 +87,7 @@ internal static class KnowledgeAltServices
             .WithEnvironment("DB_PASS", settings.Secret("BOOKSTACK_DB_PASSWORD"))
             .WithBindMount(settings.Knowledge.DataPath("BOOKSTACK_DATA", "../services-data/system/bookstack"), "/config")
             .WithLabPort(80, "bookstack")
-            .WaitFor(dependencies["bookstack-db"])
+            .WaitFor(dependencies.BookstackDb)
             .WithHomepage("Knowledge", "Wiki", "mdi-file-document-multiple", href: $"https://wiki.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("zensical", "zensical/zensical", "latest")
@@ -111,9 +111,9 @@ internal static class KnowledgeAltServices
             .WithEnvironment("MEILI_HOST", "http://karakeep-meilisearch:7700")
             .WithEnvironment("MEILI_MASTER_KEY", settings.Secret("KARAKEEP_MEILI_KEY"))
             .WithLabPort(3000, "karakeep")
-            .WaitFor(dependencies["karakeep-db"])
-            .WaitFor(dependencies["karakeep-redis"])
-            .WaitFor(dependencies["karakeep-meilisearch"])
+            .WaitFor(dependencies.KarakeepDb)
+            .WaitFor(dependencies.KarakeepRedis)
+            .WaitFor(dependencies.KarakeepMeilisearch)
             .WithHomepage("Knowledge", "Cabinet", "mdi-bookmark-multiple", href: $"https://karakeep.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("karakeep", "http://cabinet:3000", key: HomepageVar("KARAKEEP_WIDGET_KEY"));
 
@@ -128,8 +128,8 @@ internal static class KnowledgeAltServices
             .WithEnvironment("STORAGE_FOLDER", "/data/data")
             .WithBindMount(Path.Combine(settings.Knowledge.DataPath("LINKWARDEN_DATA", "../services-data/system/linkwarden/data"), "data"), "/data/data")
             .WithLabPort(3000, "linkwarden")
-            .WaitFor(dependencies["linkwarden-db"])
-            .WaitFor(dependencies["linkwarden-meilisearch"])
+            .WaitFor(dependencies.LinkwardenDb)
+            .WaitFor(dependencies.LinkwardenMeilisearch)
             .WithHomepage("Knowledge", "Pocket", "mdi-link-variant", href: $"https://pocket.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("linkwarden", "http://pocket:3000", key: HomepageVar("LINKWARDEN_WIDGET_KEY"));
 
@@ -144,7 +144,7 @@ internal static class KnowledgeAltServices
             .WithEnvironment("POSTGRES_USER", "joplin")
             .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("JOPLIN_DB_PASSWORD"))
             .WithLabPort(22300, "joplin")
-            .WaitFor(dependencies["joplin-db"])
+            .WaitFor(dependencies.JoplinDb)
             .WithHomepage("Knowledge", "Joplin", "si-joplin", "Notes sync server", $"https://joplin.{settings.Shared.DuckDnsDomain}");
     }
 }

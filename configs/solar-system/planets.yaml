@@ -1,0 +1,209 @@
+
+defaults:
+  maps:
+    tick_params:
+      axis: both
+      which: both
+      bottom: false
+      top: false
+      left: false
+      right: false
+      labelbottom: false
+      labelleft: false
+
+    aspect:
+      aspect: equal
+      adjustable: datalim
+
+    grid:
+      visible: false
+
+    spines:
+      top: true
+      right: true
+      bottom: true
+      left: true
+
+    facecolor: [1, 1, 1, 1]
+
+    title_style:
+      family: Unica One
+      size: 30
+
+    adjust_text:
+      force_static: 400
+      force_texts: 200
+      force_explode: 1
+      time_lim: 1.0
+      ensure_inside_axes: true
+      pull_threshold: 100
+
+    center:
+      name: Sun
+      command: 500@0
+      marker_style:
+        color: yellow
+        s: 100
+      label_style: null
+
+  objects:
+
+    trajectory_past:
+      enabled: true
+      style:
+        color: '0.8'
+        linewidth: 1
+
+    trajectory_future:
+      enabled: false
+      style:
+        color: '0.8'
+        linestyle: "--"
+
+    label_style:
+      family: Roboto Mono
+      ha: "center"
+      va: "top"
+
+    marker_style:
+      color: black
+      edgecolors: black
+      s: 50
+      zorder: 999
+
+definitions:
+
+    inner_planets: &inner_planet_default
+      ephemeris_file:
+        minimum_ephemeris_request:
+          time_step: 1 day
+          start_epoch: "-120 days"
+          stop_epoch: "30 days"
+        max_interpolation_interval: 2 days
+        cache_expiration_time: 10 days
+      trajectory_past:
+        duration: 80D
+        time_step: 1 days
+      trajectory_future:
+        enabled: false
+
+    outer_planets: &outer_planet_default
+      ephemeris_file:
+        minimum_ephemeris_request:
+          time_step: 50 days
+          start_epoch: "-4500 days"
+          stop_epoch: "100 days"
+        max_interpolation_interval: 100 days
+        cache_expiration_time: 10 days
+      trajectory_past:
+        duration: 4000 days
+        time_step: 50 days
+      trajectory_future:
+        enabled: false
+
+    moons: &moon_default
+      ephemeris_file:
+        minimum_ephemeris_request:
+          time_step: 1 hour
+          start_epoch: "-20 days"
+          stop_epoch: "20 days"
+        max_interpolation_interval: 1 hour
+        cache_expiration_time: 10 days
+      trajectory_past:
+        duration: 1 days
+        time_step: 1 hour
+      trajectory_future:
+        enabled: false
+      marker_style:
+        color: black
+        s: 30
+
+
+title:
+  text: THE PLANETS
+  style:
+    family: Unica One
+    size: 60
+
+figure:
+  figsize: [19.2, 10.80]
+  dpi: 100
+
+gridspec:
+  ncols: 2
+  nrows: 1
+  hspace: 0
+  wspace: 0.02
+  left: 0.02
+  right: 0.98
+  top: 0.9
+  bottom: 0.02
+
+maps:
+
+  - gridspec:
+      rows: "0:1"
+      columns: "0:1"
+    axis:
+      xlim: [-300000000, 300000000]
+      ylim: [-300000000, 300000000]
+    objects:
+      - name: Mercury
+        <<: *inner_planet_default
+        command: '199'
+        marker_style:
+          color: lightgrey
+      - name: Venus
+        <<: *inner_planet_default
+        command: '299'
+        marker_style:
+          color: wheat
+      - name: Earth
+        <<: *inner_planet_default
+        command: '399'
+        marker_style:
+          color: blue
+      - name: Mars
+        <<: *inner_planet_default
+        command: '499'
+        marker_style:
+          color: lightcoral
+      - name: Ceres
+        <<: *inner_planet_default
+        command: 'Ceres'
+        marker_style:
+          s: 30
+          color: lightgray
+
+  - gridspec:
+      rows: "0:1"
+      columns: "1:2"
+    axis:
+      xlim: [-6000000000, 6000000000]
+      ylim: [-6000000000, 6000000000]
+    objects:
+      - name: Jupiter
+        <<: *outer_planet_default
+        command: '599'
+        marker_style:
+          color: salmon
+      - name: Saturn
+        <<: *outer_planet_default
+        command: '699'
+        marker_style:
+          color: navajowhite
+      - name: Uranus
+        <<: *outer_planet_default
+        command: '799'
+        marker_style:
+          color: mediumaquamarine
+      - name: Neptune
+        <<: *outer_planet_default
+        command: '899'
+        marker_style:
+          color: paleturquoise
+      - name: Pluto
+        <<: *outer_planet_default
+        command: '999'
+        marker_style:
+          color: tan

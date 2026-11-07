@@ -3,7 +3,7 @@ using static EnvironmentSettings;
 
 internal static class SmartHomeServices
 {
-    public static void AddSmartHomeServices(this IDistributedApplicationBuilder builder,  DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddSmartHomeServices(this IDistributedApplicationBuilder builder,  LabDependencies dependencies, EnvironmentSettings settings)
     {
         var mySpeedHostPort = int.Parse(settings.SmartHome.Value("MYSPEED_PORT", "5216"), System.Globalization.CultureInfo.InvariantCulture);
         _ = builder.AddContainer("myspeed", "germannewsmaker/myspeed", "latest")
@@ -92,8 +92,8 @@ internal static class SmartHomeServices
             .WithEnvironment("TRUSTED_PROXIES", "caddy")
             .WithBindMount(settings.SmartHome.DataPath("NEXTCLOUD_DATA", "../services-data/system/nextcloud/html"), "/var/www/html")
             .WithLabPort(80, "nextcloud")
-            .WaitFor(dependencies["nextcloud-db"])
-            .WaitFor(dependencies["nextcloud-redis"])
+            .WaitFor(dependencies.NextcloudDb)
+            .WaitFor(dependencies.NextcloudRedis)
             .WithHomepage("Household", "Nextcloud", "si-nextcloud", "Files, calendar, contacts", $"https://nextcloud.{settings.Shared.DuckDnsDomain}");
     }
 }

@@ -800,6 +800,21 @@
         reverse_proxy tinyauth:3000
     }
 
+    @kiwix host kiwix.{$DUCKDNS_DOMAIN}
+    handle @kiwix {
+        reverse_proxy kiwix:8080
+    }
+
+    @sky host sky.{$DUCKDNS_DOMAIN}
+    handle @sky {
+        reverse_proxy stellarium:3000
+    }
+
+    @notebooks host notebooks.{$DUCKDNS_DOMAIN}
+    handle @notebooks {
+        reverse_proxy jupyter:8888
+    }
+
     # Fallback
     handle {
         abort

@@ -26,13 +26,18 @@
     "photoview/photoview": 4,
     "resonand/resonand": 5,
     "solar-system/solar-system": 7,
+    "stellarium/stellarium": 10,
     "worldmonitor/worldmonitor": 8
   },
   "Household": {
+    "actualbudget/actualbudget": 5,
+    "gramps-web/gramps-web": 7,
     "homebox/homebox": 3,
     "house-planner/house-planner": 1,
+    "nextcloud/nextcloud": 4,
     "radicale/radicale": 0,
-    "seafile/seafile": 2
+    "seafile/seafile": 2,
+    "wallos/wallos": 6
   },
   "Infrastructure": {
     "atuin/atuin": 3,
@@ -43,8 +48,11 @@
     "zerobyte/zerobyte": 5
   },
   "Irl": {
+    "dawarich/dawarich": 4,
     "healthlog/healthlog": 1,
     "medikeep/medikeep": 0,
+    "parenthese-aio/parenthese-aio": 6,
+    "radicale/radicale": 5,
     "tradetally/tradetally": 2,
     "trailkeepr/trailkeepr": 3
   },
@@ -53,36 +61,51 @@
     "faved/faved": 4,
     "ghost/ghost": 3,
     "joplin/joplin": 8,
+    "jupyter/jupyter": 12,
+    "kiwix/kiwix": 11,
     "memos/memos": 2,
     "nostos/nostos": 1,
     "obsidian-couchdb/obsidian-couchdb": 9,
     "paperless-ngx/paperless-ngx": 0,
+    "trilium/trilium": 10,
     "vaultisse/vaultisse": 5,
     "zensical/zensical": 6
   },
   "Media": {
     "cliparr/cliparr": 1,
     "flaresolverr/flaresolverr": 7,
+    "lidarr/lidarr": 10,
     "metube/metube": 2,
     "pinchflat-ngx/pinchflat-ngx": 6,
+    "piped-backend/piped-backend": 12,
     "piped-frontend/piped-frontend": 0,
+    "piped-proxy/piped-proxy": 13,
     "prowlarr/prowlarr": 4,
     "qbittorrent/qbittorrent-web": 3,
-    "sound-vault/sound-vault": 5
+    "radarr/radarr": 8,
+    "resonand/resonand": 14,
+    "sonarr/sonarr": 9,
+    "sound-vault/sound-vault": 5,
+    "ytdlp-web-player/ytdlp-web-player": 11
   },
   "Messaging": {
     "continuwuity/continuwuity": 0,
+    "email-signature/email-signature": 7,
+    "ergochat/irc-web": 2,
     "irc-ergochat/irc-web": 4,
     "irc-thelounge/thelounge": 5,
     "pingvin-share/pingvin-share": 3,
-    "stalwart/stalwart-web": 1
+    "stalwart/stalwart-web": 1,
+    "thelounge/thelounge": 6
   },
   "Secrets": {
+    "aliasvault/aliasvault": 8,
     "docuseal/docuseal": 3,
     "email-signature/email-signature": 4,
     "infisical/infisical": 6,
     "origamivault/origamivault": 2,
     "pocket-id/pocket-id": 5,
+    "privatebin/privatebin": 9,
     "tinyauth/tinyauth": 7,
     "twofauth/twofauth": 0,
     "vaultwarden/vaultwarden": 1

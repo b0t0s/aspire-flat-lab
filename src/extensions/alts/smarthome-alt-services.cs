@@ -3,7 +3,7 @@ using static EnvironmentSettings;
 
 internal static class SmartHomeAltServices
 {
-    public static void AddSmartHomeAltServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddSmartHomeAltServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("homebox", "sysadminsmedia/homebox", "latest")
             .WithDefaultMode(LabMode.Off)
@@ -80,7 +80,7 @@ internal static class SmartHomeAltServices
             .WithEnvironment("MIMALLOC_PURGE_DELAY", "0")
             .WithBindMount(settings.SmartHome.DataPath("OXICLOUD_DATA", "../services-data/system/oxicloud/storage"), "/app/storage")
             .WithLabPort(8086, "oxicloud")
-            .WaitFor(dependencies["oxicloud-db"])
+            .WaitFor(dependencies.OxicloudDb)
             .WithHomepage("Household", "OxiCloud", "mdi-cloud-sync", "Lightweight Rust file cloud", $"https://oxicloud.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("syncthing", "syncthing/syncthing", "latest")

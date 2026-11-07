@@ -3,7 +3,7 @@ using static EnvironmentSettings;
 
 internal static class MediaServices
 {
-    public static void AddMediaServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddMediaServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         var musicPath = settings.Media.DataPath("NAVIDROME_MUSIC", "../services-data/public/music");
 
@@ -76,7 +76,7 @@ internal static class MediaServices
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://postgres:{settings.Secret("RYOT_DB_PASSWORD")}@ryot-db:5432/postgres"))
             .WithEnvironment("SERVER_ADMIN_ACCESS_TOKEN", settings.Secret("RYOT_ADMIN_TOKEN", SecretKind.LongPassword))
             .WithLabPort(8000, "ryot")
-            .WaitFor(dependencies["ryot-db"])
+            .WaitFor(dependencies.RyotDb)
             .WithHomepage("Media", "Ryot", "mdi-book-multiple", "Media tracker", $"https://track.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("slskd", "slskd/slskd", "latest")
@@ -164,8 +164,13 @@ internal static class MediaServices
                 ["PIPED_DB_PASSWORD"] = settings.Secret("PIPED_DB_PASSWORD"),
             })
             .WithLabPort(8080, "piped-backend")
-            .WaitFor(dependencies["piped-db"])
-            .WithHomepage("Media", "Piped API", "mdi-youtube", "Piped backend", $"https://pipedapi.{settings.Shared.DuckDnsDomain}");
+            .WithLab(lab => lab.PortGroup = "Media")
+            .WaitFor(dependencies.PipedDb);
+
+        var pipedProxy = builder.AddContainer("piped-proxy", "1337kavin/piped-proxy", "latest")
+            .WithContainerName("piped-proxy")
+            .WithLabPort(8080, "piped-proxy")
+            .WithLab(lab => lab.PortGroup = "Media");
 
         _ = builder.AddContainer("piped-frontend", "1337kavin/piped-frontend", "latest")
             .WithContainerName("piped-frontend")
@@ -174,12 +179,8 @@ internal static class MediaServices
             .WithEnvironment("HTTP_MODE", "https")
             .WithLabPort(80, "piped-frontend")
             .WaitFor(pipedBackend)
+            .WaitFor(pipedProxy)
             .WithHomepage("Media", "Piped", "mdi-youtube", "Privacy YouTube frontend", $"https://piped.{settings.Shared.DuckDnsDomain}");
-
-        _ = builder.AddContainer("piped-proxy", "1337kavin/piped-proxy", "latest")
-            .WithContainerName("piped-proxy")
-            .WithLabPort(8080, "piped-proxy")
-            .WithHomepage("Media", "Piped proxy", "mdi-google-drive", "Piped video proxy", $"https://pipedproxy.{settings.Shared.DuckDnsDomain}");
 
     }
 }

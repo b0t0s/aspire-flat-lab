@@ -4,7 +4,7 @@ using static EnvironmentSettings;
 /// <summary>Homepage group "Messaging" - host ports 17xxx; IRC/XMPP/Matrix-federation/TURN keep their standard ports (docs/ports.md).</summary>
 internal static class ChatServices
 {
-    public static void AddChatServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddChatServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         var hermesDataPath = settings.Chat.DataPath("HERMES_DATA_PATH", "../services-data/system/hermes");
         var hermesWorkspacePath = settings.Chat.DataPath("HERMES_WORKSPACE_PATH", "../services-data/public/agents_workspace");

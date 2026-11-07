@@ -6,7 +6,18 @@
 #:package Aspire.Hosting.Docker@13.6.4
 #:package Aspire.Hosting.JavaScript@13.6.4
 
-#:include src/Dependencies.cs
+#:include src/dependencies/LabDependencies.cs
+#:include src/dependencies/alts/chat-alt-dependencies.cs
+#:include src/dependencies/alts/development-alt-dependencies.cs
+#:include src/dependencies/alts/knowledge-alt-dependencies.cs
+#:include src/dependencies/alts/smarthome-alt-dependencies.cs
+#:include src/dependencies/development-dependencies.cs
+#:include src/dependencies/entertainment-dependencies.cs
+#:include src/dependencies/irl-dependencies.cs
+#:include src/dependencies/knowledge-dependencies.cs
+#:include src/dependencies/media-dependencies.cs
+#:include src/dependencies/secret-dependencies.cs
+#:include src/dependencies/smarthome-dependencies.cs
 #:include src/RuntimeManager.cs
 #:include src/LabGroups.cs
 
@@ -22,7 +33,6 @@
 #:include src/extensions/secret-services.cs
 #:include src/extensions/smarthome-services.cs
 
-#:include src/extensions/alts/alt-dependencies.cs
 #:include src/extensions/alts/chat-alt-services.cs
 #:include src/extensions/alts/development-alt-services.cs
 #:include src/extensions/alts/knowledge-alt-services.cs
@@ -36,7 +46,7 @@ DotNetEnv.Env.NoClobber().TraversePath().Load();
 
 var builder = DistributedApplication.CreateBuilder(args);
 var environmentSettings = new EnvironmentSettings(builder);
-var dependencies = builder.AddDependencies(environmentSettings).AddAltDependencies();
+var dependencies = new LabDependencies(builder, environmentSettings);
 
 builder
     .AddLabGroup(LabGroup.Secrets, LabRole.Main, b => b.AddSecretServices(dependencies, environmentSettings))

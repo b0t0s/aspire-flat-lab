@@ -3,7 +3,7 @@ using static EnvironmentSettings;
 
 internal static class DevelopmentServices
 {
-    public static void AddDevelopmentServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddDevelopmentServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("zerobyte", "ghcr.io/nicotsx/zerobyte", "v0.44")
             .WithContainerName("zerobyte")
@@ -26,7 +26,7 @@ internal static class DevelopmentServices
             .WithEnvironment("ATUIN_DB_URI", ReferenceExpression.Create($"postgres://atuin:{settings.Secret("ATUIN_DB_PASSWORD")}@atuin-db:5432/atuin"))
             .WithBindMount(settings.Development.DataPath("ATUIN_CONFIG", "../services-data/system/atuin/config"), "/config")
             .WithLabPort(8888, "atuin")
-            .WaitFor(dependencies["atuin-db"])
+            .WaitFor(dependencies.AtuinDb)
             .WithHomepage("Infrastructure", "Shell history", "mdi-console-line", "", $"https://shell-history.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("ideon", "ghcr.io/3xpyth0n/ideon", "latest")
@@ -43,7 +43,7 @@ internal static class DevelopmentServices
             .WithEnvironment("SECRET_KEY", settings.Secret("IDEON_SECRET_KEY", SecretKind.Hex32))
             .WithBindMount(settings.Development.DataPath("IDEON_DATA", "../services-data/system/ideon"), "/app/storage")
             .WithLabPort(3000, "ideon")
-            .WaitFor(dependencies["ideon-db"])
+            .WaitFor(dependencies.IdeonDb)
             .WithHomepage("Development", "Ideon", "mdi-drawing-box", "Visual workspace", $"https://ideon.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("onedev", "1dev/server", "latest")
@@ -95,6 +95,22 @@ internal static class DevelopmentServices
             .WithBindMount(settings.Development.DataPath("OPENGIST_REPOS", "../services-data/system/opengist-repos"), "/app/repositories")
             .WithLabPort(6157, "opengist")
             .WithHomepage("Development", "Snippets", "mdi-source-repository", href: $"https://snippets.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("jupyter", "quay.io/jupyter/scipy-notebook", "latest")
+            .WithContainerName("jupyter")
+            .WithDefaultMode(LabMode.Manual)
+            .WithEnvironment("JUPYTER_TOKEN", settings.Secret("JUPYTER_TOKEN", SecretKind.Hex32))
+            .WithEnvironment("NB_UID", settings.Shared.Uid)
+            .WithEnvironment("NB_GID", settings.Shared.Gid)
+            .WithEnvironment("CHOWN_HOME", "yes")
+            .WithEnvironment("CHOWN_EXTRA", "/home/jovyan/work")
+            .WithEnvironment("TZ", settings.Shared.TimeZone)
+            .WithBindMount(settings.Knowledge.DataPath("JUPYTER_HOME", "../services-data/system/jupyter"), "/home/jovyan")
+            .WithBindMount(settings.Knowledge.DataPath("JUPYTER_NOTEBOOKS", "../services-data/public/notebooks"), "/home/jovyan/work")
+            .WithBindMount(settings.Shared.DataRoot + "/public", "/home/jovyan/public", isReadOnly: true)
+            .WithLab(lab => lab.User = "root")
+            .WithLabPort(8888, "jupyter")
+            .WithHomepage("Development", "JupyterLab", "si-jupyter", "", $"https://notebooks.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("it-tools", "corentinth/it-tools", "latest")
             .WithContainerName("toolbox")

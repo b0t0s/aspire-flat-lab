@@ -4,7 +4,7 @@ using static EnvironmentSettings;
 /// <summary>Homepage group "Secrets" - host ports 16xxx; the signing apps are in "Messaging" (17xxx) (docs/ports.md).</summary>
 internal static class SecretServices
 {
-    public static void AddSecretServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddSecretServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("origamivault", "ghcr.io/origamivault/origamivault", "latest")
             .WithContainerName("origami")
@@ -107,8 +107,8 @@ internal static class SecretServices
             .WithEnvironment("SMTP_HOST", "")
             .WithEnvironment("SMTP_PORT", "")
             .WithLabPort(80, "infisical")
-            .WaitFor(dependencies["infisical-db"])
-            .WaitFor(dependencies["infisical-redis"])
+            .WaitFor(dependencies.InfisicalDb)
+            .WaitFor(dependencies.InfisicalRedis)
             .WithHomepage("Secrets", "Infisical", "mdi-key-variant", "Secrets manager", $"https://secrets.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("passbolt", "passbolt/passbolt", "latest")
@@ -124,7 +124,7 @@ internal static class SecretServices
             .WithEnvironment("EMAIL_TRANSPORT_DEFAULT_HOST", "")
             .WithEnvironment("EMAIL_TRANSPORT_DEFAULT_PORT", "")
             .WithLabPort(80, "passbolt")
-            .WaitFor(dependencies["passbolt-db"])
+            .WaitFor(dependencies.PassboltDb)
             .WithHomepage("Secrets", "Passbolt", "mdi-key", "Team password manager", $"https://pass.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("psono-server", "psono/psono-server", "latest")
@@ -141,7 +141,7 @@ internal static class SecretServices
             .WithEnvironment("EMAIL_URL", "")
             .WithBindMount(settings.Secrets.DataPath("PSONO_DATA", "../services-data/system/psono"), "/data")
             .WithLabPort(80, "psono")
-            .WaitFor(dependencies["psono-db"])
+            .WaitFor(dependencies.PsonoDb)
             .WithLab(lab => lab.PortGroup = "Secrets");
 
         _ = builder.AddContainer("documenso", "documenso/documenso", "latest")
@@ -155,8 +155,8 @@ internal static class SecretServices
             .WithEnvironment("NODE_ENV", "production")
             .WithBindMount(settings.Secrets.DataPath("DOCUMENSO_DATA", "../services-data/system/documenso"), "/data")
             .WithLabPort(3500, "documenso")
-            .WaitFor(dependencies["documenso-db"])
-            .WaitFor(dependencies["documenso-redis"])
+            .WaitFor(dependencies.DocumensoDb)
+            .WaitFor(dependencies.DocumensoRedis)
             .WithHomepage("Secrets", "Document signing", "mdi-signature-freehand", "", $"https://sign.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("docuseal", "docuseal/docuseal", "latest")

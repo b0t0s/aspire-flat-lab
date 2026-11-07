@@ -4,7 +4,7 @@ using static EnvironmentSettings;
 /// <summary>Homepage group "Entertainment" - host ports 14xxx (docs/ports.md).</summary>
 internal static class EntertainmentServices
 {
-    public static void AddEntertainmentServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddEntertainmentServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("minecraft", "itzg/minecraft-server", "latest")
             .WithContainerName("minecraft")
@@ -36,7 +36,7 @@ internal static class EntertainmentServices
             .WithLabPort(3000, "dm-hero")
             .WithHomepage("Entertainment", "DM Hero", "mdi-dice-d20", "D&D campaign manager", $"https://dm-hero.{settings.Shared.DuckDnsDomain}");
 
-        _ = dependencies["rsshub"]
+        _ = dependencies.Rsshub
             .WithEndpoint(10004, 1200, name: "rsshub")
             .WithHomepage("Infrastructure", "RSS Generator", "mdi-rss-box", href: $"https://rsshub.{settings.Shared.DuckDnsDomain}");
 
@@ -52,8 +52,8 @@ internal static class EntertainmentServices
             .WithEnvironment("ADMIN_USERNAME", settings.Secret("MINIFLUX_ADMIN_USER"))
             .WithEnvironment("ADMIN_PASSWORD", settings.Secret("MINIFLUX_ADMIN_PASSWORD"))
             .WithLabPort(8080, "miniflux")
-            .WaitFor(dependencies["miniflux-db"])
-            .WaitFor(dependencies["rsshub"])
+            .WaitFor(dependencies.MinifluxDb)
+            .WaitFor(dependencies.Rsshub)
             .WithHomepage("Entertainment", "Feed", "si-feedly", href: $"https://feed.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("miniflux", "http://feed:8080", key: HomepageVar("MINIFLUX_WIDGET_KEY"));
 
@@ -114,15 +114,27 @@ internal static class EntertainmentServices
         _ = builder.AddDockerfile("solar-system", builder.RepoPath("src/containers/solar-system-map-builder"))
             .WithContainerName("solar")
             .WithDefaultMode(LabMode.Auto)
-            .WithConfigFile("configs/solar-system/config.yaml", "/config/config.yaml")
+            .WithRepoMount("configs/solar-system", "/config", isReadOnly: true)
             .WithBindMount(settings.Entertainment.DataPath("SOLAR_SYSTEM_CACHE", "../services-data/system/solar-system"), "/cache")
             .WithLabPort(80, "solar-system")
-            .WithHomepage("Entertainment", "Solar map", "mdi-earth", "Solar system maps", $"https://solarmap.{settings.Shared.DuckDnsDomain}/?epoch={DateTime.UtcNow:yyyy-MM-dd}%20{DateTime.UtcNow:HH:mm}:00");
+            .WithHomepage("Entertainment", "Solar map", "mdi-earth", "Live solar system, time travel and moments", $"https://solarmap.{settings.Shared.DuckDnsDomain}/");
 
         _ = builder.AddDockerfile("gravity", builder.RepoPath("src/containers/Gravity"), "Dockerfile", "runner")
             .WithContainerName("gravity")
             .WithDefaultMode(LabMode.Manual)
             .WithLabPort(80, "gravity")
             .WithHomepage("Entertainment", "Gravity", "mdi-space-invaders", "Solar system simulator", $"https://gravity.{settings.Shared.DuckDnsDomain}");
+
+        // Desktop Stellarium streamed to the browser (linuxserver Selkies base): full star catalogs, works offline.
+        _ = builder.AddDockerfile("stellarium", builder.RepoPath("src/containers/stellarium"))
+            .WithContainerName("stellarium")
+            .WithEnvironment("PUID", settings.Shared.Uid)
+            .WithEnvironment("PGID", settings.Shared.Gid)
+            .WithEnvironment("TZ", settings.Shared.TimeZone)
+            .WithEnvironment("PIXELFLUX_WAYLAND", "false")
+            .WithBindMount(settings.Entertainment.DataPath("STELLARIUM_DATA", "../services-data/system/stellarium"), "/config")
+            .WithLab(lab => lab.ShmSize = "1gb")
+            .WithLabPort(3000, "stellarium")
+            .WithHomepage("Entertainment", "Sky", "mdi-star-shooting", "Stellarium planetarium", $"https://sky.{settings.Shared.DuckDnsDomain}");
     }
 }

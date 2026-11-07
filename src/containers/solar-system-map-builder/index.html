@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solar Map</title>
+<style>
+  :root { --bg: #f4f4f0; --fg: #1b1b1b; --muted: #666; --panel: #ffffff; --line: #d8d8d0; --accent: #2457c5; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #121314; --fg: #e8e8e4; --muted: #9a9a96; --panel: #1c1d1f; --line: #2e3033; --accent: #7aa2ff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 system-ui, sans-serif; }
+  header, section { padding: 12px 16px; }
+  header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 18px; margin: 0 12px 0 0; letter-spacing: .08em; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  button, select, input { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px; }
+  button { cursor: pointer; }
+  button.on { border-color: var(--accent); color: var(--accent); }
+  #stage { position: relative; background: #fff; border-bottom: 1px solid var(--line); }
+  #map { display: block; width: 100%; height: auto; min-height: 200px; }
+  #status { position: absolute; left: 12px; top: 10px; padding: 3px 8px; border-radius: 6px; background: rgba(0,0,0,.65); color: #fff; font-size: 13px; }
+  #note { max-width: 70ch; }
+  #note h2 { font-size: 16px; margin: 0 0 4px; }
+  #moments { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+  #moments button { text-align: left; padding: 8px 10px; }
+  #moments small { display: block; color: var(--muted); }
+  .muted { color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>SOLAR MAP</h1>
+  <div class="row">
+    <button id="live" class="on" title="Follow the current time">Live</button>
+    <input id="when" type="datetime-local" step="60" aria-label="Date and time (UTC)">
+    <span class="muted">UTC</span>
+    <select id="view" aria-label="View"></select>
+  </div>
+  <div class="row" aria-label="Step">
+    <button data-step="-1y">-1y</button><button data-step="-1M">-1mo</button><button data-step="-1d">-1d</button><button data-step="-1h">-1h</button>
+    <button data-step="1h">+1h</button><button data-step="1d">+1d</button><button data-step="1M">+1mo</button><button data-step="1y">+1y</button>
+  </div>
+  <div class="row">
+    <button id="play">Play</button>
+    <select id="speed" aria-label="Time-lapse step">
+      <option value="1h">1 hour / frame</option>
+      <option value="1d" selected>1 day / frame</option>
+      <option value="7d">1 week / frame</option>
+      <option value="1M">1 month / frame</option>
+      <option value="1y">1 year / frame</option>
+    </select>
+    <button id="random" title="Jump to a random moment between 1900 and 2100">Random</button>
+  </div>
+</header>
+
+<div id="stage">
+  <img id="map" alt="Positions of solar system bodies at the selected time">
+  <div id="status">loading</div>
+</div>
+
+<section id="note"></section>
+
+<section>
+  <h2 style="font-size:16px;margin:0 0 8px">Moments</h2>
+  <div id="moments"></div>
+  <p class="muted">Rendering takes a few seconds the first time; every rendered moment is cached. Positions come from NASA JPL Horizons.</p>
+</section>
+
+<script>
+const MOMENTS = [
+  { title: "Apollo 11 lands", when: "1969-07-20T20:17", view: "planets", note: "Earth, Moon and the planets on the day people first walked on another world." },
+  { title: "Voyager 1 launches", when: "1977-09-05T12:56", view: "planets", note: "Voyager used a rare alignment of the outer planets (once every ~175 years) for its Grand Tour." },
+  { title: "Halley's comet perihelion", when: "1986-02-09T00:00", view: "planets", note: "Closest approach of comet Halley to the Sun; it returns every ~76 years, next in 2061." },
+  { title: "Voyager 2 at Neptune", when: "1989-08-25T03:56", view: "moons", note: "The only spacecraft visit to Neptune; Triton turned out to have active geysers." },
+  { title: "Mars closest in 60,000 years", when: "2003-08-27T09:51", view: "planets", note: "Mars opposition at 55.8 million km, the closest since the Stone Age." },
+  { title: "New Horizons at Pluto", when: "2015-07-14T11:49", view: "planets", note: "First close look at Pluto and Charon after a 9.5-year cruise." },
+  { title: "Juno arrives at Jupiter", when: "2016-07-05T03:53", view: "moons", note: "Look at the Galilean moons: Io, Europa and Ganymede keep a 1:2:4 orbital resonance; Callisto is outside it." },
+  { title: "Great conjunction", when: "2020-12-21T18:00", view: "planets", note: "Jupiter and Saturn lined up with the Sun and Earth; the closest view since 1623." },
+  { title: "Parker's record perihelion", when: "2024-12-24T11:53", view: "overview", note: "Parker Solar Probe passed 6.1 million km from the Sun at about 192 km/s, the fastest human-made object." },
+  { title: "Today, one year ago", relative: "-1y", view: "overview", note: "Earth has made one full orbit; the outer planets have barely moved." },
+  { title: "Next Halley return", when: "2061-07-28T00:00", view: "planets", note: "Halley's comet will be back near the Sun in 2061." },
+];
+
+const $ = id => document.getElementById(id);
+let current = new Date();
+let live = true;
+let playing = false;
+let liveTimer = null;
+
+function iso(date) { return date.toISOString().slice(0, 16); }
+function epoch(date) { return iso(date).replace("T", " "); }
+
+function step(date, spec) {
+  const m = /^(-?\d+)([hdMy])$/.exec(spec);
+  const n = Number(m[1]);
+  const d = new Date(date);
+  if (m[2] === "h") d.setUTCHours(d.getUTCHours() + n);
+  if (m[2] === "d") d.setUTCDate(d.getUTCDate() + n);
+  if (m[2] === "M") d.setUTCMonth(d.getUTCMonth() + n);
+  if (m[2] === "y") d.setUTCFullYear(d.getUTCFullYear() + n);
+  return d;
+}
+
+function url(date, view) {
+  return `map.png?view=${encodeURIComponent(view)}&epoch=${encodeURIComponent(live ? "now" : epoch(date))}`;
+}
+
+function load(date) {
+  return new Promise(resolve => {
+    const view = $("view").value;
+    const src = url(date, view);
+    $("status").textContent = `rendering ${live ? "now" : epoch(date)} (${view})`;
+    $("status").hidden = false;
+    fetch(src).then(async response => {
+      if (!response.ok) throw new Error(await response.text());
+      const blob = await response.blob();
+      const old = $("map").src;
+      $("map").src = URL.createObjectURL(blob);
+      if (old.startsWith("blob:")) URL.revokeObjectURL(old);
+      $("status").hidden = true;
+      resolve(true);
+    }).catch(error => {
+      $("status").textContent = `could not draw: ${error.message.slice(0, 200)}`;
+      resolve(false);
+    });
+  });
+}
+
+function show(date, note) {
+  current = date;
+  $("when").value = iso(date);
+  history.replaceState(null, "", live ? `?view=${$("view").value}` : `?view=${$("view").value}&at=${iso(date)}`);
+  if (note !== undefined) $("note").innerHTML = note;
+  return load(date);
+}
+
+function setLive(on) {
+  live = on;
+  $("live").classList.toggle("on", on);
+  clearInterval(liveTimer);
+  if (on) liveTimer = setInterval(() => show(new Date()), 10 * 60 * 1000);
+}
+
+function goTo(date, note) { setLive(false); return show(date, note); }
+
+async function play() {
+  playing = !playing;
+  $("play").textContent = playing ? "Pause" : "Play";
+  $("play").classList.toggle("on", playing);
+  if (playing) setLive(false);
+  while (playing) {
+    const ok = await show(step(current, $("speed").value));
+    if (!ok) { playing = false; $("play").textContent = "Play"; $("play").classList.remove("on"); }
+  }
+}
+
+async function init() {
+  const { views } = await fetch("views").then(r => r.json());
+  for (const v of views) $("view").add(new Option(v, v));
+  const params = new URLSearchParams(location.search);
+  $("view").value = views.includes(params.get("view")) ? params.get("view") : (views.includes("overview") ? "overview" : views[0]);
+
+  for (const m of MOMENTS) {
+    const b = document.createElement("button");
+    b.innerHTML = `${m.title}<small>${m.when ? m.when.replace("T", " ") + " UTC" : "relative to now"} &middot; ${m.view}</small>`;
+    b.onclick = () => {
+      $("view").value = m.view;
+      const date = m.when ? new Date(m.when + "Z") : step(new Date(), m.relative);
+      goTo(date, `<h2>${m.title}</h2><p>${m.note}</p>`);
+    };
+    $("moments").append(b);
+  }
+
+  $("live").onclick = () => { setLive(true); show(new Date(), ""); };
+  $("when").onchange = () => goTo(new Date($("when").value + "Z"), "");
+  $("view").onchange = () => show(current);
+  $("play").onclick = play;
+  $("random").onclick = () => {
+    $("view").value = views.includes("planets") ? "planets" : $("view").value;
+    const start = Date.UTC(1900, 0, 1), end = Date.UTC(2100, 0, 1);
+    goTo(new Date(start + Math.random() * (end - start)), "<h2>Random moment</h2><p>Where was everything on this day?</p>");
+  };
+  document.querySelectorAll("[data-step]").forEach(b => b.onclick = () => goTo(step(current, b.dataset.step), ""));
+
+  if (params.get("at")) { setLive(false); show(new Date(params.get("at") + "Z"), ""); }
+  else { setLive(true); show(new Date(), ""); }
+}
+
+init();
+</script>
+</body>
+</html>

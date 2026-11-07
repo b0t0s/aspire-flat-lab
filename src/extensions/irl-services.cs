@@ -4,7 +4,7 @@ using static EnvironmentSettings;
 /// <summary>Homepage group "Irl" - host ports 18xxx (docs/ports.md).</summary>
 internal static class IrlServices
 {
-    public static void AddIrlServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddIrlServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("tradetally", "potentialmidas/tradetally", "latest")
             .WithContainerName("tradetally")
@@ -20,7 +20,7 @@ internal static class IrlServices
             .WithEnvironment("TZ", settings.Shared.TimeZone)
             .WithBindMount(settings.Irl.DataPath("TRADETALLY_UPLOADS", "../services-data/system/tradetally/uploads"), "/app/backend/uploads")
             .WithLabPort(80, "tradetally")
-            .WaitFor(dependencies["tradetally-db"])
+            .WaitFor(dependencies.TradetallyDb)
             .WithHomepage("Irl", "TradeTally", "mdi-chart-line", "Trading journal", $"https://tradetally.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("adventurelog", "seanmorley15/adventurelog", "latest")
@@ -104,7 +104,7 @@ internal static class IrlServices
             .WithEnvironment("APP_URL", $"https://healthlog.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("HEALTHLOG_PROCESS_TYPE", "all")
             .WithLabPort(3000, "healthlog")
-            .WaitFor(dependencies["healthlog-db"])
+            .WaitFor(dependencies.HealthlogDb)
             .WithHomepage("Irl", "HealthLog", "mdi-heart-pulse", "Health metrics", $"https://healthlog.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("medikeep", "ghcr.io/afairgiant/medikeep", "latest")
@@ -125,7 +125,7 @@ internal static class IrlServices
             .WithBindMount(settings.Irl.DataPath("MEDIKEEP_LOGS", "../services-data/system/medikeep/logs"), "/app/logs")
             .WithBindMount(settings.Irl.DataPath("MEDIKEEP_BACKUPS", "../services-data/system/medikeep/backups"), "/app/backups")
             .WithLabPort(8000, "medikeep")
-            .WaitFor(dependencies["medikeep-db"])
+            .WaitFor(dependencies.MedikeepDb)
             .WithHomepage("Irl", "Medical records", "mdi-medical-bag", "", $"https://medikeep.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("openemr", "openemr/openemr", "8.2.0")
@@ -141,7 +141,7 @@ internal static class IrlServices
             .WithBindMount(settings.SmartHome.DataPath("OPENEMR_SITES", "../services-data/system/openemr/sites"), "/var/www/localhost/htdocs/openemr/sites")
             .WithLabPort(80, "openemr-http")
             .WithLabPort(443, "openemr-https", "https")
-            .WaitFor(dependencies["openemr-db"])
+            .WaitFor(dependencies.OpenemrDb)
             .WithHomepage("Household", "Medical", "mdi-hospital", href: $"https://medical.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("radicale", "ghcr.io/kozea/radicale", "stable")
@@ -166,7 +166,7 @@ internal static class IrlServices
             .WithEnvironment("GRAMPS_DATABASE_URI", ReferenceExpression.Create($"postgresql://gramps:{settings.Secret("GRAMPS_DB_PASSWORD")}@gramps-db:5432/gramps"))
             .WithEnvironment("GRAMPS_SECRET_KEY", settings.Secret("GRAMPS_SECRET", SecretKind.LongPassword))
             .WithLabPort(5000, "gramps-web")
-            .WaitFor(dependencies["gramps-db"])
+            .WaitFor(dependencies.GrampsDb)
             .WithHomepage("Household", "Genealogy", "mdi-family-tree", href: $"https://genealogy.{settings.Shared.DuckDnsDomain}");
     }
 }

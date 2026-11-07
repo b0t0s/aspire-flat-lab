@@ -3,7 +3,7 @@ using static EnvironmentSettings;
 
 internal static class DevelopmentAltServices
 {
-    public static void AddDevelopmentAltServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddDevelopmentAltServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("lightpanda", "lightpanda/browser", "latest")
             .WithContainerName("lightpanda")
@@ -44,8 +44,8 @@ internal static class DevelopmentAltServices
             .WithEnvironment("LOGIN_REDIRECT_URL", "/env/1/flows")
             .WithEnvironment("USERTOUR_COOKIE_DOMAIN", settings.Shared.DuckDnsDomain)
             .WithLabPort(80, "usertour")
-            .WaitFor(dependencies["usertour-db"])
-            .WaitFor(dependencies["usertour-redis"])
+            .WaitFor(dependencies.UsertourDb)
+            .WaitFor(dependencies.UsertourRedis)
             .WithHomepage("Development", "Usertour", "mdi-cursor-default-click-outline", "Onboarding flows", $"https://usertour.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("web-check", "lissy93/web-check", "latest")
@@ -132,9 +132,9 @@ internal static class DevelopmentAltServices
             .WithEnvironment("SECRET_KEY_BASE", settings.Secret("PLAUSIBLE_SECRET", SecretKind.LongPassword))
             .WithEnvironment("BASE_URL", $"https://analytics.{settings.Shared.DuckDnsDomain}")
             .WithLabPort(8000, "plausible")
-            .WaitFor(dependencies["plausible-db"])
-            .WaitFor(dependencies["plausible-events"])
-            .WaitFor(dependencies["plausible-clickhouse"])
+            .WaitFor(dependencies.PlausibleDb)
+            .WaitFor(dependencies.PlausibleEvents)
+            .WaitFor(dependencies.PlausibleClickhouse)
             .WithHomepage("Infrastructure", "Analytics", "mdi-chart-line", href: $"https://analytics.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("beszel-hub", "henrygd/beszel", "latest")
@@ -160,8 +160,8 @@ internal static class DevelopmentAltServices
             .WithEnvironment("DEFAULT_DOMAIN", $"go.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("LINK_LENGTH", "6")
             .WithLabPort(3000, "kutt")
-            .WaitFor(dependencies["kutt-db"])
-            .WaitFor(dependencies["kutt-redis"])
+            .WaitFor(dependencies.KuttDb)
+            .WaitFor(dependencies.KuttRedis)
             .WithHomepage("Development", "URL shortener", "mdi-link-variant", href: $"https://go.{settings.Shared.DuckDnsDomain}");
 
         var calagopusRedis = builder.AddContainer("calagopus-redis", "ghcr.io/calagopus/valkey", "latest")

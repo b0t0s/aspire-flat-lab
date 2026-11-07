@@ -3,7 +3,7 @@ using static EnvironmentSettings;
 
 internal static class ChatAltServices
 {
-    public static void AddChatAltServices(this IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    public static void AddChatAltServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("open-webui", "ghcr.io/open-webui/open-webui", "main")
             .WithContainerName("llm")
@@ -13,7 +13,7 @@ internal static class ChatAltServices
             .WithEnvironment("OLLAMA_BASE_URL", "http://ollama:11434")
             .WithBindMount(settings.Chat.DataPath("OPEN_WEBUI_DATA", "../services-data/system/open-webui"), "/app/backend/data")
             .WithEndpoint(10007, 8080, name: "open-webui")
-            .WaitFor(dependencies["ollama"])
+            .WaitFor(dependencies.Ollama)
             .WithHomepage("Development", "LLM", "mdi-robot", href: $"https://llm.{settings.Shared.DuckDnsDomain}");
 
         // XMPP: Snikket (all-in-one) needs host networking for its own 80/443/5222/5269.
@@ -86,8 +86,8 @@ internal static class ChatAltServices
                 ["PICTRS_API_KEY"] = settings.Secret("LEMMY_PICTRS_API_KEY", aliases: "LEMMY_DB_PASSWORD"),
             }, escape: value => value.Replace("\\", "\\\\").Replace("\"", "\\\""))
             .WithLabPort(8536, "lemmy")
-            .WaitFor(dependencies["lemmy-db"])
-            .WithHomepage("Messaging", "Forum", "mdi-forum", "SERVER", $"https://forum.{settings.Shared.DuckDnsDomain}");
+            .WithLab(lab => lab.PortGroup = "Messaging")
+            .WaitFor(dependencies.LemmyDb);
 
         var lemmyUi = builder.AddContainer("lemmy-project-ui", "dessalines/lemmy-ui", "0.19.20")
             .WithContainerName("forum-ui")
@@ -111,7 +111,7 @@ internal static class ChatAltServices
             .WithLabPort(8536, "lemmy-project-proxy")
             .WithLab(lab => lab.PortGroup = "Messaging")
             .WithRestart("always")
-            .WaitFor(dependencies["lemmy-project-pictrs"])
+            .WaitFor(dependencies.LemmyProjectPictrs)
             .WaitFor(lemmyUi);
 
     }
@@ -127,7 +127,7 @@ internal static class ChatAltServices
     /// Synapse without an init container: homeserver.yaml and the log config are rendered from configs/synapse/*.template
     /// into /config; the signing key is created by Synapse itself (--generate-keys).
     /// </summary>
-    private static void AddSynapse(IDistributedApplicationBuilder builder, DependenciesService dependencies, EnvironmentSettings settings)
+    private static void AddSynapse(IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         const int synapseUid = 991;
         var dataPath = settings.Chat.DataPath("SYNAPSE_DATA", "../services-data/system/synapse");
@@ -161,7 +161,7 @@ internal static class ChatAltServices
             .WithBindMount(dataPath, "/data")
             .WithLabPort(8008, "synapse-client")
             .WithEndpoint(8448, 8448, name: "synapse-federation")
-            .WaitFor(dependencies["synapse-db"])
+            .WaitFor(dependencies.SynapseDb)
             .WithHomepage("Messaging", "Matrix", "mdi-server-network", "SERVER");
     }
 }

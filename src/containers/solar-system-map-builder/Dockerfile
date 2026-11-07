@@ -14,7 +14,8 @@ COPY --from=source /source/pyproject.toml ./pyproject.toml
 COPY --from=source /source/source/ ./
 RUN pip install --no-cache-dir . \
     && mkdir -p /cache
+COPY lab_server.py index.html ./
 
 EXPOSE 80
-ENTRYPOINT ["python", "server.py"]
-CMD ["--cache-folder", "/cache", "--config", "/config/config.yaml", "--port", "80"]
+ENTRYPOINT ["python", "lab_server.py"]
+CMD ["--cache-folder", "/cache", "--config-folder", "/config", "--port", "80"]

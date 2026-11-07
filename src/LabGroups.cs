@@ -95,6 +95,21 @@ internal static class LabGroups
 
         foreach (var container in containers) _ = Resolve(container);
 
+        // A dependency follows its services: off once every service waiting for it is off, unless it has its own key or code default.
+        bool changed;
+        do
+        {
+            changed = false;
+            foreach (var container in containers.Where(c => modes[c] != LabMode.Off && waitersOf[c].Any()))
+            {
+                if (Setting($"FLAT_LAB_SERVICE_{Key(container.Name)}") is not null || container.Annotations.OfType<LabDefaultModeAnnotation>().Any()) continue;
+                if (!waitersOf[container].All(waiter => modes[waiter] == LabMode.Off)) continue;
+                modes[container] = LabMode.Off;
+                changed = true;
+            }
+        }
+        while (changed);
+
         var needed = new Stack<ContainerResource>(containers.Where(c => modes[c] != LabMode.Off));
         while (needed.TryPop(out var container))
         {
