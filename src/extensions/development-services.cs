@@ -132,5 +132,15 @@ internal static class DevelopmentServices
             .WithBindMount(settings.Development.DataPath("WEBSSH_RECOVERY", "../services-data/system/webssh/recovery"), "/app/recovery")
             .WithLabPort(5000, "webssh")
             .WithHomepage("Infrastructure", "Web SSH", "mdi-console-network", "SSH and SFTP workspace", $"https://webssh.{settings.Shared.DuckDnsDomain}");
+
+        var appsDataPath = Path.Combine(settings.Shared.DataRoot, "system", "apps");
+        _ = builder.AddDockerfile("app-deployer", builder.RepoPath("src/containers/app-deployer"))
+            .WithContainerName("app-deployer")
+            .WithDefaultMode(LabMode.Auto)
+            .WithEnvironment("APP_DATA_ROOT", appsDataPath)
+            .WithEnvironment("LAB_DOMAIN", settings.Shared.DuckDnsDomain)
+            .WithEnvironment("NTFY_URL", "http://notifications:80/lab-deploys")
+            .WithBindMount(appsDataPath, "/apps")
+            .WithDockerSocket(isReadOnly: false);
     }
 }

@@ -1,0 +1,55 @@
+version: 52
+jobs:
+- name: verify
+  steps:
+  - type: CheckoutStep
+    name: checkout
+    cloneCredential:
+      type: DefaultCredential
+    withLfs: false
+    withSubmodules: false
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
+    name: verify
+    runInContainer: true
+    image: docker:27-cli
+    interpreter:
+      type: DefaultInterpreter
+      commands: |
+        set -e
+        docker build --target runtime --progress plain .
+    useTTY: false
+    condition: SUCCESSFUL
+    optional: false
+  triggers:
+  - type: BranchUpdateTrigger
+    branches: '** -main'
+  timeout: 3600
+- name: publish
+  steps:
+  - type: CheckoutStep
+    name: checkout
+    cloneCredential:
+      type: DefaultCredential
+    withLfs: false
+    withSubmodules: false
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
+    name: build and deploy
+    runInContainer: true
+    image: docker:27-cli
+    interpreter:
+      type: DefaultInterpreter
+      commands: |
+        set -e
+        docker build --target runtime --progress plain -t flat-lab/APPNAME:@commit_hash@ .
+        tar -C devops/lab -cf - . | docker exec -i app-deployer deploy-app APPNAME @commit_hash@ http://APPNAME:8080/healthz
+    useTTY: false
+    condition: SUCCESSFUL
+    optional: false
+  triggers:
+  - type: BranchUpdateTrigger
+    branches: main
+  timeout: 7200

@@ -12,26 +12,6 @@
         resolvers 1.1.1.1 8.8.8.8
     }
 
-    @sonar host sonar.{$DUCKDNS_DOMAIN}
-    handle @sonar {
-        @sonar_rtc path /rtc /rtc/*
-        handle @sonar_rtc {
-            reverse_proxy livekit:7880
-        }
-        handle {
-            reverse_proxy sonar:8080
-        }
-    }
-
-    @livekit host livekit.{$DUCKDNS_DOMAIN}
-    handle @livekit {
-        reverse_proxy livekit:7880 {
-            header_up Host {host}
-            header_up X-Forwarded-For {remote}
-            header_up X-Forwarded-Proto {scheme}
-        }
-    }
-
     @adguard host adguard.{$DUCKDNS_DOMAIN}
     handle @adguard {
         reverse_proxy adguardhome:81
@@ -834,6 +814,9 @@
     handle @webssh {
         reverse_proxy webssh:5000
     }
+
+    # Routes of self-developed apps, installed by app-deployer.
+    import /etc/caddy/apps/*.caddy
 
     # Fallback
     handle {

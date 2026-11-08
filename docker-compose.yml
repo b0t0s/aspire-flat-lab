@@ -58,6 +58,7 @@ services:
     - ./configs/caddy/Caddyfile:/etc/caddy/Caddyfile
     - ../services-data/system/caddy/data:/data
     - ../services-data/system/caddy/config:/config
+    - ../services-data/system/apps/routes:/etc/caddy/apps:ro
     networks:
     - flat_lab_net
     extra_hosts:
