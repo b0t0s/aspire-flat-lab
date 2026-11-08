@@ -98,18 +98,6 @@ internal static class SmartHomeAltServices
 
         var seafileDataPath = settings.SmartHome.DataPath("SEAFILE_DATA", "../services-data/system/seafile");
 
-        var seafileDb = builder.AddContainer("seafile-db", "mariadb", "11.8.8")
-            .WithContainerName("seafile-db")
-            .WithEnvironment("MYSQL_ROOT_PASSWORD", settings.Secret("SEAFILE_DB_ROOT_PASS"))
-            .WithEnvironment("MYSQL_LOG_CONSOLE", "true")
-            .WithEnvironment("DEBUG", "True")
-            .WithBindMount(settings.SmartHome.DataPath("SEAFILE_DB_DATA", "../services-data/system/seafile-db"), "/var/lib/mysql");
-
-        var seafileMemcached = builder.AddContainer("seafile-memcached", "memcached", "1.6-alpine")
-            .WithContainerName("seafile-memcached")
-            .WithEntrypoint("memcached")
-            .WithArgs("-m", "256");
-
         var seafile = builder.AddContainer("seafile", "seafileltd/seafile-mc", "latest")
             .WithContainerName("cloud")
             .WithDefaultMode(LabMode.Off)
@@ -122,8 +110,8 @@ internal static class SmartHomeAltServices
             .WithEnvironment("SEAFILE_ADMIN_PASSWORD", settings.Secret("SEAFILE_ADMIN_PASS"))
             .WithBindMount(seafileDataPath, "/shared")
             .WithLabPort(80, "seafile")
-            .WaitFor(seafileDb)
-            .WaitFor(seafileMemcached)
+            .WaitFor(dependencies.SeafileDb)
+            .WaitFor(dependencies.SeafileMemcached)
             .WithHomepage("Household", "Cloud", "mdi-cloud", href: $"https://cloud.{settings.Shared.DuckDnsDomain}");
 
         // Runs once against the live Seafile: seahub_settings.py only exists after Seafile's own first start.

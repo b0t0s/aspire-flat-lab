@@ -32,6 +32,8 @@ internal sealed class EnvironmentSettings(IDistributedApplicationBuilder builder
         Hex16,
         /// <summary>48 random bytes as base64 (openssl rand -base64 48).</summary>
         Base64,
+        /// <summary>32 random bytes as base64 (openssl rand -base64 32).</summary>
+        Base64Key,
         /// <summary>Laravel APP_KEY: "base64:" + 32 random bytes.</summary>
         LaravelKey,
         /// <summary>Never generated: must be provided in .env (tokens issued by another system).</summary>

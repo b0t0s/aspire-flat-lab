@@ -8,6 +8,8 @@ internal sealed partial class LabDependencies(IDistributedApplicationBuilder bui
 {
     private readonly Dictionary<string, IResourceBuilder<ContainerResource>> created = new(StringComparer.Ordinal);
 
+    private IDistributedApplicationBuilder Builder => builder;
+
     private EnvironmentSettings Settings => settings;
 
     private IResourceBuilder<ContainerResource> Once(Func<IResourceBuilder<ContainerResource>> create, [CallerMemberName] string property = "")

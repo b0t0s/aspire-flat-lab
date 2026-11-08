@@ -22,4 +22,22 @@ internal sealed partial class LabDependencies
         .WithEnvironment("MYSQL_PASSWORD", Settings.Secret("OPENEMR_DB_PASS"))
         .WithBindMount(Settings.SmartHome.DataPath("OPENEMR_DB_DATA", "../services-data/system/openemr-db"), "/var/lib/mysql")
         .WithHealthcheck("/usr/local/bin/healthcheck.sh --su-mysql --connect --innodb_initialized", interval: "1m", retries: 3, startPeriod: "1m"));
+
+    public string TrailkeeprBuild => Builder.RepoPath("src/containers/trailkeepr");
+
+    public IResourceBuilder<ContainerResource> TrailkeeprDb => Once(() => Builder.AddDockerfile("trailkeepr-db", TrailkeeprBuild, "Dockerfile.db")
+        .WithContainerName("postgis")
+        .WithEnvironment("POSTGRES_USER", "postgres")
+        .WithEnvironment("POSTGRES_PASSWORD", Settings.Secret("TRAILKEEPR_DB_PASSWORD"))
+        .WithEnvironment("POSTGRES_DB", "hiking")
+        .WithBindMount(Settings.Irl.DataPath("TRAILKEEPR_DB_DATA", "../services-data/system/trailkeepr/postgres"), "/var/lib/postgresql/data")
+        .WithHealthcheck("pg_isready -U postgres"));
+
+    public IResourceBuilder<ContainerResource> TrailkeeprApi => Once(() => Builder.AddDockerfile("trailkeepr-api", TrailkeeprBuild, "Dockerfile.api")
+        .WithContainerName("hiking-api")
+        .WithEnvironment("POSTGRES_USER", "postgres")
+        .WithEnvironment("POSTGRES_PASSWORD", Settings.Secret("TRAILKEEPR_DB_PASSWORD"))
+        .WithEnvironment("POSTGRES_DB", "hiking")
+        .WithBindMount(Settings.Irl.DataPath("TRAILKEEPR_UPLOADS", "../services-data/system/trailkeepr/uploads"), "/app/uploads")
+        .WaitFor(TrailkeeprDb));
 }

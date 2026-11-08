@@ -83,7 +83,7 @@ internal static class MediaServices
             .WithContainerName("slskd")
             .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("SLSKD_NO_AUTH", "true")
-            .WithEnvironment("SLSKD_DOWNLOADS_DIR", "/music")
+            .WithEnvironment("SLSKD_DOWNLOADS_DIR", "/music/_incoming")
             .WithEnvironment("SLSKD_SLSK_USERNAME", settings.Media.Value("SLSKD_USERNAME"))
             .WithEnvironment("SLSKD_SLSK_PASSWORD", settings.Secret("SLSKD_PASSWORD"))
             .WithBindMount(settings.Media.DataPath("SLSKD_DATA", "../services-data/system/slskd"), "/app")
@@ -154,33 +154,27 @@ internal static class MediaServices
             .WithLabPort(8945, "pinchflat-ngx")
             .WithHomepage("Media", "YouTube", "mdi-youtube", "Pinchflat-NGX media manager", $"https://youtube.{settings.Shared.DuckDnsDomain}");
 
-        var pipedBackend = builder.AddContainer("piped-backend", "1337kavin/piped", "latest")
-            .WithContainerName("piped-backend")
-            .WithConfigTemplate("configs/piped/config.properties.template", "/app", "config.properties", new Dictionary<string, object>
-            {
-                ["PROXY_PART"] = $"https://pipedproxy.{settings.Shared.DuckDnsDomain}",
-                ["API_URL"] = $"https://pipedapi.{settings.Shared.DuckDnsDomain}",
-                ["FRONTEND_URL"] = $"https://piped.{settings.Shared.DuckDnsDomain}",
-                ["PIPED_DB_PASSWORD"] = settings.Secret("PIPED_DB_PASSWORD"),
-            })
-            .WithLabPort(8080, "piped-backend")
-            .WithLab(lab => lab.PortGroup = "Media")
-            .WaitFor(dependencies.PipedDb);
-
-        var pipedProxy = builder.AddContainer("piped-proxy", "1337kavin/piped-proxy", "latest")
-            .WithContainerName("piped-proxy")
-            .WithLabPort(8080, "piped-proxy")
-            .WithLab(lab => lab.PortGroup = "Media");
-
         _ = builder.AddContainer("piped-frontend", "1337kavin/piped-frontend", "latest")
             .WithContainerName("piped-frontend")
             .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("BACKEND_HOSTNAME", $"pipedapi.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("HTTP_MODE", "https")
             .WithLabPort(80, "piped-frontend")
-            .WaitFor(pipedBackend)
-            .WaitFor(pipedProxy)
+            .WaitFor(dependencies.PipedBackend)
+            .WaitFor(dependencies.PipedProxy)
             .WithHomepage("Media", "Piped", "mdi-youtube", "Privacy YouTube frontend", $"https://piped.{settings.Shared.DuckDnsDomain}");
 
+        // Soulseek -> beets -> Navidrome. Login uses Navidrome accounts; set the slskd URL (http://slskd:5030) in Settings on first use.
+        _ = builder.AddContainer("soulbeet", "docccccc/soulbeet", "light")
+            .WithContainerName("soulbeet")
+            .WithEnvironment("DATABASE_URL", "sqlite:/data/soulbeet.db")
+            .WithEnvironment("DOWNLOAD_PATH", "/downloads")
+            .WithEnvironment("SECRET_KEY", settings.Secret("SOULBEET_SECRET_KEY", SecretKind.Hex32))
+            .WithEnvironment("NAVIDROME_URL", "http://music:4533")
+            .WithBindMount(settings.Media.DataPath("SOULBEET_DATA", "../services-data/system/soulbeet"), "/data")
+            .WithBindMount(Path.Combine(musicPath, "_incoming"), "/downloads")
+            .WithBindMount(musicPath, "/music")
+            .WithLabPort(9765, "soulbeet")
+            .WithHomepage("Media", "Soulbeet", "mdi-music-note-plus", "Find, tag and file music", $"https://soulbeet.{settings.Shared.DuckDnsDomain}");
     }
 }

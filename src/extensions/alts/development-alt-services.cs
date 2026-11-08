@@ -164,21 +164,6 @@ internal static class DevelopmentAltServices
             .WaitFor(dependencies.KuttRedis)
             .WithHomepage("Development", "URL shortener", "mdi-link-variant", href: $"https://go.{settings.Shared.DuckDnsDomain}");
 
-        var calagopusRedis = builder.AddContainer("calagopus-redis", "ghcr.io/calagopus/valkey", "latest")
-            .WithContainerName("calagopus-redis")
-            .WithArgs("--protected-mode", "no", "--save", "900", "1")
-            .WithBindMount(settings.Development.DataPath("CALAGOPUS_REDIS_DATA", "../services-data/system/calagopus/redis"), "/data");
-
-        var calagopusDb = builder.AddContainer("calagopus-db", "ghcr.io/calagopus/pgautoupgrade", "18-alpine")
-            .WithContainerName("calagopus-db")
-            .WithEnvironment("TZ", settings.Shared.TimeZone)
-            .WithEnvironment("POSTGRES_USER", "panel")
-            .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("CALAGOPUS_DB_PASSWORD"))
-            .WithEnvironment("POSTGRES_DB", "panel")
-            .WithEnvironment("PGDATA", "/data")
-            .WithBindMount(settings.Development.DataPath("CALAGOPUS_DB_DATA", "../services-data/system/calagopus/postgres"), "/data")
-            .WithHealthcheck("pg_isready -U panel");
-
         _ = builder.AddContainer("calagopus", "ghcr.io/calagopus/panel", "aio")
             .WithContainerName("panel")
             .WithEnvironment("TZ", settings.Shared.TimeZone)
@@ -204,8 +189,8 @@ internal static class DevelopmentAltServices
             .WithBindMount("/etc/calagopus-wings/", "/etc/calagopus-wings/")
             .WithLab(lab => lab.ExtraPorts.Add((10031, 2022, "tcp")))
             .WithLabPort(8000, "calagopus")
-            .WaitFor(calagopusDb)
-            .WaitFor(calagopusRedis)
+            .WaitFor(dependencies.CalagopusDb)
+            .WaitFor(dependencies.CalagopusRedis)
             .WithHomepage("Development", "Game Panel", "mdi-gamepad-variant", "Calagopus game server panel", $"https://panel.{settings.Shared.DuckDnsDomain}");
 
     }

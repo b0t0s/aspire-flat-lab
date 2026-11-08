@@ -32,28 +32,11 @@ internal static class IrlServices
             .WithLabPort(8000, "adventurelog")
             .WithHomepage("Irl", "Adventures", "mdi-bag-suitcase", href: $"https://adventures.{settings.Shared.DuckDnsDomain}");
 
-        var trailkeeprBuild = builder.RepoPath("src/containers/trailkeepr");
-        var hikingDb = builder.AddDockerfile("trailkeepr-db", trailkeeprBuild, "Dockerfile.db")
-            .WithContainerName("postgis")
-            .WithEnvironment("POSTGRES_USER", "postgres")
-            .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("TRAILKEEPR_DB_PASSWORD"))
-            .WithEnvironment("POSTGRES_DB", "hiking")
-            .WithBindMount(settings.Irl.DataPath("TRAILKEEPR_DB_DATA", "../services-data/system/trailkeepr/postgres"), "/var/lib/postgresql/data")
-            .WithHealthcheck("pg_isready -U postgres");
-
-        var hikingApi = builder.AddDockerfile("trailkeepr-api", trailkeeprBuild, "Dockerfile.api")
-            .WithContainerName("hiking-api")
-            .WithEnvironment("POSTGRES_USER", "postgres")
-            .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("TRAILKEEPR_DB_PASSWORD"))
-            .WithEnvironment("POSTGRES_DB", "hiking")
-            .WithBindMount(settings.Irl.DataPath("TRAILKEEPR_UPLOADS", "../services-data/system/trailkeepr/uploads"), "/app/uploads")
-            .WaitFor(hikingDb);
-
-        _ = builder.AddDockerfile("trailkeepr", trailkeeprBuild, "Dockerfile.ui")
+        _ = builder.AddDockerfile("trailkeepr", dependencies.TrailkeeprBuild, "Dockerfile.ui")
             .WithContainerName("hiking")
             .WithDefaultMode(LabMode.Off)
             .WithLabPort(80, "trailkeepr")
-            .WaitFor(hikingApi)
+            .WaitFor(dependencies.TrailkeeprApi)
             .WithHomepage("Irl", "Hiking", "hiking", "Trailkeepr hike tracker", $"https://hiking.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("dawarich", "freikin/dawarich", "latest")

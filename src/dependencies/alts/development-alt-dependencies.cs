@@ -37,4 +37,19 @@ internal sealed partial class LabDependencies
         Settings.Development.DataPath("KUTT_DB_DATA", "../services-data/system/kutt/postgres")));
 
     public IResourceBuilder<ContainerResource> KuttRedis => Once(() => Redis("kutt-redis"));
+
+    public IResourceBuilder<ContainerResource> CalagopusRedis => Once(() => Builder.AddContainer("calagopus-redis", "ghcr.io/calagopus/valkey", "latest")
+        .WithContainerName("calagopus-redis")
+        .WithArgs("--protected-mode", "no", "--save", "900", "1")
+        .WithBindMount(Settings.Development.DataPath("CALAGOPUS_REDIS_DATA", "../services-data/system/calagopus/redis"), "/data"));
+
+    public IResourceBuilder<ContainerResource> CalagopusDb => Once(() => Builder.AddContainer("calagopus-db", "ghcr.io/calagopus/pgautoupgrade", "18-alpine")
+        .WithContainerName("calagopus-db")
+        .WithEnvironment("TZ", Settings.Shared.TimeZone)
+        .WithEnvironment("POSTGRES_USER", "panel")
+        .WithEnvironment("POSTGRES_PASSWORD", Settings.Secret("CALAGOPUS_DB_PASSWORD"))
+        .WithEnvironment("POSTGRES_DB", "panel")
+        .WithEnvironment("PGDATA", "/data")
+        .WithBindMount(Settings.Development.DataPath("CALAGOPUS_DB_DATA", "../services-data/system/calagopus/postgres"), "/data")
+        .WithHealthcheck("pg_isready -U panel"));
 }

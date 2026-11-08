@@ -89,6 +89,7 @@ internal sealed class LabSecrets(IDistributedApplicationBuilder builder)
             SecretKind.Hex32 => Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32)),
             SecretKind.Hex16 => Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(16)),
             SecretKind.Base64 => Convert.ToBase64String(RandomNumberGenerator.GetBytes(48)),
+            SecretKind.Base64Key => Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
             SecretKind.LaravelKey => "base64:" + Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };

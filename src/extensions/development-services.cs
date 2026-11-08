@@ -13,6 +13,7 @@ internal static class DevelopmentServices
             .WithEnvironment("APP_SECRET", settings.Secret("ZEROBYTE_APP_SECRET", SecretKind.Hex32))
             .WithBindMount(settings.SmartHome.DataPath("ZEROBYTE_DATA", "../services-data/system/zerobyte"), "/var/lib/zerobyte")
             .WithBindMount(settings.Shared.DataRoot, "/mydata/services-data", isReadOnly: true)
+            .WithRepoMount(".env", "/mydata/flat-lab.env", isReadOnly: true)
             .WithBindMount(settings.SmartHome.DataPath("ZEROBYTE_REPOSITORIES", "../backups"), "/repositories")
             .WithLabPort(4096, "zerobyte")
             .WithHomepage("Infrastructure", "Backups", "mdi-backup-restore", "", $"https://backup.{settings.Shared.DuckDnsDomain}");
@@ -63,13 +64,6 @@ internal static class DevelopmentServices
             .WithLabPort(3000, "container-hub")
             .WithHomepage("Infrastructure", "Registry UI", "mdi-docker", "Container Hub", $"https://registry.{settings.Shared.DuckDnsDomain}");
 
-        var termixDataPath = settings.SmartHome.DataPath("TERMIX_DATA", "../services-data/system/termix");
-
-        var guacd = builder.AddContainer("guacd", "guacamole/guacd", "1.6.0")
-            .WithContainerName("guacd")
-            .WithDefaultMode(LabMode.Auto)
-            .WithBindMount(termixDataPath, "/termix-data");
-
         _ = builder.AddContainer("termix", "ghcr.io/termix-ssh/termix", "latest")
             .WithContainerName("termix")
             .WithDefaultMode(LabMode.Auto)
@@ -78,10 +72,10 @@ internal static class DevelopmentServices
             .WithEnvironment("GUACD_TUNNEL_HOST", "termix")
             .WithEnvironment("GUACD_RECORDING_PATH", "/termix-data/session_recordings/guacamole")
             .WithEnvironment("GUACD_DRIVE_PATH", "/termix-data/rdp-drive")
-            .WithBindMount(termixDataPath, "/app/data")
-            .WithBindMount(termixDataPath, "/termix-data")
+            .WithBindMount(dependencies.TermixDataPath, "/app/data")
+            .WithBindMount(dependencies.TermixDataPath, "/termix-data")
             .WithLabPort(8080, "termix")
-            .WaitFor(guacd)
+            .WaitFor(dependencies.Guacd)
             .WithHomepage("Infrastructure", "SSH terminal", "mdi-console", "Termix web terminal", $"https://termix.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("opengist", "ghcr.io/thomiceli/opengist", "latest")
@@ -125,5 +119,18 @@ internal static class DevelopmentServices
             .WithBindMount(settings.Development.DataPath("CONVERTX_DATA", "../services-data/system/convertx"), "/app/data")
             .WithLabPort(3000, "convertx")
             .WithHomepage("Development", "Converter", "mdi-file-convert", href: $"https://convert.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("webssh", "ghcr.io/bifrost0x/webssh", "latest")
+            .WithContainerName("webssh")
+            .WithEnvironment("DEPLOYMENT_PROFILE", "homelab")
+            .WithEnvironment("CORS_ORIGINS", $"https://webssh.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("TRUSTED_PROXIES", "1")
+            .WithEnvironment("SESSION_COOKIE_SECURE", "true")
+            .WithEnvironment("BACKUP_TEMP_DIR", "/app/recovery")
+            .WithEnvironment("BACKUP_RECOVERY_DURABLE", "true")
+            .WithBindMount(settings.Development.DataPath("WEBSSH_DATA", "../services-data/system/webssh/data"), "/app/data")
+            .WithBindMount(settings.Development.DataPath("WEBSSH_RECOVERY", "../services-data/system/webssh/recovery"), "/app/recovery")
+            .WithLabPort(5000, "webssh")
+            .WithHomepage("Infrastructure", "Web SSH", "mdi-console-network", "SSH and SFTP workspace", $"https://webssh.{settings.Shared.DuckDnsDomain}");
     }
 }

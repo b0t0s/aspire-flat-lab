@@ -11,6 +11,9 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 COPY --from=source /source/ ./
+# Furniture drags in 5 mm steps instead of upstream's 50 mm; the grep fails the build if the pinned source ever changes.
+RUN sed -i -E 's/(snapOffset\(f\.[xy] \+ raw\.[xy] - d\.origin\.[xy])\)/\1, 5)/' src/canvas/PlanCanvas.tsx \
+    && [ "$(grep -cE 'snapOffset\(f\.[xy] \+ raw\.[xy] - d\.origin\.[xy], 5\)' src/canvas/PlanCanvas.tsx)" = 2 ]
 RUN npm ci --no-audit --no-fund \
     && npm run build \
     && rm -f dist/data/.htaccess dist/plans/.htaccess

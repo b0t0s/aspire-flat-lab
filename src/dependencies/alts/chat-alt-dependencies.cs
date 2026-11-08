@@ -27,4 +27,21 @@ internal sealed partial class LabDependencies
         .WithEnvironment("PICTRS__MEDIA__ANIMATION__MAX_FRAME_COUNT", "400")
         .WithBindMount(Path.Combine(Settings.Chat.DataPath("LEMMY_PROJECT_DATA", "../services-data/system/lemmy-project"), "pictrs"), "/mnt")
         .WithLab(lab => lab.User = "991:991"));
+
+    public IResourceBuilder<ContainerResource> Lemmy => Once(() => Builder.AddContainer("lemmy", "dessalines/lemmy", "0.19.20")
+        .WithContainerName("forum")
+        .WithContainerNetworkAlias("lemmy")
+        .WithEnvironment("LEMMY_DATABASE_URL", ReferenceExpression.Create($"postgres://lemmy:{Settings.Secret("LEMMY_DB_PASSWORD")}@lemmy-db:5432/lemmy"))
+        .WithEnvironment("LEMMY_HOSTNAME", $"forum.{Settings.Shared.DuckDnsDomain}")
+        .WithEnvironment("LEMMY_PORT", "8536")
+        .WithEnvironment("LEMMY_CONFIG_LOCATION", "/config/config.hjson")
+        .WithConfigTemplate("configs/lemmy/config.hjson.template", "/config", "config.hjson", new Dictionary<string, object>
+        {
+            ["HOSTNAME"] = $"forum.{Settings.Shared.DuckDnsDomain}",
+            ["DOMAIN"] = Settings.Shared.DuckDnsDomain,
+            ["PICTRS_API_KEY"] = Settings.Secret("LEMMY_PICTRS_API_KEY", aliases: "LEMMY_DB_PASSWORD"),
+        }, escape: value => value.Replace("\\", "\\\\").Replace("\"", "\\\""))
+        .WithLabPort(8536, "lemmy")
+        .WithLab(lab => lab.PortGroup = "Messaging")
+        .WaitFor(LemmyDb));
 }

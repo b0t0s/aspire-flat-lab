@@ -67,6 +67,8 @@ internal static class ChatServices
             .WithEnvironment("CONTINUWUITY_DATABASE_PATH", "/var/lib/continuwuity")
             .WithEnvironment("CONTINUWUITY_ADDRESS", "0.0.0.0")
             .WithEnvironment("CONTINUWUITY_PORT", "8008")
+            .WithEnvironment("CONTINUWUITY_ALLOW_REGISTRATION", "true")
+            .WithEnvironment("CONTINUWUITY_REGISTRATION_TOKEN", settings.Secret("CONTINUWUITY_REGISTRATION_TOKEN"))
             .WithBindMount(settings.Chat.DataPath("CONTINUWUITY_DATA", "../services-data/system/continuwuity"), "/var/lib/continuwuity")
             .WithLabPort(8008, "continuwuity")
             .WithHomepage("Messaging", "Matrix", "mdi-server-network", "", $"https://matrix.{settings.Shared.DuckDnsDomain}");

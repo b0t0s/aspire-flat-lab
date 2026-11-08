@@ -72,22 +72,6 @@ internal static class ChatAltServices
         AddSynapse(builder, dependencies, settings);
 
         // Forum
-        var lemmy = builder.AddContainer("lemmy", "dessalines/lemmy", "0.19.20")
-            .WithContainerName("forum")
-            .WithContainerNetworkAlias("lemmy")
-            .WithEnvironment("LEMMY_DATABASE_URL", ReferenceExpression.Create($"postgres://lemmy:{settings.Secret("LEMMY_DB_PASSWORD")}@lemmy-db:5432/lemmy"))
-            .WithEnvironment("LEMMY_HOSTNAME", $"forum.{settings.Shared.DuckDnsDomain}")
-            .WithEnvironment("LEMMY_PORT", "8536")
-            .WithEnvironment("LEMMY_CONFIG_LOCATION", "/config/config.hjson")
-            .WithConfigTemplate("configs/lemmy/config.hjson.template", "/config", "config.hjson", new Dictionary<string, object>
-            {
-                ["HOSTNAME"] = $"forum.{settings.Shared.DuckDnsDomain}",
-                ["DOMAIN"] = settings.Shared.DuckDnsDomain,
-                ["PICTRS_API_KEY"] = settings.Secret("LEMMY_PICTRS_API_KEY", aliases: "LEMMY_DB_PASSWORD"),
-            }, escape: value => value.Replace("\\", "\\\\").Replace("\"", "\\\""))
-            .WithLabPort(8536, "lemmy")
-            .WithLab(lab => lab.PortGroup = "Messaging")
-            .WaitFor(dependencies.LemmyDb);
 
         var lemmyUi = builder.AddContainer("lemmy-project-ui", "dessalines/lemmy-ui", "0.19.20")
             .WithContainerName("forum-ui")
@@ -96,7 +80,7 @@ internal static class ChatAltServices
             .WithEnvironment("LEMMY_UI_LEMMY_EXTERNAL_HOST", $"forum.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("LEMMY_UI_HTTPS", "true")
             .WithBindMount(settings.Chat.DataPath("LEMMY_UI_THEMES", "../services-data/system/lemmy-project/lemmy-ui/extra_themes"), "/app/extra_themes")
-            .WaitFor(lemmy)
+            .WaitFor(dependencies.Lemmy)
             .WithHomepage("Messaging", "Forum", "mdi-forum", "Federated network", $"https://forum.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("lemmy-project-postfix", "mwader/postfix-relay", "latest")

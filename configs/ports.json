@@ -9,6 +9,7 @@
     "excalidraw/excalidraw": 10,
     "ideon/ideon": 9,
     "it-tools/it-tools": 5,
+    "jupyter/jupyter": 15,
     "lightpanda/lightpanda": 12,
     "obscura/obscura": 13,
     "onedev/onedev-agent": 2,
@@ -43,8 +44,10 @@
     "atuin/atuin": 3,
     "container-hub/container-hub": 0,
     "degoog/degoog": 2,
+    "netronome/netronome": 7,
     "ntfy/ntfy": 4,
     "termix/termix": 1,
+    "webssh/webssh": 6,
     "zerobyte/zerobyte": 5
   },
   "Irl": {
@@ -58,6 +61,7 @@
   },
   "Knowledge": {
     "dawarich/dawarich": 7,
+    "edentext/edentext": 13,
     "faved/faved": 4,
     "ghost/ghost": 3,
     "joplin/joplin": 8,
@@ -85,6 +89,7 @@
     "radarr/radarr": 8,
     "resonand/resonand": 14,
     "sonarr/sonarr": 9,
+    "soulbeet/soulbeet": 15,
     "sound-vault/sound-vault": 5,
     "ytdlp-web-player/ytdlp-web-player": 11
   },

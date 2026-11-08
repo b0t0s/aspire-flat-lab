@@ -588,7 +588,7 @@
 
     @secrets host secrets.{$DUCKDNS_DOMAIN}
     handle @secrets {
-        reverse_proxy infisical:80
+        reverse_proxy infisical:8080
     }
 
     @sharing host sharing.{$DUCKDNS_DOMAIN}
@@ -813,6 +813,26 @@
     @notebooks host notebooks.{$DUCKDNS_DOMAIN}
     handle @notebooks {
         reverse_proxy jupyter:8888
+    }
+
+    @soulbeet host soulbeet.{$DUCKDNS_DOMAIN}
+    handle @soulbeet {
+        reverse_proxy soulbeet:9765
+    }
+
+    @edentext host text.{$DUCKDNS_DOMAIN}
+    handle @edentext {
+        reverse_proxy edentext:80
+    }
+
+    @netronome host netronome.{$DUCKDNS_DOMAIN}
+    handle @netronome {
+        reverse_proxy netronome:7575
+    }
+
+    @webssh host webssh.{$DUCKDNS_DOMAIN}
+    handle @webssh {
+        reverse_proxy webssh:5000
     }
 
     # Fallback
