@@ -2,6 +2,7 @@
   "Development": {
     "atuin/atuin": 4,
     "calagopus/calagopus": 14,
+    "container-hub/container-hub": 16,
     "convertx/convertx": 8,
     "email-signature/email-signature": 0,
     "excalidash-backend/excalidash-backend": 6,
@@ -15,6 +16,7 @@
     "onedev/onedev-agent": 2,
     "onedev/onedev-http": 1,
     "opengist/opengist": 3,
+    "termix/termix": 17,
     "usertour/usertour": 11
   },
   "Entertainment": {

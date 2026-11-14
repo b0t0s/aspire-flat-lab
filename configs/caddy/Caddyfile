@@ -815,7 +815,15 @@
         reverse_proxy webssh:5000
     }
 
-    # Routes of self-developed apps, installed by app-deployer.
+	@livekit path /rtc /rtc/*
+	handle @livekit {
+		reverse_proxy livekit:7880
+	}
+
+	handle {
+		reverse_proxy sonar:8080
+	}
+    
     import /etc/caddy/apps/*.caddy
 
     # Fallback

@@ -113,7 +113,7 @@ internal static class EntertainmentServices
 
         _ = builder.AddDockerfile("solar-system", builder.RepoPath("src/containers/solar-system-map-builder"))
             .WithContainerName("solar")
-            .WithDefaultMode(LabMode.Auto)
+            .WithDefaultMode(LabMode.Manual)
             .WithRepoMount("configs/solar-system", "/config", isReadOnly: true)
             .WithBindMount(settings.Entertainment.DataPath("SOLAR_SYSTEM_CACHE", "../services-data/system/solar-system"), "/cache")
             .WithLabPort(80, "solar-system")
@@ -128,6 +128,7 @@ internal static class EntertainmentServices
         // Desktop Stellarium streamed to the browser (linuxserver Selkies base): full star catalogs, works offline.
         _ = builder.AddDockerfile("stellarium", builder.RepoPath("src/containers/stellarium"))
             .WithContainerName("stellarium")
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("PUID", settings.Shared.Uid)
             .WithEnvironment("PGID", settings.Shared.Gid)
             .WithEnvironment("TZ", settings.Shared.TimeZone)

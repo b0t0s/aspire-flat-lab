@@ -5,6 +5,16 @@ internal static class DevelopmentServices
 {
     public static void AddDevelopmentServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
+        var appsDataPath = Path.Combine(settings.Shared.DataRoot, "system", "apps");
+        _ = builder.AddDockerfile("app-deployer", builder.RepoPath("src/containers/app-deployer"))
+            .WithContainerName("app-deployer")
+            .WithDefaultMode(LabMode.Auto)
+            .WithEnvironment("APP_DATA_ROOT", appsDataPath)
+            .WithEnvironment("LAB_DOMAIN", settings.Shared.DuckDnsDomain)
+            .WithEnvironment("NTFY_URL", "http://notifications:80/lab-deploys")
+            .WithBindMount(appsDataPath, "/apps")
+            .WithDockerSocket(isReadOnly: false);
+
         _ = builder.AddContainer("zerobyte", "ghcr.io/nicotsx/zerobyte", "v0.44")
             .WithContainerName("zerobyte")
             .WithDefaultMode(LabMode.Manual)
@@ -20,7 +30,7 @@ internal static class DevelopmentServices
 
         _ = builder.AddContainer("atuin", "ghcr.io/atuinsh/atuin", "latest")
             .WithContainerName("shell-history")
-            .WithDefaultMode(LabMode.Auto)
+            .WithDefaultMode(LabMode.Off)
             .WithArgs("start")
             .WithEnvironment("ATUIN_HOST", "0.0.0.0")
             .WithEnvironment("ATUIN_OPEN_REGISTRATION", "true")
@@ -58,15 +68,15 @@ internal static class DevelopmentServices
 
         _ = builder.AddContainer("container-hub", "ghcr.io/eznix86/docker-registry-ui", "latest")
             .WithContainerName("registry")
-            .WithDefaultMode(LabMode.Auto)
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("REGISTRY_URL", settings.Development.Value("REGISTRY_URL"))
             .WithEnvironment("REGISTRY_AUTH", settings.Development.Value("REGISTRY_AUTH"))
             .WithLabPort(3000, "container-hub")
-            .WithHomepage("Infrastructure", "Registry UI", "mdi-docker", "Container Hub", $"https://registry.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "Registry UI", "mdi-docker", "Container Hub", $"https://registry.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("termix", "ghcr.io/termix-ssh/termix", "latest")
             .WithContainerName("termix")
-            .WithDefaultMode(LabMode.Auto)
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("PORT", "8080")
             .WithEnvironment("GUACD_HOST", "guacd")
             .WithEnvironment("GUACD_TUNNEL_HOST", "termix")
@@ -76,7 +86,21 @@ internal static class DevelopmentServices
             .WithBindMount(dependencies.TermixDataPath, "/termix-data")
             .WithLabPort(8080, "termix")
             .WaitFor(dependencies.Guacd)
-            .WithHomepage("Infrastructure", "SSH terminal", "mdi-console", "Termix web terminal", $"https://termix.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "SSH terminal", "mdi-console", "", $"https://termix.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("webssh", "ghcr.io/bifrost0x/webssh", "latest")
+            .WithContainerName("webssh")
+            .WithDefaultMode(LabMode.Off)
+            .WithEnvironment("DEPLOYMENT_PROFILE", "homelab")
+            .WithEnvironment("CORS_ORIGINS", $"https://webssh.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("TRUSTED_PROXIES", "1")
+            .WithEnvironment("SESSION_COOKIE_SECURE", "true")
+            .WithEnvironment("BACKUP_TEMP_DIR", "/app/recovery")
+            .WithEnvironment("BACKUP_RECOVERY_DURABLE", "true")
+            .WithBindMount(settings.Development.DataPath("WEBSSH_DATA", "../services-data/system/webssh/data"), "/app/data")
+            .WithBindMount(settings.Development.DataPath("WEBSSH_RECOVERY", "../services-data/system/webssh/recovery"), "/app/recovery")
+            .WithLabPort(5000, "webssh")
+            .WithHomepage("Development", "Web SSH", "mdi-console-network", "", $"https://webssh.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("opengist", "ghcr.io/thomiceli/opengist", "latest")
             .WithContainerName("snippets")
@@ -92,7 +116,7 @@ internal static class DevelopmentServices
 
         _ = builder.AddContainer("jupyter", "quay.io/jupyter/scipy-notebook", "latest")
             .WithContainerName("jupyter")
-            .WithDefaultMode(LabMode.Manual)
+            .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("JUPYTER_TOKEN", settings.Secret("JUPYTER_TOKEN", SecretKind.Hex32))
             .WithEnvironment("NB_UID", settings.Shared.Uid)
             .WithEnvironment("NB_GID", settings.Shared.Gid)
@@ -120,27 +144,22 @@ internal static class DevelopmentServices
             .WithLabPort(3000, "convertx")
             .WithHomepage("Development", "Converter", "mdi-file-convert", href: $"https://convert.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("webssh", "ghcr.io/bifrost0x/webssh", "latest")
-            .WithContainerName("webssh")
-            .WithEnvironment("DEPLOYMENT_PROFILE", "homelab")
-            .WithEnvironment("CORS_ORIGINS", $"https://webssh.{settings.Shared.DuckDnsDomain}")
-            .WithEnvironment("TRUSTED_PROXIES", "1")
-            .WithEnvironment("SESSION_COOKIE_SECURE", "true")
-            .WithEnvironment("BACKUP_TEMP_DIR", "/app/recovery")
-            .WithEnvironment("BACKUP_RECOVERY_DURABLE", "true")
-            .WithBindMount(settings.Development.DataPath("WEBSSH_DATA", "../services-data/system/webssh/data"), "/app/data")
-            .WithBindMount(settings.Development.DataPath("WEBSSH_RECOVERY", "../services-data/system/webssh/recovery"), "/app/recovery")
-            .WithLabPort(5000, "webssh")
-            .WithHomepage("Infrastructure", "Web SSH", "mdi-console-network", "SSH and SFTP workspace", $"https://webssh.{settings.Shared.DuckDnsDomain}");
+        var mySpeedHostPort = int.Parse(settings.SmartHome.Value("MYSPEED_PORT", "5216"), System.Globalization.CultureInfo.InvariantCulture);
+        _ = builder.AddContainer("myspeed", "germannewsmaker/myspeed", "latest")
+            .WithContainerName("speed")
+            .WithDefaultMode(LabMode.Off)
+            .WithBindMount(settings.SmartHome.DataPath("MYSPEED_DATA_PATH", "../services-data/system/myspeed"), "/config")
+            .WithPublishedPort(mySpeedHostPort, 5216)
+            .WithHomepage("Infrastructure", "Speed", "mdi-speedometer", href: $"https://speed.{settings.Shared.DuckDnsDomain}")
+            .WithHomepageWidget("myspeed", "http://speed:5216");
 
-        var appsDataPath = Path.Combine(settings.Shared.DataRoot, "system", "apps");
-        _ = builder.AddDockerfile("app-deployer", builder.RepoPath("src/containers/app-deployer"))
-            .WithContainerName("app-deployer")
+        _ = builder.AddContainer("netronome", "ghcr.io/autobrr/netronome", "latest")
+            .WithContainerName("netronome")
             .WithDefaultMode(LabMode.Auto)
-            .WithEnvironment("APP_DATA_ROOT", appsDataPath)
-            .WithEnvironment("LAB_DOMAIN", settings.Shared.DuckDnsDomain)
-            .WithEnvironment("NTFY_URL", "http://notifications:80/lab-deploys")
-            .WithBindMount(appsDataPath, "/apps")
-            .WithDockerSocket(isReadOnly: false);
+            .WithEnvironment("NETRONOME__HOST", "0.0.0.0")
+            .WithBindMount(settings.SmartHome.DataPath("NETRONOME_DATA", "../services-data/system/netronome"), "/data")
+            .WithLab(lab => lab.User = $"{settings.Shared.Uid}:{settings.Shared.Gid}")
+            .WithLabPort(7575, "netronome")
+            .WithHomepage("Infrastructure", "Network health", "mdi-speedometer-medium", "", $"https://netronome.{settings.Shared.DuckDnsDomain}");
     }
 }

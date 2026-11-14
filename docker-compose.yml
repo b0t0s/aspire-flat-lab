@@ -64,28 +64,6 @@ services:
     extra_hosts:
     - "host.docker.internal:host-gateway"
 
-  cpm:
-    labels:
-    - homepage.group=Infrastructure
-    - homepage.name=Caddy UI
-    - homepage.icon=mdi-sign-direction
-    - homepage.href=https://caddyui.${DUCKDNS_DOMAIN:-localhost}
-    image: perteus/caddy-ui:latest
-    container_name: cpm
-    restart: unless-stopped
-    environment:
-    - CONTAINER_NAME=caddy
-    - CADDY_CONFIG_PATH=/caddy-config
-    - CADDY_DATA_PATH=/caddy-data
-    ports:
-    - "10056:8501"
-    volumes:
-    - ./configs/caddy/Caddyfile:/caddy-config/Caddyfile:ro
-    - ${CPM_DATA:-../services-data/system/caddy/data}:/caddy-data
-    - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-    - flat_lab_net
-
   adguardhome:
     labels:
     - homepage.group=Infrastructure

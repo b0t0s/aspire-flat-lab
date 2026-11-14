@@ -8,7 +8,7 @@ internal static class SecretServices
     {
         _ = builder.AddContainer("origamivault", "ghcr.io/origamivault/origamivault", "latest")
             .WithContainerName("origami")
-            .WithDefaultMode(LabMode.Manual)
+            .WithDefaultMode(LabMode.Off)
             .WithLabPort(8080, "origamivault")
             .WithHomepage("Secrets", "OrigamiVault", "mdi-file-lock", "Paper backup of secrets", $"https://origami.{settings.Shared.DuckDnsDomain}");
 
@@ -63,7 +63,7 @@ internal static class SecretServices
 
         _ = builder.AddContainer("vaultwarden", "vaultwarden/server", "latest")
             .WithContainerName("passwords")
-            .WithDefaultMode(LabMode.Manual)
+            .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("DOMAIN", $"https://passwords.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("SIGNUPS_ALLOWED", settings.Secrets.Value("VAULTWARDEN_SIGNUPS_ALLOWED", "true"))
             .WithEnvironment("INVITATIONS_ALLOWED", "true")
@@ -97,7 +97,7 @@ internal static class SecretServices
 
         _ = builder.AddContainer("infisical", "infisical/infisical", "latest")
             .WithContainerName("infisical")
-            .WithDefaultMode(LabMode.Auto)
+            .WithDefaultMode(LabMode.Off)
             .WithEnvironment("SITE_URL", $"https://secrets.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("DB_CONNECTION_URI", ReferenceExpression.Create($"postgres://infisical:{settings.Secret("INFISICAL_DB_PASSWORD")}@infisical-db:5432/infisical"))
             .WithEnvironment("REDIS_URL", "redis://infisical-redis:6379")

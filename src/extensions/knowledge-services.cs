@@ -18,7 +18,7 @@ internal static class KnowledgeServices
 
         _ = builder.AddContainer("paperless-ngx", "ghcr.io/paperless-ngx/paperless-ngx", "latest")
             .WithContainerName("documents")
-            .WithDefaultMode(LabMode.Auto)
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("PAPERLESS_REDIS", "redis://paperless-redis:6379")
             .WithEnvironment("PAPERLESS_DBENGINE", "postgresql")
             .WithEnvironment("PAPERLESS_DBHOST", "paperless-db")
@@ -84,7 +84,6 @@ internal static class KnowledgeServices
             .WaitFor(dependencies.VaultisseDb)
             .WithHomepage("Knowledge", "Book lending", "mdi-bookshelf", "", $"https://vaultisse.{settings.Shared.DuckDnsDomain}");
 
-
         _ = builder.AddContainer("kiwix", "ghcr.io/kiwix/kiwix-serve", "latest")
             .WithContainerName("kiwix")
             .WithDefaultMode(LabMode.Manual)
@@ -95,9 +94,9 @@ internal static class KnowledgeServices
             .WithDockerExecCommand("list-zims", "List ZIM files", "ls -lh /data/*.zim", "Library")
             .WithHomepage("Knowledge", "Kiwix", "mdi-library", "Offline Wikipedia, PhET simulations, Stack Exchange", $"https://kiwix.{settings.Shared.DuckDnsDomain}");
 
-        // Word processor for .docx and .odt that runs in the browser: the server stores nothing.
         _ = builder.AddContainer("edentext", "ghcr.io/stffnb/edentext", "latest")
             .WithContainerName("edentext")
+            .WithDefaultMode(LabMode.Manual)
             .WithLabPort(80, "edentext")
             .WithHomepage("Knowledge", "Text", "mdi-file-word", "Word processor", $"https://text.{settings.Shared.DuckDnsDomain}");
     }

@@ -129,7 +129,7 @@ internal static class IrlServices
 
         _ = builder.AddContainer("radicale", "ghcr.io/kozea/radicale", "stable")
             .WithContainerName("phonebook")
-            .WithDefaultMode(LabMode.Auto)
+            .WithDefaultMode(LabMode.Manual)
             .WithConfigFile("configs/radicale/config", "/etc/radicale/config", Path.Combine(settings.SmartHome.DataPath("RADICALE_CONFIG", "../services-data/system/radicale/config"), "config"))
             .WithBindMount(settings.SmartHome.DataPath("RADICALE_CONFIG", "../services-data/system/radicale/config"), "/etc/radicale")
             .WithBindMount(settings.SmartHome.DataPath("RADICALE_DATA", "../services-data/system/radicale/data"), "/var/lib/radicale")

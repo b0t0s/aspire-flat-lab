@@ -25,25 +25,6 @@ internal static class SmartHomeServices
                 password: HomepageVar("NTFY_WIDGET_PASSWORD"))
             .WithLab(lab => lab.Labels["homepage.widget.topic"] = settings.SmartHome.Value("NTFY_WIDGET_TOPIC", "general"));
 
-        var mySpeedHostPort = int.Parse(settings.SmartHome.Value("MYSPEED_PORT", "5216"), System.Globalization.CultureInfo.InvariantCulture);
-        _ = builder.AddContainer("myspeed", "germannewsmaker/myspeed", "latest")
-            .WithContainerName("speed")
-            .WithDefaultMode(LabMode.Auto)
-            .WithBindMount(settings.SmartHome.DataPath("MYSPEED_DATA_PATH", "../services-data/system/myspeed"), "/config")
-            .WithPublishedPort(mySpeedHostPort, 5216)
-            .WithHomepage("Infrastructure", "Speed", "mdi-speedometer", href: $"https://speed.{settings.Shared.DuckDnsDomain}")
-            .WithHomepageWidget("myspeed", "http://speed:5216");
-
-        _ = builder.AddDockerfile("house-planner", builder.RepoPath("src/containers/house-planner"))
-            .WithContainerName("floorplan")
-            .WithDefaultMode(LabMode.Manual)
-            .WithEnvironment("HOUSE_PASSWORD", settings.Secret("HOUSE_PLANNER_PASSWORD"))
-            .WithEnvironment("HOUSE_SETUP_KEY", settings.SmartHome.Value("HOUSE_PLANNER_SETUP_KEY"))
-            .WithEnvironment("HOUSE_DEMO", settings.SmartHome.Value("HOUSE_PLANNER_DEMO"))
-            .WithBindMount(settings.SmartHome.DataPath("HOUSE_PLANNER_DATA", "../services-data/system/house-planner"), "/var/lib/house-planner")
-            .WithLabPort(8080, "house-planner")
-            .WithHomepage("Household", "Floor plan", "mdi-home-floor-a", "House planner", $"https://floorplan.{settings.Shared.DuckDnsDomain}");
-
         _ = builder.AddContainer("worldmonitor", "worldmonitor", "local")
             .WithContainerName("worldmonitor")
             .WithDefaultMode(LabMode.Manual)
@@ -80,12 +61,14 @@ internal static class SmartHomeServices
             .WaitFor(dependencies.NextcloudRedis)
             .WithHomepage("Household", "Nextcloud", "si-nextcloud", "Files, calendar, contacts", $"https://nextcloud.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("netronome", "ghcr.io/autobrr/netronome", "latest")
-            .WithContainerName("netronome")
-            .WithEnvironment("NETRONOME__HOST", "0.0.0.0")
-            .WithBindMount(settings.SmartHome.DataPath("NETRONOME_DATA", "../services-data/system/netronome"), "/data")
-            .WithLab(lab => lab.User = $"{settings.Shared.Uid}:{settings.Shared.Gid}")
-            .WithLabPort(7575, "netronome")
-            .WithHomepage("Infrastructure", "Netronome", "mdi-speedometer-medium", "Speed tests and network monitoring", $"https://netronome.{settings.Shared.DuckDnsDomain}");
+        _ = builder.AddDockerfile("house-planner", builder.RepoPath("src/containers/house-planner"))
+            .WithContainerName("floorplan")
+            .WithDefaultMode(LabMode.Manual)
+            .WithEnvironment("HOUSE_PASSWORD", settings.Secret("HOUSE_PLANNER_PASSWORD"))
+            .WithEnvironment("HOUSE_SETUP_KEY", settings.SmartHome.Value("HOUSE_PLANNER_SETUP_KEY"))
+            .WithEnvironment("HOUSE_DEMO", settings.SmartHome.Value("HOUSE_PLANNER_DEMO"))
+            .WithBindMount(settings.SmartHome.DataPath("HOUSE_PLANNER_DATA", "../services-data/system/house-planner"), "/var/lib/house-planner")
+            .WithLabPort(8080, "house-planner")
+            .WithHomepage("Household", "Floor plan", "mdi-home-floor-a", "House planner", $"https://floorplan.{settings.Shared.DuckDnsDomain}");
     }
 }

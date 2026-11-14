@@ -16,7 +16,7 @@ internal static class ChatServices
         //   nousresearch/hermes-agent setup
         _ = builder.AddContainer("hermes", "nousresearch/hermes-agent", "latest")
             .WithContainerName("hermes")
-            .WithDefaultMode(LabMode.Auto)
+            .WithDefaultMode(LabMode.Off)
             .WithArgs("gateway", "run")
             .WithEnvironment("HERMES_DASHBOARD", "1")
             .WithEnvironment("HERMES_DASHBOARD_HOST", "0.0.0.0")
@@ -43,7 +43,7 @@ internal static class ChatServices
 
         _ = builder.AddContainer("pingvin-share", "stonith404/pingvin-share", "latest")
             .WithContainerName("sharing")
-            .WithDefaultMode(LabMode.Auto)
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("TZ", settings.Shared.TimeZone)
             .WithBindMount(settings.Chat.DataPath("PINGVIN_DATA", "../services-data/system/pingvin-share"), "/app/backend/pingvin-share-data")
             .WithBindMount(Path.Combine(settings.Chat.DataPath("PINGVIN_DATA", "../services-data/system/pingvin-share"), "data"), "/opt/app/backend/data")
@@ -52,17 +52,17 @@ internal static class ChatServices
 
         _ = builder.AddContainer("smp-server", "simplexchat/smp-server", "latest")
             .WithContainerName("smp-server")
-            .WithDefaultMode(LabMode.Manual)
+            .WithDefaultMode(LabMode.Off)
             .WithEnvironment("ADDR", settings.Chat.Value("SMP_SERVER_ADDR", settings.Shared.DuckDnsDomain))
             .WithEnvironment("PASS", settings.Secret("SMP_SERVER_PASS", SecretKind.Manual))
             .WithBindMount(settings.Chat.DataPath("SMP_SERVER_CONFIG", "../services-data/system/smp-server/config"), "/etc/opt/simplex")
             .WithBindMount(settings.Chat.DataPath("SMP_SERVER_LOGS", "../services-data/system/smp-server/logs"), "/var/opt/simplex")
             .WithPublishedPort(5223, 5223)
-            .WithHomepage("Messaging", "SimpleX relay", "mdi-lock", href: $"https://simplex.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Messaging", "SimpleX", "mdi-lock", href: $"https://simplex.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("continuwuity", "forgejo.ellis.link/continuwuation/continuwuity", "latest")
             .WithContainerName("matrix-server")
-            .WithDefaultMode(LabMode.Manual)
+            .WithDefaultMode(LabMode.Off)
             .WithEnvironment("CONTINUWUITY_SERVER_NAME", settings.Shared.DuckDnsDomain)
             .WithEnvironment("CONTINUWUITY_DATABASE_PATH", "/var/lib/continuwuity")
             .WithEnvironment("CONTINUWUITY_ADDRESS", "0.0.0.0")
@@ -94,7 +94,7 @@ internal static class ChatServices
 
         _ = builder.AddContainer("stalwart", "stalwartlabs/stalwart", "v1")
             .WithContainerName("mail")
-            .WithDefaultMode(LabMode.Manual)
+            .WithDefaultMode(LabMode.Off)
             .WithEnvironment("STALWART_RECOVERY_ADMIN", ReferenceExpression.Create($"admin:{settings.Secret("STALWART_ADMIN_PASSWORD")}"))
             .WithBindMount(settings.Chat.DataPath("STALWART_DATA", "../services-data/system/stalwart/data"), "/var/lib/stalwart")
             .WithBindMount(settings.Chat.DataPath("STALWART_CONFIG", "../services-data/system/stalwart/config"), "/etc/stalwart")
@@ -106,7 +106,7 @@ internal static class ChatServices
 
         _ = builder.AddContainer("email-signature", "ghcr.io/clarkemedia/email-signature-generator", "latest")
             .WithContainerName("email-signature-generator")
-            .WithDefaultMode(LabMode.Manual)
+            .WithDefaultMode(LabMode.Off)
             .WithLabPort(80, "email-signature")
             .WithHomepage("Messaging", "Email Signature Generator", "mdi-email-edit", "Email signature generator", $"https://email-signature-generator.{settings.Shared.DuckDnsDomain}");
     }

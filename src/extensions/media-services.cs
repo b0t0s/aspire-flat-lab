@@ -81,7 +81,7 @@ internal static class MediaServices
 
         _ = builder.AddContainer("slskd", "slskd/slskd", "latest")
             .WithContainerName("slskd")
-            .WithDefaultMode(LabMode.Auto)
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("SLSKD_NO_AUTH", "true")
             .WithEnvironment("SLSKD_DOWNLOADS_DIR", "/music/_incoming")
             .WithEnvironment("SLSKD_SLSK_USERNAME", settings.Media.Value("SLSKD_USERNAME"))
@@ -93,11 +93,11 @@ internal static class MediaServices
                 lab.ExtraPorts.Add((5030, 5030, "tcp"));
                 lab.ExtraPorts.Add((50300, 50300, "tcp"));
             })
-            .WithHomepage("Media", "Soulseek", "mdi-share-variant");
+            .WithHomepage("Media", "Soulseek", "mdi-music-note-plus", "", $"https://soulseek.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("sound-vault", "kanrim/sound-vault", "latest")
             .WithContainerName("soundvault")
-            .WithDefaultMode(LabMode.Off)
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("NAVIDROME_USER", settings.Media.Value("SOUNDVAULT_NAVIDROME_USER"))
             .WithEnvironment("NAVIDROME_PASS", settings.Secret("SOUNDVAULT_NAVIDROME_PASS"))
             .WithEnvironment("NAVIDROME_URL", "http://navidrome:4533")
@@ -115,19 +115,6 @@ internal static class MediaServices
             .WithBindMount(musicPath, "/media", isReadOnly: true)
             .WithHostNetwork()
             .WithHomepage("Media", "Music Assistant", "mdi-speaker", "Music library", $"https://music-assistant.{settings.Shared.DuckDnsDomain}");
-
-        _ = builder.AddContainer("audiomuse-ai", "neptunebhub/audiomuse-ai", "latest")
-            .WithContainerName("audiomuse-ai")
-            .WithDefaultMode(LabMode.Off)
-            .WithEnvironment("TZ", settings.Shared.TimeZone)
-            .WithEnvironment("AM_LOGGING_LEVEL", "INFO")
-            .WithEnvironment("AM_NAVIDROME_URL", "http://music:4533")
-            .WithEnvironment("AM_NAVIDROME_USER", settings.Media.Value("NAVIDROME_WIDGET_USER", "admin"))
-            .WithEnvironment("AM_NAVIDROME_PASSWORD", settings.Secret("NAVIDROME_PASSWORD", SecretKind.Manual, aliases: "NAVIDROME_WIDGET_PASSWORD"))
-            .WithBindMount(settings.Media.DataPath("AUDIOMUSE_DATA", "../services-data/system/audiomuse"), "/app/data")
-            .WithBindMount(settings.Media.DataPath("NAVIDROME_MUSIC", "../services-data/public/music"), "/music", isReadOnly: true)
-            .WithLabPort(8500, "audiomuse-ai")
-            .WithHomepage("Media", "Sonic analysis", "mdi-waveform", "", $"https://audiomuse.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("metube", "ghcr.io/alexta69/metube", "latest")
             .WithContainerName("ytdl")
@@ -156,7 +143,7 @@ internal static class MediaServices
 
         _ = builder.AddContainer("piped-frontend", "1337kavin/piped-frontend", "latest")
             .WithContainerName("piped-frontend")
-            .WithDefaultMode(LabMode.Manual)
+            .WithDefaultMode(LabMode.Off)
             .WithEnvironment("BACKEND_HOSTNAME", $"pipedapi.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("HTTP_MODE", "https")
             .WithLabPort(80, "piped-frontend")
@@ -167,6 +154,7 @@ internal static class MediaServices
         // Soulseek -> beets -> Navidrome. Login uses Navidrome accounts; set the slskd URL (http://slskd:5030) in Settings on first use.
         _ = builder.AddContainer("soulbeet", "docccccc/soulbeet", "light")
             .WithContainerName("soulbeet")
+            .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("DATABASE_URL", "sqlite:/data/soulbeet.db")
             .WithEnvironment("DOWNLOAD_PATH", "/downloads")
             .WithEnvironment("SECRET_KEY", settings.Secret("SOULBEET_SECRET_KEY", SecretKind.Hex32))
@@ -175,6 +163,19 @@ internal static class MediaServices
             .WithBindMount(Path.Combine(musicPath, "_incoming"), "/downloads")
             .WithBindMount(musicPath, "/music")
             .WithLabPort(9765, "soulbeet")
-            .WithHomepage("Media", "Soulbeet", "mdi-music-note-plus", "Find, tag and file music", $"https://soulbeet.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Media", "Find and Tag music", "mdi-music-note-plus", "", $"https://soulbeet.{settings.Shared.DuckDnsDomain}");
+
+        _ = builder.AddContainer("audiomuse-ai", "neptunebhub/audiomuse-ai", "latest")
+            .WithContainerName("audiomuse-ai")
+            .WithDefaultMode(LabMode.Off)
+            .WithEnvironment("TZ", settings.Shared.TimeZone)
+            .WithEnvironment("AM_LOGGING_LEVEL", "INFO")
+            .WithEnvironment("AM_NAVIDROME_URL", "http://music:4533")
+            .WithEnvironment("AM_NAVIDROME_USER", settings.Media.Value("NAVIDROME_WIDGET_USER", "admin"))
+            .WithEnvironment("AM_NAVIDROME_PASSWORD", settings.Secret("NAVIDROME_PASSWORD", SecretKind.Manual, aliases: "NAVIDROME_WIDGET_PASSWORD"))
+            .WithBindMount(settings.Media.DataPath("AUDIOMUSE_DATA", "../services-data/system/audiomuse"), "/app/data")
+            .WithBindMount(settings.Media.DataPath("NAVIDROME_MUSIC", "../services-data/public/music"), "/music", isReadOnly: true)
+            .WithLabPort(8500, "audiomuse-ai")
+            .WithHomepage("Media", "Sonic analysis", "mdi-waveform", "", $"https://audiomuse.{settings.Shared.DuckDnsDomain}");
     }
 }
