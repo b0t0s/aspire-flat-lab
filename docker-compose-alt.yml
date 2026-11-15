@@ -1,0 +1,246 @@
+services:
+
+  tapmap:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Connections
+    - homepage.icon=mdi-map
+    - homepage.href=https://connections.${DUCKDNS_DOMAIN:-localhost}
+    image: olalie/tapmap:latest
+    container_name: tapmap
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    environment:
+    - TAPMAP_IN_DOCKER=1
+    - TAPMAP_PORT=8050
+    - TAPMAP_HOST=0.0.0.0
+    - TAPMAP_DATA_DIR=/data
+    volumes:
+    - ${TAPMAP_DATA:-../services-data/system/tapmap}:/data
+
+  lantern:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Wake-on-LAN
+    - homepage.icon=mdi-power
+    - homepage.href=https://wol.${DUCKDNS_DOMAIN:-localhost}
+    image: lantern:local
+    build:
+      context: ./src/containers/LANtern
+      dockerfile: Dockerfile
+    container_name: lantern
+    restart: unless-stopped
+    profiles: ["build-only"]
+    network_mode: host
+    environment:
+    - PORT=${LANTERN_PORT:-3000}
+    - DEVICES_FILE=/config/devices.json
+    - CONFIG_FILE=/config/config.json
+    volumes:
+    - ${LANTERN_CONFIG:-../services-data/system/lantern}:/config
+
+  # netalertx:
+  #   labels:
+  #   - homepage.group=Infrastructure
+  #   - homepage.name=Network
+  #   - homepage.icon=mdi-network
+  #   - homepage.href=https://network.${DUCKDNS_DOMAIN:-localhost}
+  #   - homepage.widget.type=netalertx
+  #   - homepage.widget.url=http://netalertx:20211
+  #   image: jokobsk/netalertx:latest
+  #   container_name: network
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   privileged: true
+  #   tmpfs:
+  #   - /tmp:rw,nosuid,nodev,size=256m
+  #   environment:
+  #   - TZ=${TZ:-Europe/Kyiv}
+  #   - GR_TZ=${TZ:-Europe/Kyiv}
+  #   volumes:
+  #   - ${NETALERTX_DATA_PATH:-../services-data/system/netalertx}:/data
+
+  languard:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=LAN map
+    - homepage.icon=mdi-lan
+    - homepage.href=https://languard.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/hillaliy/languard-frontend:latest
+    container_name: languard
+    restart: unless-stopped
+    network_mode: host
+    environment:
+    - BACKEND_UPSTREAM=127.0.0.1:8000
+    - FRONTEND_LISTEN_ADDRESS=:8080
+    depends_on:
+      languard-backend:
+        condition: service_healthy
+
+  languard-scheduler:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/hillaliy/languard-scheduler:latest
+    container_name: languard-scheduler
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    command: ["python", "-u", "manage.py", "run_scheduler", "--run-now"]
+    environment:
+    - SECRET_KEY=${LANGUARD_SECRET_KEY:?set LANGUARD_SECRET_KEY in .env}
+    - ALLOWED_HOSTS=${LANGUARD_ALLOWED_HOSTS:-localhost,127.0.0.1}
+    - DB_PATH=/data/db.sqlite3
+    - LOG_DIRECTORY=/data/logs
+    - STATIC_ROOT=/static
+    volumes:
+    - ${LANGUARD_DATA:-../services-data/system/languard}:/data
+    - ${LANGUARD_STATIC:-../services-data/system/languard/static}:/static
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      languard-backend:
+        condition: service_healthy
+
+  languard-backend:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/hillaliy/languard-backend:latest
+    container_name: languard-backend
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+    - SECRET_KEY=${LANGUARD_SECRET_KEY:?set LANGUARD_SECRET_KEY in .env}
+    - ALLOWED_HOSTS=${LANGUARD_ALLOWED_HOSTS:-localhost,127.0.0.1}
+    - BACKEND_LISTEN_PORT=8000
+    - DB_PATH=/data/db.sqlite3
+    - LOG_DIRECTORY=/data/logs
+    - STATIC_ROOT=/static
+    volumes:
+    - ${LANGUARD_DATA:-../services-data/system/languard}:/data
+    - ${LANGUARD_STATIC:-../services-data/system/languard/static}:/static
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; port = os.environ.get('BACKEND_LISTEN_PORT', '8000'); urllib.request.urlopen(f'http://127.0.0.1:{port}/api/v1/health/', timeout=3).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 60s
+
+  # homelable:
+  #   labels:
+  #   - homepage.group=Infrastructure
+  #   - homepage.name=Diagrams
+  #   - homepage.icon=mdi-sitemap
+  #   - homepage.href=https://diagrams.${DUCKDNS_DOMAIN:-localhost}
+  #   image: ghcr.io/pouzor/homelable-frontend:latest
+  #   container_name: diagrams
+  #   restart: unless-stopped
+  #   environment:
+  #   - BACKEND_UPSTREAM=homelable-backend:8000
+  #   ports:
+  #   - "10021:80"
+  #   networks:
+  #   - flat_lab_net
+
+  # homelable-backend:
+  #   labels:
+  #   - glance.hide=true
+  #   image: ghcr.io/pouzor/homelable-backend:latest
+  #   container_name: homelable-backend
+  #   restart: unless-stopped
+  #   environment:
+  #   - SECRET_KEY=${HOMELABLE_SECRET_KEY:?set HOMELABLE_SECRET_KEY in .env}
+  #   - SQLITE_PATH=/app/data/homelab.db
+  #   - CORS_ORIGINS=["https://diagrams.${DUCKDNS_DOMAIN:-localhost}"]
+  #   - AUTH_MODE=local
+  #   - AUTH_USERNAME=${HOMELABLE_AUTH_USERNAME:-admin}
+  #   - AUTH_PASSWORD_HASH=${HOMELABLE_AUTH_PASSWORD_HASH:?set HOMELABLE_AUTH_PASSWORD_HASH in .env}
+  #   - SCANNER_RANGES=${HOMELABLE_SCANNER_RANGES:-["192.168.1.0/24"]}
+  #   - MCP_API_KEY=${HOMELABLE_MCP_API_KEY}
+  #   - MCP_SERVICE_KEY=${HOMELABLE_MCP_SERVICE_KEY}
+  #   volumes:
+  #   - ${HOMELABLE_DATA:-../services-data/system/homelable}:/app/data
+  #   cap_add:
+  #   - NET_RAW
+  #   networks:
+  #   - flat_lab_net
+
+  # homelable-mcp:
+  #   labels:
+  #   - glance.hide=true
+  #   image: ghcr.io/pouzor/homelable-mcp:latest
+  #   container_name: homelable-mcp
+  #   restart: unless-stopped
+  #   environment:
+  #   - BACKEND_URL=http://homelable-backend:8000
+  #   - MCP_API_KEY=${HOMELABLE_MCP_API_KEY}
+  #   - MCP_SERVICE_KEY=${HOMELABLE_MCP_SERVICE_KEY}
+  #   ports:
+  #   - "10022:8001"
+  #   depends_on:
+  #   - homelable-backend
+  #   networks:
+  #   - flat_lab_net
+
+  # dockflare:
+  #   labels:
+  #   - homepage.group=Infrastructure
+  #   - homepage.name=DockFlare
+  #   - homepage.icon=mdi-cloud
+  #   - homepage.href=https://dockflare.${DUCKDNS_DOMAIN:-localhost}
+  #   image: alplat/dockflare:stable
+  #   container_name: dockflare
+  #   restart: unless-stopped
+  #   environment:
+  #   - REDIS_URL=redis://dockflare-redis:6379/0
+  #   - DOCKER_HOST=tcp://docker-socket-proxy:2375
+  #   - INTERNAL_BOOTSTRAP_SECRET=${DOCKFLARE_INTERNAL_BOOTSTRAP_SECRET:?set DOCKFLARE_INTERNAL_BOOTSTRAP_SECRET in .env}
+  #   volumes:
+  #   - ${DOCKFLARE_DATA:-../services-data/system/dockflare}:/app/data
+  #   ports:
+  #   - "10020:5000"
+  #   depends_on:
+  #   - dockflare-redis
+  #   - docker-socket-proxy
+  #   networks:
+  #   - flat_lab_net
+
+  # dockflare-redis:
+  #   labels:
+  #   - glance.hide=true
+  #   image: redis:7-alpine
+  #   container_name: dockflare-redis
+  #   restart: unless-stopped
+  #   command: ["redis-server", "--save", "", "--appendonly", "no"]
+  #   networks:
+  #   - flat_lab_net
+
+  # docker-socket-proxy:
+  #   labels:
+  #   - glance.hide=true
+  #   image: tecnativa/docker-socket-proxy:v0.4.1
+  #   container_name: docker-socket-proxy
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: "none"
+  #   environment:
+  #   - DOCKER_HOST=unix:///var/run/docker.sock
+  #   - CONTAINERS=1
+  #   - EVENTS=1
+  #   - NETWORKS=1
+  #   - IMAGES=1
+  #   - POST=1
+  #   - PING=1
+  #   - INFO=1
+  #   - EXEC=1
+  #   volumes:
+  #   - /var/run/docker.sock:/var/run/docker.sock
+  #   networks:
+  #   - flat_lab_net
+
+networks:
+  flat_lab_net:
+    name: flat_lab_net
+    external: true
+
+volumes:

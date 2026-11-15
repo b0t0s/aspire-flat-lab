@@ -1,0 +1,4 @@
+@APPNAME host APPNAME.{$DUCKDNS_DOMAIN}
+handle @APPNAME {
+    reverse_proxy APPNAME:8080
+}

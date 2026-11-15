@@ -1,0 +1,19 @@
+# Run by the lab's app-deployer as compose project app-APPNAME. It sets APP_IMAGE, APP_DATA and LAB_DOMAIN.
+services:
+  APPNAME:
+    image: ${APP_IMAGE:?}
+    container_name: APPNAME
+    restart: unless-stopped
+    volumes:
+      - ${APP_DATA:?}/data:/data
+    labels:
+      - homepage.group=Development
+      - homepage.name=APPNAME
+      - homepage.icon=mdi-application
+      - homepage.href=https://APPNAME.${LAB_DOMAIN:?}
+    networks:
+      - flat_lab_net
+
+networks:
+  flat_lab_net:
+    external: true

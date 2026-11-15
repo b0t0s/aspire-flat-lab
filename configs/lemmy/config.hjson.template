@@ -1,0 +1,15 @@
+{
+  # Rendered by the AppHost (src/extensions/chat-services.cs) into /config/config.hjson.
+  # The database comes from LEMMY_DATABASE_URL; placeholders are filled from .env secrets.
+  # Reference: https://join-lemmy.org/docs/administration/configuration.html
+  hostname: "${HOSTNAME}"
+  pictrs: {
+    url: "http://lemmy-project-pictrs:8080/"
+    api_key: "${PICTRS_API_KEY}"
+  }
+  email: {
+    smtp_server: "lemmy-project-postfix:25"
+    smtp_from_address: "noreply@${DOMAIN}"
+    tls_type: "none"
+  }
+}

@@ -19,7 +19,7 @@ services:
 
   zerotier:
     build:
-      context: ./src/additional-software/zerotier
+      context: ./src/containers/zerotier
       dockerfile: Dockerfile
     container_name: zerotier
     restart: unless-stopped
@@ -35,7 +35,7 @@ services:
     environment:
     - ZEROTIER_NETWORK_ID=${ZEROTIER_NETWORK_ID:?set ZEROTIER_NETWORK_ID in .env}
     networks:
-    - homelab_net
+    - flat_lab_net
     depends_on:
       zerotier-init:
         condition: service_completed_successfully
@@ -44,7 +44,7 @@ services:
     labels:
     - glance.hide=true
     build:
-      context: ./src/additional-software/caddy
+      context: ./src/containers/caddy
       dockerfile: Dockerfile
     container_name: caddy
     restart: unless-stopped
@@ -58,8 +58,9 @@ services:
     - ./configs/caddy/Caddyfile:/etc/caddy/Caddyfile
     - ../services-data/system/caddy/data:/data
     - ../services-data/system/caddy/config:/config
+    - ../services-data/system/apps/routes:/etc/caddy/apps:ro
     networks:
-    - homelab_net
+    - flat_lab_net
     extra_hosts:
     - "host.docker.internal:host-gateway"
 
@@ -88,7 +89,37 @@ services:
     environment:
       - HOMEPAGE_ALLOWED_HOSTS=${DUCKDNS_DOMAIN:-localhost}
     networks:
-    - homelab_net
+    - flat_lab_net
+
+  rustdesk-hbbs:
+    image: rustdesk/rustdesk-server:latest
+    container_name: rustdesk-hbbs
+    restart: unless-stopped
+    labels:
+    - glance.hide=true
+    command: hbbs
+    volumes:
+    - ${RUSTDESK_DATA_PATH:-../services-data/system/rustdesk}:/root
+    ports:
+    - "21115:21115"
+    - "21116:21116"
+    - "21116:21116/udp"
+    - "21118:21118"
+    networks:
+    - flat_lab_net
+
+  rustdesk-hbbr:
+    image: rustdesk/rustdesk-server:latest
+    container_name: rustdesk-hbbr
+    restart: unless-stopped
+    command: hbbr
+    volumes:
+    - ${RUSTDESK_DATA_PATH:-../services-data/system/rustdesk}:/root
+    ports:
+    - "21117:21117"
+    - "21119:21119"
+    networks:
+    - flat_lab_net
 
   homepage:
     labels:
@@ -99,6 +130,7 @@ services:
     environment:
     - HOMEPAGE_MCP_TOKEN=${HOMEPAGE_MCP_TOKEN:-}
     - HOMEPAGE_MCP_ENABLED=${HOMEPAGE_MCP_ENABLED:-false}
+    - HOMEPAGE_AUTH_ENABLED=${HOMEPAGE_AUTH_ENABLED:-false}
     - HOMEPAGE_MCP_ALLOW_WRITE=${HOMEPAGE_MCP_ALLOW_WRITE:-false}
     - HOMEPAGE_ALLOWED_HOSTS=${HOMEPAGE_ALLOWED_HOSTS:-homepage.${DUCKDNS_DOMAIN:-localhost},localhost,127.0.0.1}
     # Look & header widgets:
@@ -156,7 +188,7 @@ services:
     - ./configs/homepage/themes/${HOMEPAGE_THEME_PRESET:-default}.css:/app/config/custom.css:ro
     - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-    - homelab_net
+    - flat_lab_net
     extra_hosts:
     - "host.docker.internal:host-gateway"
 
@@ -180,7 +212,7 @@ services:
     - "${DNS1:-}"
     - "${DNS2:-}"
     networks:
-    - homelab_net
+    - flat_lab_net
 
   searxng-redis:
     image: redis:7-alpine
@@ -189,62 +221,7 @@ services:
     volumes:
     - ${SEARXNG_REDIS_DATA:-../services-data/system/searxng/redis}:/data
     networks:
-    - homelab_net
-
-  rsshub:
-    labels:
-    - homepage.group=Infrastructure
-    - homepage.name=RSS Generator
-    - homepage.icon=mdi-rss-box
-    - homepage.href=https://rsshub.${DUCKDNS_DOMAIN:-localhost}
-    image: diygod/rsshub:latest
-    container_name: rsshub
-    restart: unless-stopped
-    environment:
-    - NODE_ENV=production
-    ports:
-    - "10004:1200"
-    networks:
-    - homelab_net
-
-  # myspeed:
-  #   labels:
-  #   - homepage.group=Infrastructure
-  #   - homepage.name=Speed
-  #   - homepage.icon=mdi-speedometer
-  #   - homepage.href=https://speed.${DUCKDNS_DOMAIN:-localhost}
-  #   - homepage.widget.type=myspeed
-  #   - homepage.widget.url=http://speed:5216
-  #   image: germannewsmaker/myspeed:latest
-  #   container_name: speed
-  #   restart: unless-stopped
-  #   ports:
-  #   - "${MYSPEED_PORT:-5216}:5216"
-  #   volumes:
-  #   - ${MYSPEED_DATA_PATH:-../services-data/system/myspeed}:/config
-  #   networks:
-  #   - homelab_net
-
-  # netalertx:
-  #   labels:
-  #   - homepage.group=Infrastructure
-  #   - homepage.name=Network
-  #   - homepage.icon=mdi-network
-  #   - homepage.href=https://network.${DUCKDNS_DOMAIN:-localhost}
-  #   - homepage.widget.type=netalertx
-  #   - homepage.widget.url=http://netalertx:20211
-  #   image: jokobsk/netalertx:latest
-  #   container_name: network
-  #   restart: unless-stopped
-  #   network_mode: host
-  #   privileged: true
-  #   tmpfs:
-  #   - /tmp:rw,nosuid,nodev,size=256m
-  #   environment:
-  #   - TZ=${TZ:-Europe/Kyiv}
-  #   - GR_TZ=${TZ:-Europe/Kyiv}
-  #   volumes:
-  #   - ${NETALERTX_DATA_PATH:-../services-data/system/netalertx}:/data
+    - flat_lab_net
 
   filebrowser-quantum:
     labels:
@@ -254,23 +231,19 @@ services:
     - homepage.href=https://files.${DUCKDNS_DOMAIN:-localhost}
     - homepage.widget.type=filebrowser
     - homepage.widget.url=http://filebrowser-quantum:80
-    image: gtstef/filebrowser:1.3.3-stable
+    image: gtstef/filebrowser:2.0.1-stable
     container_name: files
     restart: unless-stopped
     environment:
-    - FB_NOAUTH=true
-    - FB_AUTH.METHOD=noauth
-    - FB_BASEURL=/
-    - FILEBROWSER_DATABASE=/config/database.db
     - FILEBROWSER_CONFIG=/config/config.yaml
     ports:
     - "10005:80"
     volumes:
     - ${FILEBROWSER_DATA:-../services-data/system/filebrowser-quantum}:/config
     - ./configs/filebrowser-quantum/config.yaml:/config/config.yaml:ro
-    - ${FILEBROWSER_FILES:-../services-data/public}:/srv
+    - ${FILEBROWSER_FILES:-../services-data/public}:/public
     networks:
-    - homelab_net
+    - flat_lab_net
 
   glances:
     labels:
@@ -295,144 +268,95 @@ services:
     ports:
     - "10006:61208"
     networks:
-    - homelab_net
+    - flat_lab_net
 
-  # olivetin:
-  #   labels:
-  #   - homepage.group=Infrastructure
-  #   - homepage.name=OliveTin
-  #   - homepage.icon=mdi-gamepad
-  #   - homepage.description=Buttons panel
-  #   - homepage.href=https://control.${DUCKDNS_DOMAIN:-localhost}
-  #   image: jamesread/olivetin:latest
-  #   container_name: olivetin
-  #   restart: unless-stopped
-  #   user: "${UID:-1000}:124"
-  #   group_add:
-  #   - 124
-  #   ports:
-  #   - "${OLIVETIN_PORT:-1337}:1337"
-  #   volumes:
-  #   - ${OLIVETIN_DATA:-../services-data/system/olivetin}:/config
-  #   - ./configs/olivetin/config.yaml:/config/config.yaml:ro
-  #   - ./configs/olivetin/entities:/config/entities
-  #   - /var/run/docker.sock:/var/run/docker.sock
-  #   # - ../services-data:/srv/services-data:ro
-  #   # - /var/log/journal:/var/log/journal:ro    
-  #   networks:
-  #   - homelab_net
-
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
+  tapmap:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Connections
+    - homepage.icon=mdi-map
+    - homepage.href=https://connections.${DUCKDNS_DOMAIN:-localhost}
+    image: olalie/tapmap:latest
+    container_name: tapmap
     restart: unless-stopped
+    network_mode: host
+    pid: host
+    environment:
+    - TAPMAP_IN_DOCKER=1
+    - TAPMAP_PORT=8050
+    - TAPMAP_HOST=0.0.0.0
+    - TAPMAP_DATA_DIR=/data
+    volumes:
+    - ${TAPMAP_DATA:-../services-data/system/tapmap}:/data
+
+  scanopy:
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Networks
+    - homepage.icon=mdi-radar
+    - homepage.href=https://networks.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/scanopy/scanopy/server:latest
+    container_name: networks
+    restart: unless-stopped
+    environment:
+    - SCANOPY_LOG_LEVEL=info
+    - SCANOPY_DATABASE_URL=postgresql://postgres:${SCANOPY_DB_PASSWORD}@scanopy-db:5432/scanopy
+    - SCANOPY_WEB_EXTERNAL_PATH=/app/static
+    - SCANOPY_PUBLIC_URL=https://networks.${DUCKDNS_DOMAIN:-localhost}
+    - SCANOPY_INTEGRATED_DAEMON_URL=http://host.docker.internal:60073
+    volumes:
+    - ${SCANOPY_DATA:-../services-data/system/scanopy/data}:/data
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    ports:
+    - "10023:60072"
+    depends_on:
+      scanopy-db:
+        condition: service_healthy
+      scanopy-daemon:
+        condition: service_started
+    networks:
+    - flat_lab_net
+
+  scanopy-daemon:
     labels:
     - glance.hide=true
+    image: ghcr.io/scanopy/scanopy/daemon:latest
+    container_name: networks-daemon
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
     environment:
-    - OLLAMA_ORIGINS=*
-    - OLLAMA_HOST=0.0.0.0
-    - OLLAMA_KEEP_ALIVE=24h
-    - OLLAMA_API_KEY=${OLLAMA_API_KEY:-}
-    ports:
-    - "11434:11434"
+    - SCANOPY_LOG_LEVEL=info
+    - SCANOPY_SERVER_URL=http://127.0.0.1:10023
     volumes:
-    - ${OLLAMA_DATA:-../services-data/system/ollama}:/root/.ollama
-    networks:
-    - homelab_net
+    - ${SCANOPY_DAEMON_CONFIG:-../services-data/system/scanopy/daemon}:/root/.config/scanopy/daemon
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:60073/api/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
 
-  open-webui:
+  scanopy-db:
     labels:
-    - homepage.group=Development
-    - homepage.name=LLM
-    - homepage.icon=mdi-robot
-    - homepage.description=
-    - homepage.href=https://llm.${DUCKDNS_DOMAIN:-localhost}
-    image: ghcr.io/open-webui/open-webui:main
-    container_name: llm
-    restart: unless-stopped
-    ports:
-    - "10007:8080"
-    volumes:
-    - ${OPEN_WEBUI_DATA:-../services-data/system/open-webui}:/app/backend/data
-    networks:
-    - homelab_net
-    environment:
-      - TZ=Europe/Kyiv
-      - ENABLE_SIGNUP=True
-      - OLLAMA_BASE_URL=http://ollama:11434
-
-  seafile:
-    labels:
-    - homepage.group=Household
-    - homepage.name=Cloud
-    - homepage.icon=mdi-cloud
-    - homepage.href=https://cloud.${DUCKDNS_DOMAIN:-localhost}
-    image: seafileltd/seafile-mc:latest
-    container_name: cloud
-    restart: unless-stopped
-    ports:
-      - "10008:80"
-    environment:
-      - DB_HOST=seafile-db
-      - TIME_ZONE=Europe/Kyiv
-      - SEAFILE_SERVER_LETSENCRYPT=false
-      - SEAFILE_SERVER_HOSTNAME=${DUCKDNS_DOMAIN:-localhost}
-      - DB_ROOT_PASSWD=${SEAFILE_DB_ROOT_PASS:?set SEAFILE_DB_ROOT_PASS in .env}
-      - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL:?set SEAFILE_ADMIN_EMAIL in .env}
-      - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASS:?set SEAFILE_ADMIN_PASS in .env}
-    volumes:
-    - ${SEAFILE_DATA:-../services-data/system/seafile}:/shared
-    depends_on:
-      - seafile-db
-      - seafile-memcached
-    networks:
-      - homelab_net
-      
-  seafile-db:
-    image: mariadb:11.8.8
-    container_name: seafile-db
+    - glance.hide=true
+    image: postgres:17-alpine
+    container_name: networks-db
     restart: unless-stopped
     environment:
-      - MYSQL_ROOT_PASSWORD=${SEAFILE_DB_ROOT_PASS:?set SEAFILE_DB_ROOT_PASS in .env}
-      - MYSQL_LOG_CONSOLE=true
-      - DEBUG=True
+    - POSTGRES_DB=scanopy
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=${SCANOPY_DB_PASSWORD:?set SCANOPY_DB_PASSWORD in .env}
     volumes:
-      - ${SEAFILE_DB_DATA:-../services-data/system/seafile-db}:/var/lib/mysql
+    - ${SCANOPY_DB_DATA:-../services-data/system/scanopy/postgres}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - homelab_net
-
-  seafile-memcached:
-    image: memcached:1.6-alpine
-    container_name: seafile-memcached
-    restart: unless-stopped
-    entrypoint: memcached -m 256
-    networks:
-      - homelab_net
-
-  seafile-auto-config:
-    image: docker:cli
-    container_name: seafile-auto-config
-    restart: "no"
-    environment:
-    - DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN:-localhost}
-    volumes:
-    - ${SEAFILE_DATA:-../services-data/system/seafile}:/shared
-    - /var/run/docker.sock:/var/run/docker.sock
-    entrypoint: /bin/sh
-    command:
-    - -c
-    - |
-      CFG=/shared/seafile/conf/seahub_settings.py
-      for i in $$(seq 1 100); do [ -f "$$CFG" ] && break; sleep 3; done
-      [ -f "$$CFG" ] || { echo "seahub_settings.py not found, giving up"; exit 1; }
-      sleep 5
-      sed -i "s|'LOCATION': 'memcached:11211'|'LOCATION': 'seafile-memcached:11211'|" "$$CFG"
-      if ! grep -q CSRF_TRUSTED_ORIGINS "$$CFG"; then
-        printf "\nSERVICE_URL = 'https://cloud.%s'\nFILE_SERVER_ROOT = 'https://cloud.%s/seafhttp'\nCSRF_TRUSTED_ORIGINS = ['https://cloud.%s']\nSECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')\n" "$$DUCKDNS_DOMAIN" "$$DUCKDNS_DOMAIN" "$$DUCKDNS_DOMAIN" >> "$$CFG"
-        docker restart cloud
-      fi
-    depends_on:
-      - seafile
+    - flat_lab_net
 
   home-assistant:
     labels:
@@ -459,127 +383,126 @@ services:
     environment:
     - TZ=${TZ:-Europe/Kyiv}
 
-  flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
+  kept:
+    labels:
+    - homepage.group=Household
+    - homepage.name=Kept
+    - homepage.icon=mdi-book-multiple
+    - homepage.href=https://kept.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/keptinventory/kept:1.13.1
+    container_name: kept
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+    - /tmp
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
     environment:
-    - LOG_LEVEL=info
-    ports:
-    - "10009:8191"
+    - KEPT_PUBLIC_URL=https://kept.${DUCKDNS_DOMAIN:-localhost}
+    - KEPT_TRUSTED_PROXIES=${KEPT_TRUSTED_PROXIES:-172.29.72.200}
+    - KEPT_DATABASE_URL=postgres://kept_app@kept-db:5432/kept
+    - KEPT_AUTH_DATABASE_URL=postgres://kept_auth@kept-db:5432/kept
+    - KEPT_SYSTEM_DATABASE_URL=postgres://kept_system@kept-db:5432/kept
+    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
+    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
+    - KEPT_DB_APP_PASSWORD_FILE=/config/database/kept_app
+    - KEPT_DB_AUTH_PASSWORD_FILE=/config/database/kept_auth
+    - KEPT_DB_SYSTEM_PASSWORD_FILE=/config/database/kept_system
+    volumes:
+    - kept-data:/data
+    - kept-config:/config
+    depends_on:
+      kept-db:
+        condition: service_healthy
+      kept-migrate:
+        condition: service_completed_successfully
     networks:
-    - homelab_net
+    - flat_lab_net
 
-  # watchtower:
-  #   labels:
-  #   - homepage.group=Infrastructure
-  #   - homepage.name=watchtower
-  #   - homepage.icon=mdi-update
-  #   - homepage.description=Services auto-updater
-  #   - homepage.widget.type=watchtower
-  #   - homepage.widget.url=http://watchtower:8080
-  #   image: containrrr/watchtower:latest
-  #   container_name: watchtower
-  #   restart: unless-stopped
-  #   command: --cleanup --schedule "0 0 4 * * *" --label-enable
-  #   environment:
-  #   - DOCKER_API_VERSION=1.40
-  #   volumes:
-  #   - /var/run/docker.sock:/var/run/docker.sock
-  #   networks:
-  #   - homelab_net
-
-  rustdesk-hbbs:
-    image: rustdesk/rustdesk-server:latest
-    container_name: rustdesk-hbbs
-    restart: unless-stopped
+  kept-db:
     labels:
     - glance.hide=true
-    command: hbbs
-    volumes:
-    - ${RUSTDESK_DATA_PATH:-../services-data/system/rustdesk}:/root
-    ports:
-    - "21115:21115"
-    - "21116:21116"
-    - "21116:21116/udp"
-    - "21118:21118"
-    networks:
-    - homelab_net
-
-  rustdesk-hbbr:
-    image: rustdesk/rustdesk-server:latest
-    container_name: rustdesk-hbbr
+    image: pgvector/pgvector:0.8.6-pg18-bookworm
+    container_name: kept-db
     restart: unless-stopped
-    command: hbbr
-    volumes:
-    - ${RUSTDESK_DATA_PATH:-../services-data/system/rustdesk}:/root
-    ports:
-    - "21117:21117"
-    - "21119:21119"
-    networks:
-    - homelab_net
-
-  ntfy:
-    labels:
-    - homepage.group=Infrastructure
-    - homepage.name=Notifications
-    - homepage.icon=mdi-bell-ring
-    - homepage.href=https://notifications.${DUCKDNS_DOMAIN:-localhost}
-    - homepage.widget.type=ntfy
-    - homepage.widget.url=http://ntfy:80
-    - homepage.widget.topic=${NTFY_WIDGET_TOPIC:-general}
-    - homepage.widget.username={{HOMEPAGE_VAR_NTFY_WIDGET_USERNAME}}
-    - homepage.widget.password={{HOMEPAGE_VAR_NTFY_WIDGET_PASSWORD}}
-    image: binwiederhier/ntfy:latest
-    container_name: notifications
-    restart: unless-stopped
-    command: serve
     environment:
-    - TZ=${TZ:-Europe/Kyiv}
-    - NTFY_BASE_URL=https://notifications.${DUCKDNS_DOMAIN:-localhost}
-    - NTFY_AUTH_DEFAULT_ACCESS=read-write
-    - NTFY_ENABLE_LOGIN=true
-    - NTFY_BEHIND_PROXY=true
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=${KEPT_DB_SUPERUSER_PASSWORD:-}
+    - POSTGRES_DB=kept
+    - TZ=UTC
     volumes:
-    - ${NTFY_AUTH:-../services-data/system/ntfy/auth}:/var/lib/ntfy
-    - ./configs/ntfy:/etc/ntfy:ro
-    - ${NTFY_CACHE:-../services-data/system/ntfy/cache}:/var/cache/ntfy
-    ports:
-    - "10010:80"
+    - kept-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d kept"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
     networks:
-    - homelab_net
+    - flat_lab_net
 
-  minecraft:
+  kept-bootstrap:
     labels:
-    - homepage.group=Entertainment
-    - homepage.name=minecraft
-    - homepage.icon=mdi-minecraft
-    - homepage.description=Game server
-    - homepage.widget.type=minecraft
-    - homepage.widget.url=udp://minecraft:25565
-    image: itzg/minecraft-server:latest
-    container_name: minecraft
-    restart: unless-stopped
-    ports:
-    - "25565:25565"
+    - glance.hide=true
+    image: ghcr.io/keptinventory/kept:1.13.1
+    container_name: kept-bootstrap
+    restart: "no"
+    entrypoint: ["kept"]
+    command: ["bootstrap"]
     environment:
-    - EULA=TRUE
-    - TYPE=PAPER
-    - DIFFICULTY=hard
-    - LEVEL_TYPE=AMPLIFIED
-    - ICON=/data/server-icon.png
-    - OVERRIDE_ICON=true
-    - ENABLE_RCON=false
-    - ONLINE_MODE=false
-    - MEMORY=2G
-    - MOTD=Flat-lab
+    - PGHOST=kept-db
+    - PGPORT=5432
+    - PGUSER=postgres
+    - PGDATABASE=kept
+    - PGPASSWORD=${KEPT_DB_SUPERUSER_PASSWORD:?set KEPT_DB_SUPERUSER_PASSWORD in .env}
+    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
+    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
+    - KEPT_DB_OWNER_PASSWORD_FILE=/owner/kept_owner
+    - KEPT_DB_APP_PASSWORD_FILE=/config/database/kept_app
+    - KEPT_DB_AUTH_PASSWORD_FILE=/config/database/kept_auth
+    - KEPT_DB_SYSTEM_PASSWORD_FILE=/config/database/kept_system
     volumes:
-    - ./configs/minecraft:/config:ro
-    - ${MINECRAFT_DATA:-../services-data/system/minecraft}:/data
+    - kept-config:/config
+    - kept-owner:/owner
+    depends_on:
+      kept-db:
+        condition: service_healthy
     networks:
-    - homelab_net
+    - flat_lab_net
+
+  kept-migrate:
+    labels:
+    - glance.hide=true
+    image: ghcr.io/keptinventory/kept:1.13.1
+    container_name: kept-migrate
+    restart: "no"
+    entrypoint: ["kept"]
+    command: ["migrate"]
+    environment:
+    - KEPT_OWNER_DATABASE_URL=postgres://kept_owner@kept-db:5432/kept
+    - KEPT_DB_OWNER_PASSWORD_FILE=/owner/kept_owner
+    - KEPT_SECRET_KEY=${KEPT_SECRET_KEY:?set KEPT_SECRET_KEY in .env}
+    - KEPT_AUTH_SECRET=${KEPT_AUTH_SECRET:?set KEPT_AUTH_SECRET in .env}
+    volumes:
+    - kept-data:/data
+    - kept-config:/config:ro
+    - kept-owner:/owner:ro
+    depends_on:
+      kept-db:
+        condition: service_healthy
+      kept-bootstrap:
+        condition: service_completed_successfully
+    networks:
+    - flat_lab_net
 
 networks:
-  homelab_net:
-    name: homelab_net
+  flat_lab_net:
+    name: flat_lab_net
     external: true
+
+volumes:
+  kept-db: {}
+  kept-data: {}
+  kept-config: {}
+  kept-owner: {}

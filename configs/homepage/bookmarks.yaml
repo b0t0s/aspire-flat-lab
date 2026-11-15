@@ -1,0 +1,22 @@
+---
+# Bookmark widgets — quick-access external services that don't live in compose.
+# Reference: https://gethomepage.dev/widgets/bookmarks/
+- Bookmarks:
+    - SpeedTest:
+      - href: https://speed.cloudflare.com/
+        abbr: CF
+    - Omada:
+      - href: https://omada.tplinkcloud.com/
+        abbr: OM
+    - ProtonMail:
+      - href: https://protonmail.com/
+        abbr: PM
+    - YouTube:
+      - href: https://youtube.com/
+        abbr: YT
+    - Wikipedia:
+        - href: https://wikipedia.org/
+          abbr: WP
+    - Github:
+        - href: https://github.com/
+          abbr: GH

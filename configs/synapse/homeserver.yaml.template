@@ -1,0 +1,46 @@
+# Synapse homeserver.yaml template.
+# Rendered by the AppHost (src/extensions/chat-services.cs) into /config/homeserver.yaml; placeholders are filled from .env secrets.
+
+server_name: '${SERVER_NAME}'
+report_stats: false
+public_baseurl: https://matrix.${SERVER_NAME}/
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+
+database:
+  name: psycopg2
+  args:
+    user: '${DB_USER}'
+    password: '${DB_PASSWORD}'
+    database: '${DB_NAME}'
+    host: '${DB_HOST}'
+    cp_min: 5
+    cp_max: 10
+
+log_config: /config/log.config
+
+macaroon_secret_key: '${MACAROON_SECRET_KEY}'
+signing_key_path: /data/${SERVER_NAME}.signing.key
+
+media_store_path: /data/media_store
+uploads_path: /data/uploads
+
+suppress_key_server_warning: true
+
+trusted_key_servers:
+  - server_name: 'matrix.org'
+    accept_keys_insecurely: true
+
+enable_registration: false
+enable_registration_without_verification: false
+allow_public_rooms: false
+
+max_upload_size: 100M
+
+url_preview_enabled: false

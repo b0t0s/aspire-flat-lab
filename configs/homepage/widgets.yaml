@@ -1,0 +1,41 @@
+---
+# Info widgets in the header bar.
+# Reference: https://gethomepage.dev/widgets/  ({{HOMEPAGE_VAR_*}} come from .env via docker-compose.yml)
+
+- greeting:
+    text_size: xl
+    text: "{{HOMEPAGE_VAR_TITLE}}"
+
+# SearXNG as the search box (and quick-launch internet search).
+- search:
+    provider: custom
+    url: https://search.{{HOMEPAGE_VAR_DOMAIN}}/search?q=
+    target: _blank
+    suggestionUrl: https://search.{{HOMEPAGE_VAR_DOMAIN}}/autocompleter?q=
+    showSearchSuggestions: true
+
+# Host stats straight from Glances (container "monitor"), the Pi rather than the homepage container.
+- glances:
+    url: http://monitor:61208
+    version: 4
+    cpu: true
+    mem: true
+    cputemp: true
+    uptime: true
+    disk: /
+
+- openmeteo:
+    label: "{{HOMEPAGE_VAR_OPENMETEO_LABEL}}"
+    latitude: "{{HOMEPAGE_VAR_OPENMETEO_LAT}}"
+    longitude: "{{HOMEPAGE_VAR_OPENMETEO_LON}}"
+    timezone: "{{HOMEPAGE_VAR_TZ}}"
+    units: metric
+    cache: 5
+
+- datetime:
+    text_size: sm
+    format:
+      dateStyle: short
+      timeStyle: short
+      hour12: false
+      timeZone: "{{HOMEPAGE_VAR_TZ}}"

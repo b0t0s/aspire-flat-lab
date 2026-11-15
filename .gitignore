@@ -1,3 +1,10 @@
+# Assistants
+.claude/
+.copilot/
+.github/copilot/
+.agents/
+.mcp.json
+
 # OS
 .DS_Store
 Thumbs.db
@@ -29,6 +36,7 @@ docker-compose.local.yml
 
 # Aspire publish output (contains resolved configuration)
 aspire-output/
+docs/ports.json
 
 # Runtime service data lives outside the repo at ../services-data (FLAT_LAB_DATA).
 # Upstream lemmy project files write their volumes next to the config.
@@ -44,10 +52,13 @@ credentials.json
 *.crt
 
 # IDEs
+.agents
+.playwright/
 .vscode/
 .idea/
 .vs/
 *.iml
+
 
 # Misc
 *.swp
@@ -59,3 +70,5 @@ container-snapshots/
 
 # Files the SearXNG container generates next to its settings
 configs/searxng/uwsgi.ini
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
