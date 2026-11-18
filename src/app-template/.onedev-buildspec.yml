@@ -13,7 +13,7 @@ jobs:
   - type: CommandStep
     name: verify
     runInContainer: true
-    image: docker:27-cli
+    image: docker:29-cli
     interpreter:
       type: DefaultInterpreter
       commands: |
@@ -39,7 +39,7 @@ jobs:
   - type: CommandStep
     name: build and deploy
     runInContainer: true
-    image: docker:27-cli
+    image: docker:29-cli
     interpreter:
       type: DefaultInterpreter
       commands: |

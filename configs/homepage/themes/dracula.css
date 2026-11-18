@@ -1,0 +1,17 @@
+/* Dracula palette for Homepage. Selected with HOMEPAGE_THEME_PRESET=dracula in .env (mounted as /app/config/custom.css).
+   Overrides Homepage's colour scale (--color-50 lightest .. --color-900 darkest; dark mode uses 800 as background),
+   so it applies whatever `color:` is set in settings.yaml. Best with HOMEPAGE_THEME=dark. */
+html[class*="theme-"] {
+  --color-50: 248 248 242;
+  --color-100: 226 226 220;
+  --color-200: 200 202 214;
+  --color-300: 164 168 192;
+  --color-400: 139 144 176;
+  --color-500: 98 114 164;
+  --color-600: 68 71 90;
+  --color-700: 52 55 70;
+  --color-800: 40 42 54;
+  --color-900: 33 34 44;
+  --color-logo-start: 189 147 249 / 40%;
+  --color-logo-stop: 189 147 249 / 80%;
+}

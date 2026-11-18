@@ -1,0 +1,73 @@
+---
+# Tiles that are not one container's labels. Every other tile comes from Docker labels.
+# Reference: https://gethomepage.dev/widgets/services/glances/
+
+- Controls:
+    - Home Assistant:
+        icon: mdi-home-automation
+        widget:
+          type: iframe
+          name: home-assistant-controls
+          src: https://home-assistant.{{HOMEPAGE_VAR_DOMAIN}}/lab-homepage/0
+          classes: h-96 sm:h-96 md:h-96 lg:h-96 xl:h-96 2xl:h-96
+          allowScrolling: "yes"
+          loadingStrategy: lazy
+
+- System:
+    - CPU:
+        icon: mdi-cpu-64-bit
+        widget:
+          type: glances
+          url: http://host.docker.internal:61208
+          version: 4
+          metric: cpu
+          refreshInterval: 10000
+    - Memory:
+        icon: mdi-memory
+        widget:
+          type: glances
+          url: http://host.docker.internal:61208
+          version: 4
+          metric: memory
+          refreshInterval: 10000
+    - Temperature:
+        icon: mdi-thermometer
+        widget:
+          type: glances
+          url: http://host.docker.internal:61208
+          version: 4
+          metric: "sensor:{{HOMEPAGE_VAR_GLANCES_CPU_SENSOR}}"
+          refreshInterval: 10000
+    - Network:
+        icon: mdi-lan
+        widget:
+          type: glances
+          url: http://host.docker.internal:61208
+          version: 4
+          metric: "network:{{HOMEPAGE_VAR_GLANCES_NET_IFACE}}"
+          refreshInterval: 10000
+    - Disk:
+        icon: mdi-harddisk
+        widget:
+          type: glances
+          url: http://host.docker.internal:61208
+          version: 4
+          metric: fs:/rootfs
+          chart: false
+          refreshInterval: 60000
+    - Processes:
+        icon: mdi-format-list-numbered
+        widget:
+          type: glances
+          url: http://host.docker.internal:61208
+          version: 4
+          metric: process
+          refreshInterval: 10000
+    - Containers:
+        icon: mdi-docker
+        widget:
+          type: glances
+          url: http://host.docker.internal:61208
+          version: 4
+          metric: containers
+          refreshInterval: 30000

@@ -1,4 +1,4 @@
-FROM alpine:3.21 AS source
+FROM alpine:3.24 AS source
 
 RUN apk add --no-cache git
 ARG SOURCE_COMMIT=dc80693063064724cfd7d5bee3e072a9faf6a645

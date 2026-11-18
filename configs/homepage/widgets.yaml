@@ -14,15 +14,16 @@
     suggestionUrl: https://search.{{HOMEPAGE_VAR_DOMAIN}}/autocompleter?q=
     showSearchSuggestions: true
 
-# Host stats straight from Glances (container "monitor"), the Pi rather than the homepage container.
+# Host stats straight from Glances (host network, port 61208), every 10 s.
 - glances:
-    url: http://monitor:61208
+    url: http://host.docker.internal:61208
     version: 4
     cpu: true
     mem: true
     cputemp: true
     uptime: true
-    disk: /
+    disk: /rootfs
+    refreshInterval: 10000
 
 - openmeteo:
     label: "{{HOMEPAGE_VAR_OPENMETEO_LABEL}}"

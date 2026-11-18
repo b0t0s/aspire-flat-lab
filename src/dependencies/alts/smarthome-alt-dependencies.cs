@@ -5,7 +5,7 @@ internal sealed partial class LabDependencies
     public IResourceBuilder<ContainerResource> OxicloudDb => Once(() => Postgres("oxicloud-db", "16-alpine", "oxicloud", "oxicloud", "OXICLOUD_DB_PASSWORD",
         Settings.SmartHome.DataPath("OXICLOUD_DB_DATA", "../services-data/system/oxicloud/postgres")));
 
-    public IResourceBuilder<ContainerResource> SeafileDb => Once(() => Builder.AddContainer("seafile-db", "mariadb", "11.8.8")
+    public IResourceBuilder<ContainerResource> SeafileDb => Once(() => Builder.AddContainer("seafile-db", "mariadb", "11.8.9")
         .WithContainerName("seafile-db")
         .WithEnvironment("MYSQL_ROOT_PASSWORD", Settings.Secret("SEAFILE_DB_ROOT_PASS"))
         .WithEnvironment("MYSQL_LOG_CONSOLE", "true")

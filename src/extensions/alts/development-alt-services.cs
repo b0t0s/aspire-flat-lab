@@ -6,10 +6,10 @@ internal static class DevelopmentAltServices
     public static void AddDevelopmentAltServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("lightpanda", "lightpanda/browser", "latest")
-            .WithContainerName("lightpanda")
+            .WithContainerName("browser")
             .WithDefaultMode(LabMode.Manual)
             .WithLabPort(9222, "lightpanda")
-            .WithHomepage("Development", "Lightpanda", "mdi-web", "Headless browser (CDP)", $"https://lightpanda.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "Lightpanda", "mdi-web", "Headless browser (CDP)", $"https://browser.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("code-server", "linuxserver/code-server", "latest")
             .WithContainerName("ide")
@@ -21,7 +21,7 @@ internal static class DevelopmentAltServices
             .WithBindMount(settings.Development.DataPath("CODESERVER_DATA", "../services-data/system/code-server/config"), "/config")
             .WithBindMount(settings.Development.DataPath("CODESERVER_PROJECTS", "../services-data/public"), "/projects")
             .WithLabPort(8443, "code-server")
-            .WithHomepage("Development", "IDE", "mdi-microsoft-visual-studio-code", href: $"https://code.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "IDE", "mdi-microsoft-visual-studio-code", "VS Code in the browser", href: $"https://code.{settings.Shared.DuckDnsDomain}");
 
         // Placeholder image: set CODING_TOOLBOX_IMAGE to your own build before starting it.
         _ = builder.AddContainer("coding-toolbox", settings.Development.Value("CODING_TOOLBOX_IMAGE", "YOUR_ORG/coding-toolbox"), "latest")
@@ -30,10 +30,10 @@ internal static class DevelopmentAltServices
             .WithEnvironment("PORT", "3000")
             .WithEnvironment("HOST", "0.0.0.0")
             .WithLabPort(3000, "coding-toolbox")
-            .WithHomepage("Development", "DevTools", "mdi-toolbox", href: $"https://devtools.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "DevTools", "mdi-toolbox", "Own developer tools", href: $"https://dev-tools.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("usertour", "usertour/usertour", "latest")
-            .WithContainerName("usertour")
+            .WithContainerName("onboarding")
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgresql://postgres:{settings.Secret("USERTOUR_DB_PASSWORD")}@usertour-db:5432/usertour?schema=usertour"))
             .WithEnvironment("DATABASE_DIRECT_URL", ReferenceExpression.Create($"postgresql://postgres:{settings.Secret("USERTOUR_DB_PASSWORD")}@usertour-db:5432/usertour?schema=usertour"))
             .WithEnvironment("Redis_HOST", "usertour-redis")
@@ -46,18 +46,18 @@ internal static class DevelopmentAltServices
             .WithLabPort(80, "usertour")
             .WaitFor(dependencies.UsertourDb)
             .WaitFor(dependencies.UsertourRedis)
-            .WithHomepage("Development", "Usertour", "mdi-cursor-default-click-outline", "Onboarding flows", $"https://usertour.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "Usertour", "mdi-cursor-default-click-outline", "Onboarding flows", $"https://onboarding.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("web-check", "lissy93/web-check", "latest")
-            .WithContainerName("web-check")
+            .WithContainerName("webcheck")
             .WithLabPort(3000, "web-check")
-            .WithHomepage("Development", "Web Check", "mdi-shield-search", href: $"https://webcheck.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "Web Check", "mdi-shield-search", "Inspect any website", href: $"https://webcheck.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("obscura", "h4ckf0r0day/obscura", "latest")
-            .WithContainerName("obscura")
+            .WithContainerName("stealth-browser")
             .WithEnvironment("OBSCURA_CDP_TOKEN", settings.Secret("OBSCURA_CDP_TOKEN", SecretKind.Hex32))
             .WithLabPort(9222, "obscura")
-            .WithHomepage("Development", "Obscura", "mdi-incognito", "Stealth headless browser (CDP)", $"https://obscura.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "Obscura", "mdi-incognito", "Stealth headless browser (CDP)", $"https://stealth-browser.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("whois", "jinzeyang/whois", "latest")
             .WithContainerName("whois")
@@ -87,10 +87,10 @@ internal static class DevelopmentAltServices
             .WithBindMount(settings.Development.DataPath("STIRLING_CUSTOM", "../services-data/system/stirling-pdf/customFiles"), "/customFiles")
             .WithBindMount(settings.Development.DataPath("STIRLING_LOGS", "../services-data/system/stirling-pdf/logs"), "/logs")
             .WithLabPort(8080, "stirling-pdf")
-            .WithHomepage("Development", "PDF", "mdi-file-pdf-box", href: $"https://pdf.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "PDF", "mdi-file-pdf-box", "Edit, merge and convert PDFs", href: $"https://pdf.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("super-productivity", "ghcr.io/super-productivity/supersync", "latest")
-            .WithContainerName("super-productivity")
+            .WithContainerName("tasks")
             .WithEnvironment("NODE_ENV", "production")
             .WithEnvironment("PORT", "1900")
             .WithEnvironment("DATA_DIR", "/data")
@@ -105,43 +105,43 @@ internal static class DevelopmentAltServices
             .WithHomepage("Development", "Super Productivity", "mdi-checkbox-marked-circle-outline", "Task tracker", $"https://tasks.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("solidtime", "solidtime/solidtime", "latest")
-            .WithContainerName("solidtime")
+            .WithContainerName("timesheet")
             .WithEnvironment("APP_ENV", "production")
             .WithEnvironment("APP_DEBUG", "false")
             .WithEnvironment("APP_KEY", settings.Secret("SOLIDTIME_APP_KEY", SecretKind.LaravelKey))
             .WithEnvironment("DB_CONNECTION", "sqlite")
             .WithBindMount(settings.Development.DataPath("SOLIDTIME_DATA", "../services-data/system/solidtime"), "/var/www/html/database")
             .WithLabPort(80, "solidtime")
-            .WithHomepage("Development", "Solidtime", "mdi-clock-outline", "Time tracking", $"https://time.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "Solidtime", "mdi-clock-outline", "Time tracking", $"https://timesheet.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("kimai", "kimai/kimai2", "latest")
-            .WithContainerName("kimai")
+            .WithContainerName("invoicing")
             .WithEnvironment("APP_ENV", "prod")
             .WithEnvironment("TRUSTED_PROXIES", "127.0.0.1,REMOTE_ADDR")
             .WithEnvironment("DATABASE_URL", "sqlite:///%kernel.project_dir%/var/data/kimai.sqlite")
             .WithBindMount(settings.Development.DataPath("KIMAI_DATA", "../services-data/system/kimai"), "/opt/kimai/var")
             .WithLabPort(80, "kimai")
-            .WithHomepage("Development", "Kimai", "mdi-clock-outline", "Invoicing", $"https://time-kimai.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "Kimai", "mdi-clock-outline", "Invoicing", $"https://invoicing.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("plausible", "plausible/analytics", "latest")
+        _ = builder.AddContainer("plausible", "ghcr.io/plausible/community-edition", "v3.0.1")
             .WithContainerName("analytics")
-            .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://plausible:{settings.Secret("PLAUSIBLE_DB_PASSWORD")}@plausible-db:5432/plausible"))
-            .WithEnvironment("CLICKHOUSE_DATABASE_URL", "http://plausible-clickhouse:8123/plausible")
-            .WithEnvironment("CLICKHOUSE_USER", "plausible")
-            .WithEnvironment("CLICKHOUSE_PASSWORD", settings.Secret("PLAUSIBLE_CLICKHOUSE_PASSWORD", aliases: "PLAUSIBLE_CLICKHO_PASSWORD"))
-            .WithEnvironment("SECRET_KEY_BASE", settings.Secret("PLAUSIBLE_SECRET", SecretKind.LongPassword))
+            .WithArgs("sh", "-c", "/entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run")
             .WithEnvironment("BASE_URL", $"https://analytics.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("SECRET_KEY_BASE", settings.Secret("PLAUSIBLE_SECRET", SecretKind.LongPassword))
+            .WithEnvironment("TMPDIR", "/var/lib/plausible/tmp")
+            .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://plausible:{settings.Secret("PLAUSIBLE_DB_PASSWORD")}@plausible-db:5432/plausible"))
+            .WithEnvironment("CLICKHOUSE_DATABASE_URL", ReferenceExpression.Create($"http://plausible:{settings.Secret("PLAUSIBLE_CLICKHOUSE_PASSWORD", aliases: "PLAUSIBLE_CLICKHO_PASSWORD")}@plausible-clickhouse:8123/plausible"))
+            .WithBindMount(settings.Development.DataPath("PLAUSIBLE_DATA", "../services-data/system/plausible/data"), "/var/lib/plausible")
             .WithLabPort(8000, "plausible")
             .WaitFor(dependencies.PlausibleDb)
-            .WaitFor(dependencies.PlausibleEvents)
             .WaitFor(dependencies.PlausibleClickhouse)
-            .WithHomepage("Infrastructure", "Analytics", "mdi-chart-line", href: $"https://analytics.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Infrastructure", "Analytics", "mdi-chart-line", "Website visitor statistics", href: $"https://analytics.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("beszel-hub", "henrygd/beszel", "latest")
             .WithContainerName("metrics")
             .WithBindMount(settings.SmartHome.DataPath("BESZEL_DATA", "../services-data/system/beszel"), "/beszel_data")
             .WithLabPort(8090, "beszel-hub")
-            .WithHomepage("Infrastructure", "Metrics", "mdi-server", href: $"https://metrics.{settings.Shared.DuckDnsDomain}")
+            .WithHomepage("Infrastructure", "Metrics", "mdi-server", "Server resource history", href: $"https://metrics.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("beszel", "http://metrics:8090", username: HomepageVar("BESZEL_WIDGET_USERNAME"), password: HomepageVar("BESZEL_WIDGET_PASSWORD"), version: "2");
 
         _ = builder.AddContainer("beszel-agent", "henrygd/beszel-agent", "latest")
@@ -151,18 +151,26 @@ internal static class DevelopmentAltServices
             .WithDockerSocket()
             .WithHostNetwork();
 
-        var kuttDbPassword = settings.Secret("KUTT_DB_PASSWORD");
-        _ = builder.AddContainer("kutt", "ghcr.io/thedevs-network/kutt", "latest")
+        _ = builder.AddContainer("kutt", "kutt/kutt", "latest")
             .WithContainerName("shortener")
             .WithEnvironment("PORT", "3000")
-            .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://kutt:{kuttDbPassword}@kutt-db:5432/kutt"))
-            .WithEnvironment("REDIS_URL", "redis://kutt-redis:6379")
             .WithEnvironment("DEFAULT_DOMAIN", $"go.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("JWT_SECRET", settings.Secret("KUTT_JWT_SECRET", SecretKind.LongPassword))
+            .WithEnvironment("TRUST_PROXY", "true")
+            .WithEnvironment("DB_CLIENT", "pg")
+            .WithEnvironment("DB_HOST", "kutt-db")
+            .WithEnvironment("DB_PORT", "5432")
+            .WithEnvironment("DB_NAME", "kutt")
+            .WithEnvironment("DB_USER", "kutt")
+            .WithEnvironment("DB_PASSWORD", settings.Secret("KUTT_DB_PASSWORD"))
+            .WithEnvironment("REDIS_ENABLED", "true")
+            .WithEnvironment("REDIS_HOST", "kutt-redis")
+            .WithEnvironment("REDIS_PORT", "6379")
             .WithEnvironment("LINK_LENGTH", "6")
             .WithLabPort(3000, "kutt")
             .WaitFor(dependencies.KuttDb)
             .WaitFor(dependencies.KuttRedis)
-            .WithHomepage("Development", "URL shortener", "mdi-link-variant", href: $"https://go.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "URL shortener", "mdi-link-variant", "Short links", href: $"https://go.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("calagopus", "ghcr.io/calagopus/panel", "aio")
             .WithContainerName("panel")

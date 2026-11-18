@@ -7,14 +7,14 @@ internal static class KnowledgeServices
     public static void AddKnowledgeServices(this IDistributedApplicationBuilder builder, LabDependencies dependencies, EnvironmentSettings settings)
     {
         _ = builder.AddContainer("trilium", "triliumnext/trilium", "latest")
-            .WithContainerName("trilium")
+            .WithContainerName("outliner")
             .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("TZ", settings.Shared.TimeZone)
             .WithEnvironment("USER_UID", settings.Shared.Uid)
             .WithEnvironment("USER_GID", settings.Shared.Gid)
             .WithBindMount(settings.Knowledge.DataPath("TRILIUM_DATA", "../services-data/system/trilium"), "/home/node/trilium-data")
             .WithLabPort(8080, "trilium")
-            .WithHomepage("Knowledge", "Trilium", "mdi-file-tree", "", $"https://trilium.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Knowledge", "Trilium", "mdi-file-tree", "Hierarchical notes", $"https://outliner.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("paperless-ngx", "ghcr.io/paperless-ngx/paperless-ngx", "latest")
             .WithContainerName("documents")
@@ -27,6 +27,9 @@ internal static class KnowledgeServices
             .WithEnvironment("PAPERLESS_DBPASS", settings.Secret("PAPERLESS_DB_PASSWORD"))
             .WithEnvironment("PAPERLESS_SECRET_KEY", settings.Secret("PAPERLESS_SECRET", SecretKind.LongPassword))
             .WithEnvironment("PAPERLESS_TIME_ZONE", settings.Shared.TimeZone)
+            .WithEnvironment("PAPERLESS_WEBSERVER_WORKERS", "1")
+            .WithEnvironment("PAPERLESS_TASK_WORKERS", "1")
+            .WithEnvironment("PAPERLESS_THREADS_PER_WORKER", "1")
             .WithEnvironment("PAPERLESS_ACCOUNT_ALLOW_SIGNUPS", "true")
             .WithEnvironment("PAPERLESS_URL", $"https://documents.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("USERMAP_UID", settings.Shared.Uid)
@@ -38,7 +41,7 @@ internal static class KnowledgeServices
             .WithLabPort(8000, "paperless-ngx")
             .WaitFor(dependencies.PaperlessRedis)
             .WaitFor(dependencies.PaperlessDb)
-            .WithHomepage("Knowledge", "Documents", "mdi-file-pdf-box", href: $"https://documents.{settings.Shared.DuckDnsDomain}")
+            .WithHomepage("Knowledge", "Documents", "mdi-file-pdf-box", "Scanned documents with search", href: $"https://documents.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("paperlessngx", "http://documents:8000", key: HomepageVar("PAPERLESS_WIDGET_KEY"));
 
         _ = builder.AddContainer("faved", "denho/faved", "latest")
@@ -48,7 +51,7 @@ internal static class KnowledgeServices
             .WithEnvironment("SECRET_KEY", settings.Secret("FAVED_SECRET"))
             .WithBindMount(settings.Knowledge.DataPath("FAVED_DATA", "../services-data/system/faved"), "/var/www/html/storage/")
             .WithLabPort(80, "faved")
-            .WithHomepage("Knowledge", "Bookmarks", "si-pocket", href: $"https://bookmarks.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Knowledge", "Bookmarks", "si-pocket", "Bookmarks", href: $"https://bookmarks.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("memos", "neosmemo/memos", "stable")
             .WithContainerName("favourites")
@@ -57,7 +60,7 @@ internal static class KnowledgeServices
             .WithLabPort(5230, "memos")
             .WithHomepage("Knowledge", "Favourites", "mdi-note-multiple", "Microblog", $"https://favourites.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("ghost", "ghost", "5")
+        _ = builder.AddContainer("ghost", "ghost", "6-alpine")
             .WithContainerName("blog")
             .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("database__client", "mysql")
@@ -72,30 +75,30 @@ internal static class KnowledgeServices
             .WithHomepage("Knowledge", "Blog", "si-ghost", "Blog and posts", $"https://blog.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("vaultisse", "ghcr.io/albertamat/vaultisse", "latest")
-            .WithContainerName("vaultisse")
+            .WithContainerName("lending")
             .WithDefaultMode(LabMode.Off)
             .WithEnvironment("DB_HOST", "vaultisse-db")
             .WithEnvironment("DB_PORT", "5432")
-            .WithEnvironment("DB_NAME", "vaultisse")
-            .WithEnvironment("DB_USER", "vaultisse")
+            .WithEnvironment("DB_NAME", "lending")
+            .WithEnvironment("DB_USER", "lending")
             .WithEnvironment("DB_PASSWORD", settings.Secret("VAULTISSE_DB_PASSWORD"))
             .WithBindMount(settings.Knowledge.DataPath("VAULTISSE_LOGS", "../services-data/system/vaultisse/logs"), "/app/logs")
             .WithLabPort(3000, "vaultisse")
             .WaitFor(dependencies.VaultisseDb)
-            .WithHomepage("Knowledge", "Book lending", "mdi-bookshelf", "", $"https://vaultisse.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Knowledge", "Book lending", "mdi-bookshelf", "Lend and track books", $"https://lending.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("kiwix", "ghcr.io/kiwix/kiwix-serve", "latest")
-            .WithContainerName("kiwix")
+            .WithContainerName("library")
             .WithDefaultMode(LabMode.Manual)
             .WithArgs("*.zim")
             .WithBindMount(dependencies.KiwixDataPath, "/data")
             .WithLabPort(8080, "kiwix")
             .WaitForCompletion(dependencies.KiwixFetch)
             .WithDockerExecCommand("list-zims", "List ZIM files", "ls -lh /data/*.zim", "Library")
-            .WithHomepage("Knowledge", "Kiwix", "mdi-library", "Offline Wikipedia, PhET simulations, Stack Exchange", $"https://kiwix.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Knowledge", "Kiwix", "mdi-library", "Offline Wikipedia, PhET simulations, Stack Exchange", $"https://library.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("edentext", "ghcr.io/stffnb/edentext", "latest")
-            .WithContainerName("edentext")
+            .WithContainerName("text")
             .WithDefaultMode(LabMode.Manual)
             .WithLabPort(80, "edentext")
             .WithHomepage("Knowledge", "Text", "mdi-file-word", "Word processor", $"https://text.{settings.Shared.DuckDnsDomain}");

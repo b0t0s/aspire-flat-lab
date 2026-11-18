@@ -7,13 +7,6 @@ internal static class MediaServices
     {
         var musicPath = settings.Media.DataPath("NAVIDROME_MUSIC", "../services-data/public/music");
 
-        _ = builder.AddContainer("flaresolverr", "ghcr.io/flaresolverr/flaresolverr", "latest")
-            .WithContainerName("flaresolverr")
-            .WithDefaultMode(LabMode.Auto)
-            .WithEnvironment("LOG_LEVEL", "info")
-            .WithLabPort(8191, "flaresolverr")
-            .WithLab(lab => lab.PortGroup = "Media");
-
         IResourceBuilder<ContainerResource> LinuxServer(string name, string image, string containerName)
         {
             return builder.AddContainer(name, image, "latest")
@@ -60,27 +53,28 @@ internal static class MediaServices
             .WithLabPort(8080, "qbittorrent-web")
             .WithPublishedPort(torrentPort, torrentPort, "tcp")
             .WithPublishedPort(torrentPort, torrentPort, "udp")
-            .WithHomepage("Media", "Torrent", "mdi-magnet", "", $"https://torrent.{settings.Shared.DuckDnsDomain}")
+            .WithHomepage("Media", "Torrent", "mdi-magnet", "Torrent downloads", $"https://torrent.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("qbittorrent", "http://torrent:8080", username: HomepageVar("QBITTORRENT_WIDGET_USER"), password: HomepageVar("QBITTORRENT_WIDGET_PASSWORD"));
 
         _ = LinuxServer("prowlarr", "lscr.io/linuxserver/prowlarr", "indexer")
             .WithDefaultMode(LabMode.Auto)
             .WithBindMount(settings.Media.DataPath("PROWLARR_DATA", "../services-data/system/prowlarr"), "/config")
             .WithLabPort(9696, "prowlarr")
-            .WithHomepage("Media", "Indexer", "mdi-magnify", "", $"https://indexer.{settings.Shared.DuckDnsDomain}")
+            .WaitFor(dependencies.Flaresolverr)
+            .WithHomepage("Media", "Indexer", "mdi-magnify", "Torrent indexers", $"https://indexer.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("prowlarr", "http://indexer:9696", key: HomepageVar("PROWLARR_WIDGET_KEY"));
 
         _ = builder.AddContainer("ryot", "ignisda/ryot", "v10")
-            .WithContainerName("ryot")
+            .WithContainerName("tracker")
             .WithDefaultMode(LabMode.Off)
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://postgres:{settings.Secret("RYOT_DB_PASSWORD")}@ryot-db:5432/postgres"))
             .WithEnvironment("SERVER_ADMIN_ACCESS_TOKEN", settings.Secret("RYOT_ADMIN_TOKEN", SecretKind.LongPassword))
             .WithLabPort(8000, "ryot")
             .WaitFor(dependencies.RyotDb)
-            .WithHomepage("Media", "Ryot", "mdi-book-multiple", "Media tracker", $"https://track.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Media", "Ryot", "mdi-book-multiple", "Media tracker", $"https://tracker.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("slskd", "slskd/slskd", "latest")
-            .WithContainerName("slskd")
+            .WithContainerName("soulseek")
             .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("SLSKD_NO_AUTH", "true")
             .WithEnvironment("SLSKD_DOWNLOADS_DIR", "/music/_incoming")
@@ -93,7 +87,7 @@ internal static class MediaServices
                 lab.ExtraPorts.Add((5030, 5030, "tcp"));
                 lab.ExtraPorts.Add((50300, 50300, "tcp"));
             })
-            .WithHomepage("Media", "Soulseek", "mdi-music-note-plus", "", $"https://soulseek.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Media", "Soulseek", "mdi-music-note-plus", "Soulseek file sharing", $"https://soulseek.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("sound-vault", "kanrim/sound-vault", "latest")
             .WithContainerName("soundvault")
@@ -101,11 +95,11 @@ internal static class MediaServices
             .WithEnvironment("NAVIDROME_USER", settings.Media.Value("SOUNDVAULT_NAVIDROME_USER"))
             .WithEnvironment("NAVIDROME_PASS", settings.Secret("SOUNDVAULT_NAVIDROME_PASS"))
             .WithEnvironment("NAVIDROME_URL", "http://navidrome:4533")
-            .WithEnvironment("SLSKD_URL", "http://slskd:5030")
+            .WithEnvironment("SLSKD_URL", "http://soulseek:5030")
             .WithEnvironment("SLSKD_API_KEY", settings.Media.Value("SOUNDVAULT_SLSKD_API_KEY"))
             .WithBindMount(musicPath, "/music")
             .WithLabPort(8080, "sound-vault")
-            .WithHomepage("Media", "Sound Vault", "mdi-music-box-multiple", "", $"https://soundvault.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Media", "Sound Vault", "mdi-music-box-multiple", "Music library tools", $"https://soundvault.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("music-assistant", "ghcr.io/music-assistant/server", "latest")
             .WithContainerName("music-assistant")
@@ -142,18 +136,18 @@ internal static class MediaServices
             .WithHomepage("Media", "YouTube", "mdi-youtube", "Pinchflat-NGX media manager", $"https://youtube.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("piped-frontend", "1337kavin/piped-frontend", "latest")
-            .WithContainerName("piped-frontend")
+            .WithContainerName("tube")
             .WithDefaultMode(LabMode.Off)
-            .WithEnvironment("BACKEND_HOSTNAME", $"pipedapi.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("BACKEND_HOSTNAME", $"piped-backend.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("HTTP_MODE", "https")
             .WithLabPort(80, "piped-frontend")
             .WaitFor(dependencies.PipedBackend)
             .WaitFor(dependencies.PipedProxy)
-            .WithHomepage("Media", "Piped", "mdi-youtube", "Privacy YouTube frontend", $"https://piped.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Media", "Piped", "mdi-youtube", "Privacy YouTube frontend", $"https://tube.{settings.Shared.DuckDnsDomain}");
 
-        // Soulseek -> beets -> Navidrome. Login uses Navidrome accounts; set the slskd URL (http://slskd:5030) in Settings on first use.
+        // Soulseek -> beets -> Navidrome. Login uses Navidrome accounts; set the Soulseek URL (http://soulseek:5030) in Settings on first use.
         _ = builder.AddContainer("soulbeet", "docccccc/soulbeet", "light")
-            .WithContainerName("soulbeet")
+            .WithContainerName("crate")
             .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("DATABASE_URL", "sqlite:/data/soulbeet.db")
             .WithEnvironment("DOWNLOAD_PATH", "/downloads")
@@ -163,19 +157,14 @@ internal static class MediaServices
             .WithBindMount(Path.Combine(musicPath, "_incoming"), "/downloads")
             .WithBindMount(musicPath, "/music")
             .WithLabPort(9765, "soulbeet")
-            .WithHomepage("Media", "Find and Tag music", "mdi-music-note-plus", "", $"https://soulbeet.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Media", "Find and Tag music", "mdi-music-note-plus", "Find, tag and file music", $"https://crate.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("audiomuse-ai", "neptunebhub/audiomuse-ai", "latest")
-            .WithContainerName("audiomuse-ai")
+        _ = dependencies.WithAudiomuse(builder.AddContainer("audiomuse-ai", "ghcr.io/neptunehub/audiomuse-ai", "latest")
+                .WithContainerName("sonic"), "flask")
             .WithDefaultMode(LabMode.Off)
-            .WithEnvironment("TZ", settings.Shared.TimeZone)
-            .WithEnvironment("AM_LOGGING_LEVEL", "INFO")
-            .WithEnvironment("AM_NAVIDROME_URL", "http://music:4533")
-            .WithEnvironment("AM_NAVIDROME_USER", settings.Media.Value("NAVIDROME_WIDGET_USER", "admin"))
-            .WithEnvironment("AM_NAVIDROME_PASSWORD", settings.Secret("NAVIDROME_PASSWORD", SecretKind.Manual, aliases: "NAVIDROME_WIDGET_PASSWORD"))
-            .WithBindMount(settings.Media.DataPath("AUDIOMUSE_DATA", "../services-data/system/audiomuse"), "/app/data")
-            .WithBindMount(settings.Media.DataPath("NAVIDROME_MUSIC", "../services-data/public/music"), "/music", isReadOnly: true)
-            .WithLabPort(8500, "audiomuse-ai")
-            .WithHomepage("Media", "Sonic analysis", "mdi-waveform", "", $"https://audiomuse.{settings.Shared.DuckDnsDomain}");
+            .WithLabPort(8000, "audiomuse-ai")
+            .WaitFor(dependencies.AudiomuseDb)
+            .WaitFor(dependencies.AudiomuseWorker)
+            .WithHomepage("Media", "Sonic analysis", "mdi-waveform", "Playlists from audio analysis", $"https://sonic.{settings.Shared.DuckDnsDomain}");
     }
 }

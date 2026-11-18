@@ -1,0 +1,44 @@
+# Automations kept in the repo (mounted read-only). Automations made in the UI stay in automations.yaml.
+# Both read the Glances integration (Settings > Devices & services > Add > Glances, host 127.0.0.1, port 61208, API v4).
+
+- id: lab_pi_overheat
+  alias: Pi overheating
+  mode: single
+  triggers:
+    - trigger: template
+      value_template: >-
+        {% set t = integration_entities('glances') | select('search', 'cpu_thermal') | map('states')
+           | reject('in', ['unknown', 'unavailable']) | map('float') | list %}
+        {{ t | count > 0 and t | max > 80 }}
+      for: "00:05:00"
+  actions:
+    - action: persistent_notification.create
+      data:
+        title: Pi overheating
+        message: CPU above 80 C for 5 minutes. The Pi 5 throttles at 85 C.
+    - action: notify.notify
+      continue_on_error: true
+      data:
+        title: Pi overheating
+        message: CPU above 80 C for 5 minutes.
+
+- id: lab_pi_memory_low
+  alias: Pi memory almost full
+  mode: single
+  triggers:
+    - trigger: template
+      value_template: >-
+        {% set m = integration_entities('glances') | select('search', 'memory_usage') | map('states')
+           | reject('in', ['unknown', 'unavailable']) | map('float') | list %}
+        {{ m | count > 0 and m | max > 90 }}
+      for: "00:02:00"
+  actions:
+    - action: persistent_notification.create
+      data:
+        title: Pi memory almost full
+        message: Memory above 90 % for 2 minutes. Stop a manual service before the Pi stalls.
+    - action: notify.notify
+      continue_on_error: true
+      data:
+        title: Pi memory almost full
+        message: Memory above 90 % for 2 minutes.

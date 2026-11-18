@@ -1,6 +1,6 @@
 # Put a login in front of a route: add `import tinyauth` as the first line inside its handle block.
 (tinyauth) {
-    forward_auth tinyauth:3000 {
+    forward_auth auth:3000 {
         uri /api/auth/caddy
         copy_headers Remote-User Remote-Email Remote-Name Remote-Groups
     }
@@ -12,14 +12,14 @@
         resolvers 1.1.1.1 8.8.8.8
     }
 
-    @adguard host adguard.{$DUCKDNS_DOMAIN}
-    handle @adguard {
+    @adguardhome host adguardhome.{$DUCKDNS_DOMAIN}
+    handle @adguardhome {
         reverse_proxy adguardhome:81
     }
 
     @adventures host adventures.{$DUCKDNS_DOMAIN} travel.{$DUCKDNS_DOMAIN}
     handle @adventures {
-        reverse_proxy adventures:8000
+        reverse_proxy adventures:3000
     }
 
     @affine host affine.{$DUCKDNS_DOMAIN}
@@ -50,9 +50,9 @@
     }
 
 
-    @audiomuse host audiomuse.{$DUCKDNS_DOMAIN}
-    handle @audiomuse {
-        reverse_proxy audiomuse-ai:8500
+    @sonic host sonic.{$DUCKDNS_DOMAIN}
+    handle @sonic {
+        reverse_proxy sonic:8000
     }
 
     @blog host blog.{$DUCKDNS_DOMAIN}
@@ -81,14 +81,14 @@
         reverse_proxy cpm:8501
     }
 
-    @changedetection host changedetection.{$DUCKDNS_DOMAIN}
-    handle @changedetection {
-        reverse_proxy changedetection:5000
+    @watch host watch.{$DUCKDNS_DOMAIN}
+    handle @watch {
+        reverse_proxy watch:5000
     }
 
     @chat host chat.{$DUCKDNS_DOMAIN}
     handle @chat {
-        reverse_proxy snikket-portal:80
+        reverse_proxy chat:80
     }
 
     @clips host clips.{$DUCKDNS_DOMAIN}
@@ -101,9 +101,9 @@
         reverse_proxy diagrams:80
     }
 
-    @dm-hero host dm-hero.{$DUCKDNS_DOMAIN}
-    handle @dm-hero {
-        reverse_proxy dm-hero:3000
+    @campaigns host campaigns.{$DUCKDNS_DOMAIN}
+    handle @campaigns {
+        reverse_proxy campaigns:3000
     }
 
     @documents host documents.{$DUCKDNS_DOMAIN}
@@ -143,8 +143,8 @@
         reverse_proxy degoog:4444
     }
 
-    @devtools host devtools.{$DUCKDNS_DOMAIN}
-    handle @devtools {
+    @dev-tools host dev-tools.{$DUCKDNS_DOMAIN}
+    handle @dev-tools {
         reverse_proxy dev-tools:3000
     }
 
@@ -153,14 +153,14 @@
         reverse_proxy dockflare:5000
     }
 
-    @docs host docs.{$DUCKDNS_DOMAIN}
-    handle @docs {
+    @dev-notes host dev-notes.{$DUCKDNS_DOMAIN}
+    handle @dev-notes {
         reverse_proxy dev-notes:3000
     }
 
     @docs2 host docs2.{$DUCKDNS_DOMAIN}
     handle @docs2 {
-        reverse_proxy zensical:8000
+        reverse_proxy docs2:8000
     }
 
     @pdf host pdf.{$DUCKDNS_DOMAIN}
@@ -175,7 +175,7 @@
 
     @familytree host familytree.{$DUCKDNS_DOMAIN}
     handle @familytree {
-        reverse_proxy parenthese:80
+        reverse_proxy familytree:80
     }
 
     @favourites host favourites.{$DUCKDNS_DOMAIN}
@@ -242,9 +242,9 @@
         reverse_proxy gravity:80
     }
 
-    @healthlog host healthlog.{$DUCKDNS_DOMAIN}
-    handle @healthlog {
-        reverse_proxy healthlog:3000
+    @health host health.{$DUCKDNS_DOMAIN}
+    handle @health {
+        reverse_proxy health:3000
     }
 
     @hiking host hiking.{$DUCKDNS_DOMAIN}
@@ -271,9 +271,9 @@
         }
     }
 
-    @hermes host hermes.{$DUCKDNS_DOMAIN}
-    handle @hermes {
-        reverse_proxy hermes:9119
+    @agent host agent.{$DUCKDNS_DOMAIN}
+    handle @agent {
+        reverse_proxy agent:9119
     }
 
     @household host household.{$DUCKDNS_DOMAIN}
@@ -286,9 +286,9 @@
         reverse_proxy ide:8443
     }
 
-    @ideon host ideon.{$DUCKDNS_DOMAIN}
-    handle @ideon {
-        reverse_proxy ideon:3000
+    @canvas host canvas.{$DUCKDNS_DOMAIN}
+    handle @canvas {
+        reverse_proxy canvas:3000
     }
 
     @immich host photos.{$DUCKDNS_DOMAIN} immich.{$DUCKDNS_DOMAIN}
@@ -311,9 +311,14 @@
         reverse_proxy irc:9000
     }
 
-    @karakeep host karakeep.{$DUCKDNS_DOMAIN}
-    handle @karakeep {
+    @cabinet host cabinet.{$DUCKDNS_DOMAIN}
+    handle @cabinet {
         reverse_proxy cabinet:3000
+    }
+
+    @board host board.{$DUCKDNS_DOMAIN}
+    handle @board {
+        reverse_proxy board:7575
     }
 
     @kept host kept.{$DUCKDNS_DOMAIN}
@@ -321,9 +326,9 @@
         reverse_proxy kept:8080
     }
 
-    @kimai host time-kimai.{$DUCKDNS_DOMAIN}
-    handle @kimai {
-        reverse_proxy kimai:80
+    @invoicing host invoicing.{$DUCKDNS_DOMAIN}
+    handle @invoicing {
+        reverse_proxy invoicing:80
     }
 
     @languard host languard.{$DUCKDNS_DOMAIN}
@@ -336,9 +341,9 @@
         reverse_proxy indexer-music:8686
     }
 
-    @lightpanda host lightpanda.{$DUCKDNS_DOMAIN}
-    handle @lightpanda {
-        reverse_proxy lightpanda:9222
+    @browser host browser.{$DUCKDNS_DOMAIN}
+    handle @browser {
+        reverse_proxy browser:9222
     }
 
     @llm host llm.{$DUCKDNS_DOMAIN}
@@ -358,7 +363,7 @@
 
     @locations host locations.{$DUCKDNS_DOMAIN}
     handle @locations {
-        reverse_proxy dawarich:3000
+        reverse_proxy locations:3000
     }
 
     @matrix host matrix.{$DUCKDNS_DOMAIN} element.{$DUCKDNS_DOMAIN}
@@ -374,7 +379,7 @@
 
     @meals host meals.{$DUCKDNS_DOMAIN} recipes.{$DUCKDNS_DOMAIN}
     handle @meals {
-        reverse_proxy meals:8089
+        reverse_proxy meals:9000
     }
 
     @medical host medical.{$DUCKDNS_DOMAIN} emr.{$DUCKDNS_DOMAIN}
@@ -386,9 +391,9 @@
         }
     }
 
-    @medikeep host medikeep.{$DUCKDNS_DOMAIN}
-    handle @medikeep {
-        reverse_proxy medikeep:8000
+    @health-records host health-records.{$DUCKDNS_DOMAIN}
+    handle @health-records {
+        reverse_proxy health-records:8000
     }
 
 
@@ -399,7 +404,7 @@
 
     @monitor host monitor.{$DUCKDNS_DOMAIN}
     handle @monitor {
-        reverse_proxy monitor:61208
+        reverse_proxy host.docker.internal:61208
     }
 
     @music host music.{$DUCKDNS_DOMAIN}
@@ -412,9 +417,9 @@
         reverse_proxy news:4000
     }
 
-    @nostos host nostos.{$DUCKDNS_DOMAIN}
-    handle @nostos {
-        reverse_proxy nostos:8080
+    @reading host reading.{$DUCKDNS_DOMAIN}
+    handle @reading {
+        reverse_proxy reading:8080
     }
 
     @notes host notes.{$DUCKDNS_DOMAIN}
@@ -430,9 +435,9 @@
         reverse_proxy notifications:80
     }
 
-    @obscura host obscura.{$DUCKDNS_DOMAIN}
-    handle @obscura {
-        reverse_proxy obscura:9222
+    @stealth-browser host stealth-browser.{$DUCKDNS_DOMAIN}
+    handle @stealth-browser {
+        reverse_proxy stealth-browser:9222
     }
 
     @origami host origami.{$DUCKDNS_DOMAIN}
@@ -445,9 +450,9 @@
         reverse_proxy panel:8000
     }
 
-    @pass host pass.{$DUCKDNS_DOMAIN}
-    handle @pass {
-        reverse_proxy passbolt:80
+    @teampass host teampass.{$DUCKDNS_DOMAIN}
+    handle @teampass {
+        reverse_proxy teampass:80
     }
 
     @passwords host passwords.{$DUCKDNS_DOMAIN}
@@ -457,7 +462,7 @@
 
     @paste host paste.{$DUCKDNS_DOMAIN}
     handle @paste {
-        reverse_proxy privatebin:8080
+        reverse_proxy paste:8080
     }
 
     @perplexica host perplexica.{$DUCKDNS_DOMAIN}
@@ -477,18 +482,18 @@
         reverse_proxy youtube:8945
     }
 
-    @piped host piped.{$DUCKDNS_DOMAIN}
-    handle @piped {
-        reverse_proxy piped-frontend:80
+    @tube host tube.{$DUCKDNS_DOMAIN}
+    handle @tube {
+        reverse_proxy tube:80
     }
 
-    @pipedapi host pipedapi.{$DUCKDNS_DOMAIN}
-    handle @pipedapi {
+    @piped-backend host piped-backend.{$DUCKDNS_DOMAIN}
+    handle @piped-backend {
         reverse_proxy piped-backend:8080
     }
 
-    @pipedproxy host pipedproxy.{$DUCKDNS_DOMAIN}
-    handle @pipedproxy {
+    @piped-proxy host piped-proxy.{$DUCKDNS_DOMAIN}
+    handle @piped-proxy {
         reverse_proxy piped-proxy:8080
     }
 
@@ -528,9 +533,9 @@
         reverse_proxy registry:3000
     }
 
-    @resonand host resonand.{$DUCKDNS_DOMAIN}
-    handle @resonand {
-        reverse_proxy resonand:8000
+    @voices host voices.{$DUCKDNS_DOMAIN}
+    handle @voices {
+        reverse_proxy voices:8000
     }
 
     @rsshub host rsshub.{$DUCKDNS_DOMAIN}
@@ -553,12 +558,12 @@
 
     @simplex host simplex.{$DUCKDNS_DOMAIN}
     handle @simplex {
-        reverse_proxy smp-server:5223
+        reverse_proxy simplex:5223
     }
 
     @soulseek host soulseek.{$DUCKDNS_DOMAIN}
     handle @soulseek {
-        reverse_proxy slskd:5030
+        reverse_proxy soulseek:5030
     }
 
     @speed host speed.{$DUCKDNS_DOMAIN}
@@ -568,7 +573,7 @@
 
     @secrets host secrets.{$DUCKDNS_DOMAIN}
     handle @secrets {
-        reverse_proxy infisical:8080
+        reverse_proxy secrets:8080
     }
 
     @sharing host sharing.{$DUCKDNS_DOMAIN}
@@ -578,12 +583,12 @@
 
     @sign host sign.{$DUCKDNS_DOMAIN}
     handle @sign {
-        reverse_proxy documenso:3500
+        reverse_proxy sign:3500
     }
 
-    @email-signature-generator host email-signature-generator.{$DUCKDNS_DOMAIN}
-    handle @email-signature-generator {
-        reverse_proxy email-signature-generator:80
+    @letterhead host letterhead.{$DUCKDNS_DOMAIN}
+    handle @letterhead {
+        reverse_proxy letterhead:80
     }
 
     @snippets host snippets.{$DUCKDNS_DOMAIN}
@@ -591,8 +596,8 @@
         reverse_proxy snippets:6157
     }
 
-    @solarmap host solarmap.{$DUCKDNS_DOMAIN}
-    handle @solarmap {
+    @solar host solar.{$DUCKDNS_DOMAIN}
+    handle @solar {
         reverse_proxy solar:80
     }
 
@@ -618,17 +623,17 @@
 
     @tasks host tasks.{$DUCKDNS_DOMAIN}
     handle @tasks {
-        reverse_proxy super-productivity:1900
+        reverse_proxy tasks:1900
     }
 
-    @termix host termix.{$DUCKDNS_DOMAIN}
-    handle @termix {
-        reverse_proxy termix:8080
+    @terminal host terminal.{$DUCKDNS_DOMAIN}
+    handle @terminal {
+        reverse_proxy terminal:8080
     }
 
-    @time host time.{$DUCKDNS_DOMAIN}
-    handle @time {
-        reverse_proxy solidtime:80
+    @timesheet host timesheet.{$DUCKDNS_DOMAIN}
+    handle @timesheet {
+        reverse_proxy timesheet:80
     }
 
     @toolbox host tools.{$DUCKDNS_DOMAIN} toolbox.{$DUCKDNS_DOMAIN}
@@ -641,29 +646,29 @@
         reverse_proxy torrent:8080
     }
 
-    @track host track.{$DUCKDNS_DOMAIN}
-    handle @track {
-        reverse_proxy ryot:8000
+    @tracker host tracker.{$DUCKDNS_DOMAIN}
+    handle @tracker {
+        reverse_proxy tracker:8000
     }
 
-    @tradetally host tradetally.{$DUCKDNS_DOMAIN}
-    handle @tradetally {
-        reverse_proxy tradetally:80
+    @trades host trades.{$DUCKDNS_DOMAIN}
+    handle @trades {
+        reverse_proxy trades:80
     }
 
-    @twofa host 2fa.{$DUCKDNS_DOMAIN}
-    handle @twofa {
-        reverse_proxy twofauth:8000
+    @twofactor host twofactor.{$DUCKDNS_DOMAIN}
+    handle @twofactor {
+        reverse_proxy twofactor:8000
     }
 
-    @usertour host usertour.{$DUCKDNS_DOMAIN}
-    handle @usertour {
-        reverse_proxy usertour:80
+    @onboarding host onboarding.{$DUCKDNS_DOMAIN}
+    handle @onboarding {
+        reverse_proxy onboarding:80
     }
 
-    @vaultisse host vaultisse.{$DUCKDNS_DOMAIN}
-    handle @vaultisse {
-        reverse_proxy vaultisse:3000
+    @lending host lending.{$DUCKDNS_DOMAIN}
+    handle @lending {
+        reverse_proxy lending:3000
     }
 
     @videos host videos.{$DUCKDNS_DOMAIN}
@@ -673,7 +678,7 @@
 
     @webcheck host webcheck.{$DUCKDNS_DOMAIN}
     handle @webcheck {
-        reverse_proxy web-check:3000
+        reverse_proxy webcheck:3000
     }
 
     @whiteboard host whiteboard.{$DUCKDNS_DOMAIN}
@@ -696,9 +701,9 @@
         reverse_proxy host.docker.internal:3000
     }
 
-    @worldmonitor host worldmonitor.{$DUCKDNS_DOMAIN}
-    handle @worldmonitor {
-        reverse_proxy worldmonitor:8080
+    @world host world.{$DUCKDNS_DOMAIN}
+    handle @world {
+        reverse_proxy world:8080
     }
 
     @xmpp host xmpp.{$DUCKDNS_DOMAIN} converse.{$DUCKDNS_DOMAIN}
@@ -723,9 +728,9 @@
         reverse_proxy ytdl-player:5000
     }
 
-    @nextcloud host nextcloud.{$DUCKDNS_DOMAIN}
-    handle @nextcloud {
-        reverse_proxy nextcloud:80
+    @drive host drive.{$DUCKDNS_DOMAIN}
+    handle @drive {
+        reverse_proxy drive:80
     }
 
     @opencloud host opencloud.{$DUCKDNS_DOMAIN}
@@ -740,19 +745,19 @@
 
     @sync host sync.{$DUCKDNS_DOMAIN}
     handle @sync {
-        reverse_proxy syncthing:8384 {
+        reverse_proxy sync:8384 {
             header_up Host {upstream_hostport}
         }
     }
 
-    @joplin host joplin.{$DUCKDNS_DOMAIN}
-    handle @joplin {
-        reverse_proxy joplin:22300
+    @joplin-sync host joplin-sync.{$DUCKDNS_DOMAIN}
+    handle @joplin-sync {
+        reverse_proxy joplin-sync:22300
     }
 
-    @trilium host trilium.{$DUCKDNS_DOMAIN}
-    handle @trilium {
-        reverse_proxy trilium:8080
+    @outliner host outliner.{$DUCKDNS_DOMAIN}
+    handle @outliner {
+        reverse_proxy outliner:8080
     }
 
     @obsidian-sync host obsidian-sync.{$DUCKDNS_DOMAIN}
@@ -762,7 +767,7 @@
 
     @backup host backup.{$DUCKDNS_DOMAIN}
     handle @backup {
-        reverse_proxy zerobyte:4096
+        reverse_proxy backup:4096
     }
 
     @mail host mail.{$DUCKDNS_DOMAIN}
@@ -772,47 +777,47 @@
 
     @id host id.{$DUCKDNS_DOMAIN}
     handle @id {
-        reverse_proxy pocket-id:1411
+        reverse_proxy id:1411
     }
 
     @auth host auth.{$DUCKDNS_DOMAIN}
     handle @auth {
-        reverse_proxy tinyauth:3000
+        reverse_proxy auth:3000
     }
 
-    @kiwix host kiwix.{$DUCKDNS_DOMAIN}
-    handle @kiwix {
-        reverse_proxy kiwix:8080
+    @library host library.{$DUCKDNS_DOMAIN}
+    handle @library {
+        reverse_proxy library:8080
     }
 
     @sky host sky.{$DUCKDNS_DOMAIN}
     handle @sky {
-        reverse_proxy stellarium:3000
+        reverse_proxy sky:3000
     }
 
     @notebooks host notebooks.{$DUCKDNS_DOMAIN}
     handle @notebooks {
-        reverse_proxy jupyter:8888
+        reverse_proxy notebooks:8888
     }
 
-    @soulbeet host soulbeet.{$DUCKDNS_DOMAIN}
-    handle @soulbeet {
-        reverse_proxy soulbeet:9765
+    @crate host crate.{$DUCKDNS_DOMAIN}
+    handle @crate {
+        reverse_proxy crate:9765
     }
 
-    @edentext host text.{$DUCKDNS_DOMAIN}
-    handle @edentext {
-        reverse_proxy edentext:80
+    @text host text.{$DUCKDNS_DOMAIN}
+    handle @text {
+        reverse_proxy text:80
     }
 
-    @netronome host netronome.{$DUCKDNS_DOMAIN}
-    handle @netronome {
-        reverse_proxy netronome:7575
+    @netcheck host netcheck.{$DUCKDNS_DOMAIN}
+    handle @netcheck {
+        reverse_proxy netcheck:7575
     }
 
-    @webssh host webssh.{$DUCKDNS_DOMAIN}
-    handle @webssh {
-        reverse_proxy webssh:5000
+    @ssh host ssh.{$DUCKDNS_DOMAIN}
+    handle @ssh {
+        reverse_proxy ssh:5000
     }
 
 	@livekit path /rtc /rtc/*

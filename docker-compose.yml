@@ -1,5 +1,13 @@
+# Logs are only read during setup: at most 2 MB per container (Docker refuses one file with compression).
+x-logging: &lab-logging
+  driver: local
+  options:
+    max-size: "16m"
+    max-file: "2"
+
 services:
   zerotier-init:
+    logging: *lab-logging
     image: alpine:latest
     container_name: zerotier-init
     restart: "no"
@@ -18,6 +26,7 @@ services:
       fi
 
   zerotier:
+    logging: *lab-logging
     build:
       context: ./src/containers/zerotier
       dockerfile: Dockerfile
@@ -41,6 +50,7 @@ services:
         condition: service_completed_successfully
 
   caddy:
+    logging: *lab-logging
     labels:
     - glance.hide=true
     build:
@@ -65,14 +75,15 @@ services:
     - "host.docker.internal:host-gateway"
 
   adguardhome:
+    logging: *lab-logging
     labels:
     - homepage.group=Infrastructure
     - homepage.name=AdGuard
     - homepage.icon=mdi-shield-check
     - homepage.description=DNS sinkhole
-    - homepage.href=https://adguard.${DUCKDNS_DOMAIN:-localhost}
+    - homepage.href=https://adguardhome.${DUCKDNS_DOMAIN:-localhost}
     - homepage.widget.type=adguard
-    - homepage.widget.url=https://adguard.${DUCKDNS_DOMAIN:-localhost}
+    - homepage.widget.url=https://adguardhome.${DUCKDNS_DOMAIN:-localhost}
     - homepage.widget.username={{HOMEPAGE_VAR_ADGUARD_WIDGET_USERNAME}}
     - homepage.widget.password={{HOMEPAGE_VAR_ADGUARD_WIDGET_PASSWORD}}
     image: adguard/adguardhome:latest
@@ -92,6 +103,7 @@ services:
     - flat_lab_net
 
   rustdesk-hbbs:
+    logging: *lab-logging
     image: rustdesk/rustdesk-server:latest
     container_name: rustdesk-hbbs
     restart: unless-stopped
@@ -109,6 +121,7 @@ services:
     - flat_lab_net
 
   rustdesk-hbbr:
+    logging: *lab-logging
     image: rustdesk/rustdesk-server:latest
     container_name: rustdesk-hbbr
     restart: unless-stopped
@@ -122,6 +135,7 @@ services:
     - flat_lab_net
 
   homepage:
+    logging: *lab-logging
     labels:
     - glance.hide=true
     image: ghcr.io/gethomepage/homepage:latest
@@ -146,6 +160,10 @@ services:
     - HOMEPAGE_VAR_OPENMETEO_LABEL=${OPENMETEO_LABEL:-Home}
     - HOMEPAGE_VAR_OPENMETEO_LAT=${OPENMETEO_LAT:-50.45}
     - HOMEPAGE_VAR_OPENMETEO_LON=${OPENMETEO_LON:-30.52}
+    # Glances sensor name of the CPU (curl localhost:61208/api/4/sensors on the Pi); Pi 5 reports cpu_thermal 0.
+    - HOMEPAGE_VAR_GLANCES_CPU_SENSOR=${GLANCES_CPU_SENSOR:-cpu_thermal 0}
+    # Network interface for the traffic graph (ip -br link on the Pi): eth0 for cable, wlan0 for Wi-Fi.
+    - HOMEPAGE_VAR_GLANCES_NET_IFACE=${GLANCES_NET_IFACE:-eth0}
     # Widget credentials:
     - HOMEPAGE_VAR_BESZEL_WIDGET_USERNAME=${BESZEL_WIDGET_USERNAME:-}
     - HOMEPAGE_VAR_BESZEL_WIDGET_PASSWORD=${BESZEL_WIDGET_PASSWORD:-}
@@ -184,6 +202,7 @@ services:
     - ./configs/homepage/docker.yaml:/app/config/docker.yaml:ro
     - ./configs/homepage/settings.yaml:/app/config/settings.yaml:ro
     - ./configs/homepage/widgets.yaml:/app/config/widgets.yaml:ro
+    - ./configs/homepage/services.yaml:/app/config/services.yaml:ro
     - ./configs/homepage/bookmarks.yaml:/app/config/bookmarks.yaml:ro
     - ./configs/homepage/themes/${HOMEPAGE_THEME_PRESET:-default}.css:/app/config/custom.css:ro
     - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -193,6 +212,7 @@ services:
     - "host.docker.internal:host-gateway"
 
   searxng:
+    logging: *lab-logging
     labels:
     - homepage.group=Household
     - homepage.name=Search
@@ -204,10 +224,12 @@ services:
     environment:
     - SEARXNG_SECRET=${SEARXNG_SECRET:?set SEARXNG_SECRET in .env}
     - SEARXNG_REDIS_URL=redis://searxng-redis:6379/0
+    - SEARXNG_SETTINGS_PATH=/etc/searxng-lab/settings.yml
     ports:
     - "10003:8080"
     volumes:
-    - ./configs/searxng:/etc/searxng
+    - ${SEARXNG_DATA:-../services-data/system/searxng/data}:/etc/searxng
+    - ./configs/searxng/settings.yml:/etc/searxng-lab/settings.yml:ro
     dns:
     - "${DNS1:-}"
     - "${DNS2:-}"
@@ -215,6 +237,7 @@ services:
     - flat_lab_net
 
   searxng-redis:
+    logging: *lab-logging
     image: redis:7-alpine
     container_name: searxng-redis
     restart: unless-stopped
@@ -224,14 +247,15 @@ services:
     - flat_lab_net
 
   filebrowser-quantum:
+    logging: *lab-logging
     labels:
     - homepage.group=Infrastructure
     - homepage.name=Files
     - homepage.icon=si-filebrowser
     - homepage.href=https://files.${DUCKDNS_DOMAIN:-localhost}
     - homepage.widget.type=filebrowser
-    - homepage.widget.url=http://filebrowser-quantum:80
-    image: gtstef/filebrowser:2.0.1-stable
+    - homepage.widget.url=http://files:80
+    image: gtstef/filebrowser:2.0.2-stable
     container_name: files
     restart: unless-stopped
     environment:
@@ -246,31 +270,37 @@ services:
     - flat_lab_net
 
   glances:
+    logging: *lab-logging
     labels:
     - homepage.group=Infrastructure
     - homepage.name=Monitor
     - homepage.icon=mdi-monitor-eye
     - homepage.href=https://monitor.${DUCKDNS_DOMAIN:-localhost}
     - homepage.widget.type=glances
-    - homepage.widget.url=http://monitor:61208
+    - homepage.widget.url=http://host.docker.internal:61208
     - homepage.widget.version=4
     - homepage.widget.metric=info
+    - homepage.widget.refreshInterval=10000
     image: nicolargo/glances:latest
     container_name: monitor
     restart: unless-stopped
+    # Host network and PID namespace: Glances sees the Pi's own interfaces and processes; it listens on host port 61208.
+    network_mode: host
     pid: host
     privileged: true
     environment:
-    - GLANCES_OPT=-w
+    # Refresh every 10 s, no in-memory history, no update check, plugins a Pi has no use for off.
+    - GLANCES_OPT=-w -t 10 --disable-history --disable-check-update --disable-plugin irq,raid,folders,wifi,cloud,ports,amps,gpu
+    mem_limit: 128m
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
     - ${GLANCES_DATA_PATH:-../services-data/system/glances}:/glances/conf
-    ports:
-    - "10006:61208"
-    networks:
-    - flat_lab_net
+    # The host root file system, read-only, for the disk tile (fs:/rootfs).
+    - /:/rootfs:ro
 
   tapmap:
+    logging: *lab-logging
+    profiles: ["stats"]
     labels:
     - homepage.group=Infrastructure
     - homepage.name=Connections
@@ -290,6 +320,8 @@ services:
     - ${TAPMAP_DATA:-../services-data/system/tapmap}:/data
 
   scanopy:
+    logging: *lab-logging
+    profiles: ["stats"]
     labels:
     - homepage.group=Infrastructure
     - homepage.name=Networks
@@ -319,6 +351,8 @@ services:
     - flat_lab_net
 
   scanopy-daemon:
+    logging: *lab-logging
+    profiles: ["stats"]
     labels:
     - glance.hide=true
     image: ghcr.io/scanopy/scanopy/daemon:latest
@@ -339,6 +373,8 @@ services:
       retries: 15
 
   scanopy-db:
+    logging: *lab-logging
+    profiles: ["stats"]
     labels:
     - glance.hide=true
     image: postgres:17-alpine
@@ -358,7 +394,36 @@ services:
     networks:
     - flat_lab_net
 
+  # Demo: a second start page with controls (Home Assistant toggles and automations, Docker start/stop).
+  # Not started by default: docker compose --profile demo up -d homarr
+  homarr:
+    logging: *lab-logging
+    profiles: ["demo"]
+    labels:
+    - homepage.group=Infrastructure
+    - homepage.name=Board
+    - homepage.icon=mdi-view-dashboard-edit
+    - homepage.description=Demo start page with controls
+    - homepage.href=https://board.${DUCKDNS_DOMAIN:-localhost}
+    image: ghcr.io/homarr-labs/homarr:latest
+    container_name: board
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+    - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_ENCRYPTION_KEY:?set HOMARR_SECRET_ENCRYPTION_KEY in .env}
+    - TZ=${TZ:-Europe/Kyiv}
+    volumes:
+    - ${HOMARR_DATA:-../services-data/system/homarr}:/appdata
+    - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+    - "10007:7575"
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    networks:
+    - flat_lab_net
+
   home-assistant:
+    logging: *lab-logging
     labels:
     - homepage.group=Household
     - homepage.name=Home Assistant
@@ -367,6 +432,17 @@ services:
     - homepage.widget.type=homeassistant
     - homepage.widget.url=http://host.docker.internal:8123
     - homepage.widget.key={{HOMEPAGE_VAR_HOMEASSISTANT_WIDGET_KEY}}
+    - homepage.widget.refreshInterval=30000
+    # The default fields count person, light and switch entities; templates read whatever sensors exist.
+    # Glances sensors (the Pi itself) are left out: the System row shows them.
+    - "homepage.widget.custom[0].template={% set t = states.sensor | rejectattr('entity_id', 'in', integration_entities('glances')) | selectattr('attributes.device_class', 'defined') | selectattr('attributes.device_class', 'eq', 'temperature') | map(attribute='state') | reject('in', ['unknown', 'unavailable']) | map('float') | list %}{{ ((t | min | round(1)) ~ ' .. ' ~ (t | max | round(1))) if t else '-' }}"
+    - homepage.widget.custom[0].label=temp C
+    - "homepage.widget.custom[1].template={% set b = states.sensor | rejectattr('entity_id', 'in', integration_entities('glances')) | selectattr('attributes.device_class', 'defined') | selectattr('attributes.device_class', 'eq', 'battery') | map(attribute='state') | reject('in', ['unknown', 'unavailable']) | map('float') | list %}{{ (b | min | round(0) | int) if b else '-' }}"
+    - homepage.widget.custom[1].label=lowest battery %
+    - "homepage.widget.custom[2].template={{ states | selectattr('state', 'eq', 'unavailable') | list | count }}"
+    - homepage.widget.custom[2].label=offline
+    - "homepage.widget.custom[3].template={{ (states.light | selectattr('state', 'eq', 'on') | list | count) + (states.switch | selectattr('state', 'eq', 'on') | list | count) }}"
+    - homepage.widget.custom[3].label=on
     image: ghcr.io/home-assistant/home-assistant:stable
     container_name: home-assistant
     restart: unless-stopped
@@ -378,18 +454,21 @@ services:
     volumes:
     - ${HOME_ASSISTANT_DATA:-../services-data/system/home-assistant}:/config
     - ./configs/home-assistant/configuration.yaml:/config/configuration.yaml:ro
+    - ./configs/home-assistant/lab-automations.yaml:/config/lab-automations.yaml:ro
+    - ./configs/home-assistant/lab-dashboard.yaml:/config/lab-dashboard.yaml:ro
     - /etc/localtime:/etc/localtime:ro
     - /run/dbus:/run/dbus:ro
     environment:
     - TZ=${TZ:-Europe/Kyiv}
 
   kept:
+    logging: *lab-logging
     labels:
     - homepage.group=Household
     - homepage.name=Kept
     - homepage.icon=mdi-book-multiple
     - homepage.href=https://kept.${DUCKDNS_DOMAIN:-localhost}
-    image: ghcr.io/keptinventory/kept:1.13.1
+    image: ghcr.io/keptinventory/kept:1.14.7
     container_name: kept
     restart: unless-stopped
     read_only: true
@@ -422,9 +501,10 @@ services:
     - flat_lab_net
 
   kept-db:
+    logging: *lab-logging
     labels:
     - glance.hide=true
-    image: pgvector/pgvector:0.8.6-pg18-bookworm
+    image: pgvector/pgvector:0.8.7-pg18-bookworm
     container_name: kept-db
     restart: unless-stopped
     environment:
@@ -443,9 +523,10 @@ services:
     - flat_lab_net
 
   kept-bootstrap:
+    logging: *lab-logging
     labels:
     - glance.hide=true
-    image: ghcr.io/keptinventory/kept:1.13.1
+    image: ghcr.io/keptinventory/kept:1.14.7
     container_name: kept-bootstrap
     restart: "no"
     entrypoint: ["kept"]
@@ -472,9 +553,10 @@ services:
     - flat_lab_net
 
   kept-migrate:
+    logging: *lab-logging
     labels:
     - glance.hide=true
-    image: ghcr.io/keptinventory/kept:1.13.1
+    image: ghcr.io/keptinventory/kept:1.14.7
     container_name: kept-migrate
     restart: "no"
     entrypoint: ["kept"]

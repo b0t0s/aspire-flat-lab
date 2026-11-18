@@ -6,7 +6,7 @@ internal sealed partial class LabDependencies
         Settings.Development.DataPath("ATUIN_DB_DATA", "../services-data/system/atuin/postgres")));
 
     public IResourceBuilder<ContainerResource> IdeonDb => Once(() => Postgres("ideon-db", "18-alpine", "ideon", "ideon", "IDEON_DB_PASSWORD",
-        Settings.Development.DataPath("IDEON_DB_DATA", "../services-data/system/ideon/postgres")));
+        Settings.Development.DataPath("IDEON_DB_DATA", "../services-data/system/ideon-db")));
 
     public string TermixDataPath => Settings.SmartHome.DataPath("TERMIX_DATA", "../services-data/system/termix");
 

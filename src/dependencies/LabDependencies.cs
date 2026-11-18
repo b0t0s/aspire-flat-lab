@@ -38,6 +38,10 @@ internal sealed partial class LabDependencies(IDistributedApplicationBuilder bui
             .WithEnvironment("POSTGRES_USER", user)
             .WithEnvironment("POSTGRES_PASSWORD", settings.Secret(passwordKey, aliases: passwordAliases))
             .WithBindMount(dataPath, dataTarget)
+            // Small, mostly idle databases: a fraction of the default 128 MB cache, fewer connections, quieter logs, fewer checkpoints.
+            .WithArgs("postgres", "-c", "shared_buffers=32MB", "-c", "effective_cache_size=96MB", "-c", "work_mem=2MB", "-c", "maintenance_work_mem=16MB",
+                "-c", "max_connections=30", "-c", "checkpoint_timeout=15min", "-c", "log_min_messages=warning")
+            .WithLab(lab => lab.Memory = "256m")
             .WithHealthcheck(PgIsReady);
         if (int.TryParse(tag.Split('-')[0], out var major) && major >= 18)
         {
@@ -54,20 +58,29 @@ internal sealed partial class LabDependencies(IDistributedApplicationBuilder bui
             .WithEnvironment("MARIADB_PASSWORD", settings.Secret(passwordKey))
             .WithEnvironment("MARIADB_RANDOM_ROOT_PASSWORD", "true")
             .WithBindMount(dataPath, "/var/lib/mysql")
+            .WithArgs("--innodb-buffer-pool-size=64M", "--performance-schema=OFF")
+            .WithLab(lab => lab.Memory = "256m")
             .WithHealthcheck(MariaDbReady, startPeriod: "30s");
     }
 
     private IResourceBuilder<ContainerResource> Redis(string name, string? dataPath = null)
     {
-        var redis = Add(name, "redis", "7-alpine").WithHealthcheck("redis-cli ping");
-        return dataPath is null ? redis : redis.WithBindMount(dataPath, "/data");
+        var redis = Add(name, "redis", "7-alpine")
+            .WithLab(lab => lab.Memory = "96m")
+            .WithHealthcheck("redis-cli ping");
+        // Queues as well as caches live here, so a full instance refuses writes instead of silently dropping jobs.
+        return dataPath is null
+            ? redis.WithArgs("redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "noeviction", "--save", "", "--appendonly", "no")
+            : redis.WithArgs("redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "noeviction").WithBindMount(dataPath, "/data");
     }
 
-    private IResourceBuilder<ContainerResource> Meilisearch(string name, string masterKeyKey, string dataPath)
+    private IResourceBuilder<ContainerResource> Meilisearch(string name, string tag, string masterKeyKey, string dataPath)
     {
-        return Add(name, "getmeili/meilisearch", "v1.10")
+        return Add(name, "getmeili/meilisearch", tag)
             .WithEnvironment("MEILI_MASTER_KEY", settings.Secret(masterKeyKey))
             .WithEnvironment("MEILI_ENV", "production")
+            .WithEnvironment("MEILI_NO_ANALYTICS", "true")
+            .WithEnvironment("MEILI_MAX_INDEXING_MEMORY", "256Mb")
             .WithBindMount(dataPath, "/meili_data");
     }
 }

@@ -1,0 +1,15 @@
+/* Terminal look: monospace, square corners, green accents (HOMEPAGE_THEME_PRESET=terminal). Pair with HOMEPAGE_FONT=plex. */
+html[class*="theme-"] {
+  --color-50: 190 255 200;
+  --color-100: 150 235 165;
+  --color-200: 110 210 130;
+  --color-300: 80 180 100;
+  --color-400: 60 150 80;
+  --color-500: 45 115 60;
+  --color-600: 30 80 42;
+  --color-700: 20 45 26;
+  --color-800: 8 14 10;
+  --color-900: 4 8 5;
+}
+* { border-radius: 0 !important; }
+body { font-family: "IBM Plex Mono", ui-monospace, monospace; letter-spacing: 0.01em; }

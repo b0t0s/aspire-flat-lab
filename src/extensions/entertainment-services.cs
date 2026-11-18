@@ -22,11 +22,11 @@ internal static class EntertainmentServices
             .WithBindMount(settings.Entertainment.DataPath("MINECRAFT_CONFIG", "configs/minecraft"), "/config", isReadOnly: true)
             .WithBindMount(settings.Entertainment.DataPath("MINECRAFT_DATA", "../services-data/system/minecraft"), "/data")
             .WithEndpoint(25565, 25565, name: "minecraft")
-            .WithHomepage("Entertainment", "minecraft", "mdi-minecraft", "Game server")
+            .WithHomepage("Entertainment", "Minecraft", "mdi-minecraft", "Game server")
             .WithHomepageWidget("minecraft", "udp://minecraft:25565");
 
         _ = builder.AddContainer("dm-hero", "ghcr.io/flo0806/dm-hero", "latest")
-            .WithContainerName("dm-hero")
+            .WithContainerName("campaigns")
             .WithDefaultMode(LabMode.Off)
             .WithEnvironment("NODE_ENV", "production")
             .WithEnvironment("NITRO_PORT", "3000")
@@ -34,7 +34,7 @@ internal static class EntertainmentServices
             .WithBindMount(settings.Entertainment.DataPath("DM_HERO_DATA", "../services-data/system/dm-hero/data"), "/app/data")
             .WithBindMount(settings.Entertainment.DataPath("DM_HERO_UPLOADS", "../services-data/system/dm-hero/uploads"), "/app/.output/public/uploads")
             .WithLabPort(3000, "dm-hero")
-            .WithHomepage("Entertainment", "DM Hero", "mdi-dice-d20", "D&D campaign manager", $"https://dm-hero.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Entertainment", "DM Hero", "mdi-dice-d20", "D&D campaign manager", $"https://campaigns.{settings.Shared.DuckDnsDomain}");
 
         _ = dependencies.Rsshub
             .WithEndpoint(10004, 1200, name: "rsshub")
@@ -54,7 +54,7 @@ internal static class EntertainmentServices
             .WithLabPort(8080, "miniflux")
             .WaitFor(dependencies.MinifluxDb)
             .WaitFor(dependencies.Rsshub)
-            .WithHomepage("Entertainment", "Feed", "si-feedly", href: $"https://feed.{settings.Shared.DuckDnsDomain}")
+            .WithHomepage("Entertainment", "Feed", "si-feedly", "RSS reader", href: $"https://feed.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("miniflux", "http://feed:8080", key: HomepageVar("MINIFLUX_WIDGET_KEY"));
 
         _ = builder.AddContainer("navidrome", "deluan/navidrome", "latest")
@@ -67,7 +67,7 @@ internal static class EntertainmentServices
             .WithBindMount(settings.Entertainment.DataPath("NAVIDROME_DATA", "../services-data/system/navidrome"), "/data")
             .WithBindMount(settings.Entertainment.DataPath("NAVIDROME_MUSIC", "../services-data/public/music"), "/music", isReadOnly: false)
             .WithLabPort(4533, "navidrome")
-            .WithHomepage("Entertainment", "Music", "mdi-music", href: $"https://music.{settings.Shared.DuckDnsDomain}")
+            .WithHomepage("Entertainment", "Music", "mdi-music", "Music streaming", href: $"https://music.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("navidrome", "http://music:4533",
                 username: HomepageVar("NAVIDROME_WIDGET_USER"),
                 token: HomepageVar("NAVIDROME_WIDGET_TOKEN"),
@@ -80,7 +80,7 @@ internal static class EntertainmentServices
             .WithBindMount(settings.Entertainment.DataPath("JELLYFIN_CACHE", "../services-data/system/jellyfin/cache"), "/cache")
             .WithBindMount(settings.Entertainment.DataPath("MEDIA_FOLDERS", "../services-data/public/movies"), "/media", isReadOnly: false)
             .WithLabPort(8096, "jellyfin")
-            .WithHomepage("Entertainment", "Videos", "mdi-play-circle", href: $"https://videos.{settings.Shared.DuckDnsDomain}")
+            .WithHomepage("Entertainment", "Videos", "mdi-play-circle", "Movies and series", href: $"https://videos.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("jellyfin", "http://videos:8096", key: HomepageVar("JELLYFIN_WIDGET_KEY"));
 
         _ = builder.AddContainer("kavita", "jvmilazz0/kavita", "latest")
@@ -109,7 +109,7 @@ internal static class EntertainmentServices
             .WithBindMount(settings.Entertainment.DataPath("PHOTOVIEW_PHOTOS", "../services-data/public/photos"), "/photos/")
             .WithBindMount(settings.Entertainment.DataPath("PHOTOVIEW_CACHE", "../services-data/system/photoview/cache"), "/app/cache")
             .WithLabPort(80, "photoview")
-            .WithHomepage("Entertainment", "Gallery", "mdi-image-search", href: $"https://gallery.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Entertainment", "Gallery", "mdi-image-search", "Photo gallery", href: $"https://gallery.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddDockerfile("solar-system", builder.RepoPath("src/containers/solar-system-map-builder"))
             .WithContainerName("solar")
@@ -117,7 +117,7 @@ internal static class EntertainmentServices
             .WithRepoMount("configs/solar-system", "/config", isReadOnly: true)
             .WithBindMount(settings.Entertainment.DataPath("SOLAR_SYSTEM_CACHE", "../services-data/system/solar-system"), "/cache")
             .WithLabPort(80, "solar-system")
-            .WithHomepage("Entertainment", "Solar map", "mdi-earth", "Live solar system, time travel and moments", $"https://solarmap.{settings.Shared.DuckDnsDomain}/");
+            .WithHomepage("Entertainment", "Solar map", "mdi-earth", "Live solar system, time travel and moments", $"https://solar.{settings.Shared.DuckDnsDomain}/");
 
         _ = builder.AddDockerfile("gravity", builder.RepoPath("src/containers/Gravity"), "Dockerfile", "runner")
             .WithContainerName("gravity")
@@ -127,7 +127,7 @@ internal static class EntertainmentServices
 
         // Desktop Stellarium streamed to the browser (linuxserver Selkies base): full star catalogs, works offline.
         _ = builder.AddDockerfile("stellarium", builder.RepoPath("src/containers/stellarium"))
-            .WithContainerName("stellarium")
+            .WithContainerName("sky")
             .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("PUID", settings.Shared.Uid)
             .WithEnvironment("PGID", settings.Shared.Gid)

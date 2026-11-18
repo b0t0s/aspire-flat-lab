@@ -22,7 +22,7 @@ internal sealed partial class LabDependencies
 
     // Offline libraries (ZIM files). The fetcher resolves the newest edition of each KIWIX_ZIMS entry ("<folder>/<name>"),
     // downloads what is missing, drops older editions, and always exits 0 so Kiwix also starts without internet.
-    public IResourceBuilder<ContainerResource> KiwixFetch => Once(() => Builder.AddContainer("kiwix-fetch", "alpine", "3.21")
+    public IResourceBuilder<ContainerResource> KiwixFetch => Once(() => Builder.AddContainer("kiwix-fetch", "alpine", "3.24")
         .WithContainerName("kiwix-fetch")
         .WithRestart("no")
         .WithEnvironment("KIWIX_ZIMS", Settings.Knowledge.Value("KIWIX_ZIMS",

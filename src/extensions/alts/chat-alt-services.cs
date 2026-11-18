@@ -14,14 +14,14 @@ internal static class ChatAltServices
             .WithBindMount(settings.Chat.DataPath("OPEN_WEBUI_DATA", "../services-data/system/open-webui"), "/app/backend/data")
             .WithEndpoint(10007, 8080, name: "open-webui")
             .WaitFor(dependencies.Ollama)
-            .WithHomepage("Development", "LLM", "mdi-robot", href: $"https://llm.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Development", "LLM", "mdi-robot", "Chat with local AI models", href: $"https://llm.{settings.Shared.DuckDnsDomain}");
 
         // XMPP: Snikket (all-in-one) needs host networking for its own 80/443/5222/5269.
         var snikketDataPath = settings.Chat.DataPath("SNIKKET_DATA_PATH", "../services-data/system/snikket");
         var snikketAcmePath = Path.Combine(snikketDataPath, "acme-challenge");
         IResourceBuilder<ContainerResource> Snikket(string name, string image)
         {
-            return builder.AddContainer(name, image, "dev")
+            return builder.AddContainer(name, image, "stable")
                 .WithContainerName(name)
                 .WithHostNetwork()
                 .WithSnikketSettings(settings)
@@ -34,10 +34,10 @@ internal static class ChatAltServices
         _ = Snikket("snikket-certs", "snikket/snikket-cert-manager")
             .WithBindMount(snikketAcmePath, "/var/www/.well-known/acme-challenge");
 
-        _ = builder.AddContainer("snikket-portal", "snikket/snikket-web-portal", "dev")
-            .WithContainerName("snikket-portal")
+        _ = builder.AddContainer("snikket-portal", "snikket/snikket-web-portal", "stable")
+            .WithContainerName("chat")
             .WithSnikketSettings(settings)
-            .WithHomepage("Messaging", "Portal", "mdi-chat", href: $"https://chat.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Messaging", "Portal", "mdi-chat", "XMPP chat accounts", href: $"https://chat.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddDockerfile("conversejs", builder.RepoPath("src/containers/xmpp-web"), "Dockerfile")
             .WithContainerName("xmpp")
@@ -67,13 +67,13 @@ internal static class ChatAltServices
             .WithContainerName("matrix")
             .WithConfigTemplate("configs/element/config.json.template", "/app", "config.json", new Dictionary<string, object> { ["DOMAIN"] = settings.Shared.DuckDnsDomain })
             .WithLabPort(80, "element-web")
-            .WithHomepage("Messaging", "Matrix", "mdi-chat", href: $"https://matrix.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Messaging", "Matrix", "mdi-chat", "Matrix chat client", href: $"https://matrix.{settings.Shared.DuckDnsDomain}");
 
         AddSynapse(builder, dependencies, settings);
 
         // Forum
 
-        var lemmyUi = builder.AddContainer("lemmy-project-ui", "dessalines/lemmy-ui", "0.19.20")
+        var lemmyUi = builder.AddContainer("lemmy-project-ui", "dessalines/lemmy-ui", "0.19.21")
             .WithContainerName("forum-ui")
             .WithContainerNetworkAlias("lemmy-ui")
             .WithEnvironment("LEMMY_UI_LEMMY_INTERNAL_HOST", "forum:8536")
@@ -88,7 +88,7 @@ internal static class ChatAltServices
             .WithEnvironment("POSTFIX_myhostname", settings.Shared.DuckDnsDomain);
 
         _ = builder.AddContainer("lemmy-project-proxy", "nginx", "1-alpine")
-            .WithContainerName("lemmy-project-proxy")
+            .WithContainerName("forum-proxy")
             .WithContainerNetworkAlias("proxy")
             .WithRepoMount("configs/lemmy/nginx_internal.conf", "/etc/nginx/nginx.conf", isReadOnly: true)
             .WithRepoMount("configs/lemmy/proxy_params", "/etc/nginx/proxy_params", isReadOnly: true)
@@ -130,7 +130,7 @@ internal static class ChatAltServices
             return value.Replace("'", "''");
         }
 
-        _ = builder.AddContainer("synapse", "matrixdotorg/synapse", "v1.95.1")
+        _ = builder.AddContainer("synapse", "matrixdotorg/synapse", "v1.165.0")
             .WithContainerName("matrix-server")
             .WithEnvironment("SYNAPSE_CONFIG_PATH", "/config/homeserver.yaml")
             .WithConfigTemplate("configs/synapse/homeserver.yaml.template", "/config", "homeserver.yaml", variables, Yaml, synapseUid)

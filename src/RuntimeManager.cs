@@ -22,6 +22,7 @@ internal sealed class LabContainerAnnotation : IResourceAnnotation
     public string? Pid { get; set; }
     public string? User { get; set; }
     public string? ShmSize { get; set; }
+    public string? Memory { get; set; }
     public string? Hostname { get; set; }
     public LabHealthcheck? Healthcheck { get; set; }
 
@@ -332,6 +333,11 @@ internal static class ContainerConventions
                 if (lab.Pid is not null) args.Add($"--pid={lab.Pid}");
                 if (lab.User is not null) args.Add($"--user={lab.User}");
                 if (lab.ShmSize is not null) args.Add($"--shm-size={lab.ShmSize}");
+                if (lab.Memory is not null) args.Add($"--memory={lab.Memory}");
+                // Logs are only read during setup: one 1 MB file. json-file, not local: Aspire's orchestrator forces max-file=1,
+                // which the local driver rejects because it compresses by default.
+                args.Add("--log-driver=json-file");
+                args.Add("--log-opt=max-size=1m");
                 if (lab.Hostname is not null) args.Add($"--hostname={lab.Hostname}");
                 if (lab.Healthcheck is { } health)
                 {
@@ -380,6 +386,7 @@ internal static class ContainerConventions
                 service.Pid = lab.Pid ?? service.Pid;
                 service.User = lab.User ?? service.User;
                 service.ShmSize = lab.ShmSize ?? service.ShmSize;
+                service.Logging = new Logging { Driver = "local", Options = new() { ["max-size"] = "1m", ["max-file"] = "2" } };
                 service.Hostname = lab.Hostname ?? service.Hostname;
                 if (lab.Healthcheck is { } health)
                 {

@@ -24,7 +24,7 @@ internal sealed partial class LabDependencies
         .WithEnvironment("UPSTASH_REDIS_REST_URL", "http://worldmonitor-redis-rest:80")
         .WithEnvironment("UPSTASH_REDIS_REST_TOKEN", Settings.Secret("WORLDMONITOR_REDIS_TOKEN"))
         .WithEnvironment("UPSTASH_ALLOW_INSECURE_HTTP", "true")
-        .WithEnvironment("API_BASE_URL", "http://worldmonitor:8080")
+        .WithEnvironment("API_BASE_URL", "http://world:8080")
         .WithEnvironment("PORT", "3004")
         .WaitFor(WorldmonitorRedisRest));
 }

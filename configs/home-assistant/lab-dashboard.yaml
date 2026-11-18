@@ -1,0 +1,4 @@
+# Dashboard embedded in Homepage (Controls row). Home Assistant builds it from every entity, grouped by area, with toggles.
+# To pick cards by hand, replace the strategy with views: and cards:.
+strategy:
+  type: original-states

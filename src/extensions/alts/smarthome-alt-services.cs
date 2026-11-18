@@ -13,7 +13,7 @@ internal static class SmartHomeAltServices
             .WithBindMount(settings.SmartHome.DataPath("HOMEBOX_DATA", "../services-data/system/homebox"), "/data")
             .WithLabPort(7745, "homebox")
             .WithEnvironment("HBOX_AUTH_API_KEY_PEPPER", settings.Secret("HBOX_AUTH_API_KEY_PEPPER", SecretKind.Base64, Path.Combine(settings.SmartHome.DataPath("HOMEBOX_SECRETS", "../services-data/system/homebox/secrets"), "homebox_api_key_pepper")))
-            .WithHomepage("Household", "Inventory", "mdi-package-variant-closed", href: $"https://inventory.{settings.Shared.DuckDnsDomain}")
+            .WithHomepage("Household", "Inventory", "mdi-package-variant-closed", "What is where at home", href: $"https://inventory.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("homebox", "http://inventory:7745",
                 username: HomepageVar("HOMEBOX_WIDGET_USERNAME"),
                 password: HomepageVar("HOMEBOX_WIDGET_PASSWORD"));
@@ -25,14 +25,15 @@ internal static class SmartHomeAltServices
             .WithLabPort(1880, "nodered")
             .WithHomepage("Household", "Flows", "mdi-sitemap", "Automation flows", $"https://flows.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("managemeals", "ghcr.io/nightwhistler/managemeals", "latest")
+        _ = builder.AddContainer("mealie", "ghcr.io/mealie-recipes/mealie", "latest")
             .WithContainerName("meals")
             .WithDefaultMode(LabMode.Off)
-            .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Production")
-            .WithEnvironment("ASPNETCORE_URLS", "http://+:8089")
-            .WithBindMount(settings.SmartHome.DataPath("MANAGEMEALS_DATA", "../services-data/system/managemeals"), "/app/data")
-            .WithLabPort(8089, "managemeals")
-            .WithHomepage("Household", "Meals", "mdi-silverware-fork-knife", "Recipe manager", $"https://meals.{settings.Shared.DuckDnsDomain}");
+            .WithEnvironment("BASE_URL", $"https://meals.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("ALLOW_SIGNUP", "true")
+            .WithEnvironment("TZ", settings.Shared.TimeZone)
+            .WithBindMount(settings.SmartHome.DataPath("MEALIE_DATA", "../services-data/system/mealie"), "/app/data")
+            .WithLabPort(9000, "mealie")
+            .WithHomepage("Household", "Meals", "mdi-silverware-fork-knife", "Recipes and meal plans", $"https://meals.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("grocy", "ghcr.io/linuxserver/grocy", "latest")
             .WithContainerName("household")
@@ -43,15 +44,15 @@ internal static class SmartHomeAltServices
             .WithEnvironment("DISABLE_BROWSER_OPEN", "true")
             .WithBindMount(settings.SmartHome.DataPath("GROCY_DATA", "../services-data/system/grocy"), "/config")
             .WithLabPort(80, "grocy")
-            .WithHomepage("Household", "Household", "mdi-home", href: $"https://household.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Household", "Household", "mdi-home", "Groceries and household stock", href: $"https://household.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("changedetection", "dgtlmoon/changedetection.io", "latest")
-            .WithContainerName("changedetection")
+            .WithContainerName("watch")
             .WithDefaultMode(LabMode.Off)
             .WithBindMount(settings.SmartHome.DataPath("CHANGEDETECTION_DATA", "../services-data/system/changedetection"), "/datastore")
             .WithLabPort(5000, "changedetection")
-            .WithHomepage("Infrastructure", "ChangeDetection", "mdi-monitor-dashboard", "Page change detector", $"https://changedetection.{settings.Shared.DuckDnsDomain}")
-            .WithHomepageWidget("changedetectionio", "http://changedetection:5000", key: HomepageVar("CHANGEDETECTION_WIDGET_KEY"));
+            .WithHomepage("Infrastructure", "ChangeDetection", "mdi-monitor-dashboard", "Page change detector", $"https://watch.{settings.Shared.DuckDnsDomain}")
+            .WithHomepageWidget("changedetectionio", "http://watch:5000", key: HomepageVar("CHANGEDETECTION_WIDGET_KEY"));
 
         _ = builder.AddContainer("opencloud", "opencloudeu/opencloud-rolling", "latest")
             .WithContainerName("opencloud")
@@ -84,7 +85,7 @@ internal static class SmartHomeAltServices
             .WithHomepage("Household", "OxiCloud", "mdi-cloud-sync", "Lightweight Rust file cloud", $"https://oxicloud.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("syncthing", "syncthing/syncthing", "latest")
-            .WithContainerName("syncthing")
+            .WithContainerName("sync")
             .WithDefaultMode(LabMode.Off)
             .WithEnvironment("PUID", settings.Shared.Uid)
             .WithEnvironment("PGID", settings.Shared.Gid)
@@ -112,7 +113,7 @@ internal static class SmartHomeAltServices
             .WithLabPort(80, "seafile")
             .WaitFor(dependencies.SeafileDb)
             .WaitFor(dependencies.SeafileMemcached)
-            .WithHomepage("Household", "Cloud", "mdi-cloud", href: $"https://cloud.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Household", "Cloud", "mdi-cloud", "File sync and sharing", href: $"https://cloud.{settings.Shared.DuckDnsDomain}");
 
         // Runs once against the live Seafile: seahub_settings.py only exists after Seafile's own first start.
         _ = builder.AddContainer("seafile-auto-config", "docker", "cli")

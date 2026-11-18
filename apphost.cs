@@ -1,10 +1,9 @@
 #!/usr/bin/env -S dotnet --
-#:sdk Aspire.AppHost.Sdk@13.6.4
-#:property AspireUseCliBundle=false
-#:property NoWarn=$(NoWarn);ASPIRE010
+#:sdk Aspire.AppHost.Sdk@17.0.0
+#:property AspireUseCliBundle=true
 #:package DotNetEnv@3.2.0
-#:package Aspire.Hosting.Docker@13.6.4
-#:package Aspire.Hosting.JavaScript@13.6.4
+#:package Aspire.Hosting.Docker@17.0.0
+#:package Aspire.Hosting.JavaScript@17.0.0
 
 #:include src/dependencies/LabDependencies.cs
 #:include src/dependencies/alts/chat-alt-dependencies.cs

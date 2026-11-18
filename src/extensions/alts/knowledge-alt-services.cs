@@ -13,7 +13,7 @@ internal static class KnowledgeAltServices
             .WithBindMount(settings.Knowledge.DataPath("CALIBRE_DATA", "../services-data/system/calibre-web"), "/config")
             .WithBindMount(settings.Knowledge.DataPath("CALIBRE_LIBRARY", "../services-data/public/books"), "/books")
             .WithLabPort(8083, "calibre-web")
-            .WithHomepage("Knowledge", "Archive", "mdi-book-open-page-variant", href: $"https://archive.{settings.Shared.DuckDnsDomain}")
+            .WithHomepage("Knowledge", "Archive", "mdi-book-open-page-variant", "Ebook library", href: $"https://archive.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("calibreweb", "http://archive:8083",
                 username: HomepageVar("CALIBRE_WIDGET_USER"),
                 password: HomepageVar("CALIBRE_WIDGET_PASSWORD"));
@@ -25,15 +25,15 @@ internal static class KnowledgeAltServices
             .WithEnvironment("ADMIN_PASSWORD", settings.Secret("ARCHIVEBOX_ADMIN_PASS"))
             .WithBindMount(settings.Knowledge.DataPath("ARCHIVEBOX_DATA", "../services-data/system/archivebox"), "/data")
             .WithLabPort(8000, "archivebox")
-            .WithHomepage("Knowledge", "History", "mdi-archive", href: $"https://history.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Knowledge", "History", "mdi-archive", "Saved copies of web pages", href: $"https://history.{settings.Shared.DuckDnsDomain}");
 
         // DO AFTER START: chown -R 1654:1654 ../services-data/system/nostos
         // (image runs as the dotnet 'app' user and needs /data writable by it - do not override the container user)
         _ = builder.AddContainer("nostos", "ghcr.io/christian-gennari/nostos", "latest")
-            .WithContainerName("nostos")
+            .WithContainerName("reading")
             .WithBindMount(settings.Knowledge.DataPath("NOSTOS_DATA", "../services-data/system/nostos"), "/data")
             .WithLabPort(8080, "nostos")
-            .WithHomepage("Knowledge", "Nostos", "mdi-book-open-variant", "", $"https://nostos.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Knowledge", "Nostos", "mdi-book-open-variant", "Reading tracker", $"https://reading.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("siyuan", "b3log/siyuan", "latest")
             .WithContainerName("notes")
@@ -44,7 +44,7 @@ internal static class KnowledgeAltServices
             .WithArgs("serve", "--workspace=/siyuan/workspace/")
             .WithBindMount(settings.Knowledge.DataPath("SIYUAN_DATA", "../services-data/system/siyuan"), "/siyuan/workspace")
             .WithLabPort(6806, "siyuan")
-            .WithHomepage("Knowledge", "Notes", "mdi-notebook", href: $"https://notes.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Knowledge", "Notes", "mdi-notebook", "Personal notes", href: $"https://notes.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("affine", "ghcr.io/toeverything/affine", "stable")
             .WithContainerName("affine")
@@ -62,7 +62,7 @@ internal static class KnowledgeAltServices
             .WithEnvironment("NODE_ENV", "production")
             .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://outline:{settings.Secret("OUTLINE_DB_PASSWORD")}@outline-db:5432/outline?sslmode=disable"))
             .WithEnvironment("REDIS_URL", "redis://outline-redis:6379")
-            .WithEnvironment("URL", $"https://docs.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("URL", $"https://dev-notes.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("PORT", "3000")
             .WithEnvironment("FILE_STORAGE", "local")
             .WithEnvironment("FILE_STORAGE_LOCAL_ROOT_DIR", "/var/lib/outline/data")
@@ -72,7 +72,7 @@ internal static class KnowledgeAltServices
             .WithEnvironment("UTILS_SECRET", settings.Secret("OUTLINE_UTILS_SECRET_KEY", SecretKind.Hex32, Path.Combine(outlineSecrets, "outline_utils_secret")))
             .WaitFor(dependencies.OutlineDb)
             .WaitFor(dependencies.OutlineRedis)
-            .WithHomepage("Knowledge", "Dev notes", "mdi-file-document-multiple", href: $"https://docs.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Knowledge", "Dev notes", "mdi-file-document-multiple", "Team wiki and notes", href: $"https://dev-notes.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("bookstack", "ghcr.io/linuxserver/bookstack", "latest")
             .WithContainerName("wiki")
@@ -88,10 +88,10 @@ internal static class KnowledgeAltServices
             .WithBindMount(settings.Knowledge.DataPath("BOOKSTACK_DATA", "../services-data/system/bookstack"), "/config")
             .WithLabPort(80, "bookstack")
             .WaitFor(dependencies.BookstackDb)
-            .WithHomepage("Knowledge", "Wiki", "mdi-file-document-multiple", href: $"https://wiki.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Knowledge", "Wiki", "mdi-file-document-multiple", "Structured wiki", href: $"https://wiki.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("zensical", "zensical/zensical", "latest")
-            .WithContainerName("zensical")
+            .WithContainerName("docs2")
             .WithArgs("serve", "--dev-addr=0.0.0.0:8000")
             .WithBindMount(settings.Knowledge.DataPath("ZENSICAL_DOCS", "../services-data/public/docs2"), "/docs")
             .WithConfigFile("configs/zensical/mkdocs.yml", "/docs/mkdocs.yml")
@@ -99,22 +99,19 @@ internal static class KnowledgeAltServices
             .WithLabPort(8000, "zensical")
             .WithHomepage("Knowledge", "Zensical", "mdi-book-open-page-variant", "Docs server", $"https://docs2.{settings.Shared.DuckDnsDomain}");
 
-        _ = builder.AddContainer("karakeep", "ghcr.io/karakeep-dev/karakeep", "latest")
+        _ = builder.AddContainer("karakeep", "ghcr.io/karakeep-app/karakeep", "release")
             .WithContainerName("cabinet")
-            .WithEnvironment("NODE_ENV", "production")
-            .WithEnvironment("PORT", "3000")
-            .WithEnvironment("DATABASE_URL", ReferenceExpression.Create($"postgres://karakeep:{settings.Secret("KARAKEEP_DB_PASSWORD")}@karakeep-db:5432/karakeep"))
-            .WithEnvironment("REDIS_URL", "redis://karakeep-redis:6379")
-            .WithEnvironment("NEXTAUTH_SECRET", settings.Secret("KARAKEEP_SECRET"))
-            .WithEnvironment("NEXTAUTH_URL", $"https://karakeep.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("DATA_DIR", "/data")
-            .WithEnvironment("MEILI_HOST", "http://karakeep-meilisearch:7700")
+            .WithEnvironment("NEXTAUTH_SECRET", settings.Secret("KARAKEEP_SECRET"))
+            .WithEnvironment("NEXTAUTH_URL", $"https://cabinet.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("MEILI_ADDR", "http://karakeep-meilisearch:7700")
             .WithEnvironment("MEILI_MASTER_KEY", settings.Secret("KARAKEEP_MEILI_KEY"))
+            .WithEnvironment("BROWSER_WEB_URL", "http://karakeep-chrome:9222")
+            .WithBindMount(settings.Knowledge.DataPath("KARAKEEP_DATA", "../services-data/system/karakeep/data"), "/data")
             .WithLabPort(3000, "karakeep")
-            .WaitFor(dependencies.KarakeepDb)
-            .WaitFor(dependencies.KarakeepRedis)
             .WaitFor(dependencies.KarakeepMeilisearch)
-            .WithHomepage("Knowledge", "Cabinet", "mdi-bookmark-multiple", href: $"https://karakeep.{settings.Shared.DuckDnsDomain}")
+            .WaitFor(dependencies.KarakeepChrome)
+            .WithHomepage("Knowledge", "Cabinet", "mdi-bookmark-multiple", "Bookmarks with full-text search", href: $"https://cabinet.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("karakeep", "http://cabinet:3000", key: HomepageVar("KARAKEEP_WIDGET_KEY"));
 
         _ = builder.AddContainer("linkwarden", "ghcr.io/linkwarden/linkwarden", "latest")
@@ -130,21 +127,21 @@ internal static class KnowledgeAltServices
             .WithLabPort(3000, "linkwarden")
             .WaitFor(dependencies.LinkwardenDb)
             .WaitFor(dependencies.LinkwardenMeilisearch)
-            .WithHomepage("Knowledge", "Pocket", "mdi-link-variant", href: $"https://pocket.{settings.Shared.DuckDnsDomain}")
+            .WithHomepage("Knowledge", "Pocket", "mdi-link-variant", "Saved links and snapshots", href: $"https://pocket.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("linkwarden", "http://pocket:3000", key: HomepageVar("LINKWARDEN_WIDGET_KEY"));
 
         _ = builder.AddContainer("joplin", "joplin/server", "latest")
-            .WithContainerName("joplin")
-            .WithEnvironment("APP_BASE_URL", $"https://joplin.{settings.Shared.DuckDnsDomain}")
+            .WithContainerName("joplin-sync")
+            .WithEnvironment("APP_BASE_URL", $"https://joplin-sync.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("APP_PORT", "22300")
             .WithEnvironment("DB_CLIENT", "pg")
             .WithEnvironment("POSTGRES_HOST", "joplin-db")
             .WithEnvironment("POSTGRES_PORT", "5432")
-            .WithEnvironment("POSTGRES_DATABASE", "joplin")
-            .WithEnvironment("POSTGRES_USER", "joplin")
+            .WithEnvironment("POSTGRES_DATABASE", "joplin-sync")
+            .WithEnvironment("POSTGRES_USER", "joplin-sync")
             .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("JOPLIN_DB_PASSWORD"))
             .WithLabPort(22300, "joplin")
             .WaitFor(dependencies.JoplinDb)
-            .WithHomepage("Knowledge", "Joplin", "si-joplin", "Notes sync server", $"https://joplin.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Knowledge", "Joplin", "si-joplin", "Notes sync server", $"https://joplin-sync.{settings.Shared.DuckDnsDomain}");
     }
 }

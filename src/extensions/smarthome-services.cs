@@ -19,14 +19,14 @@ internal static class SmartHomeServices
             .WithBindMount(settings.SmartHome.DataPath("NTFY_CACHE", "../services-data/system/ntfy/cache"), "/var/cache/ntfy")
             .WithConfigFile("configs/ntfy/server.yml", "/etc/ntfy/server.yml")
             .WithLabPort(80, "ntfy")
-            .WithHomepage("Infrastructure", "Notifications", "mdi-bell-ring", href: $"https://notifications.{settings.Shared.DuckDnsDomain}")
+            .WithHomepage("Infrastructure", "Notifications", "mdi-bell-ring", "Push notifications", href: $"https://notifications.{settings.Shared.DuckDnsDomain}")
             .WithHomepageWidget("ntfy", "http://ntfy:80",
                 username: HomepageVar("NTFY_WIDGET_USERNAME"),
                 password: HomepageVar("NTFY_WIDGET_PASSWORD"))
             .WithLab(lab => lab.Labels["homepage.widget.topic"] = settings.SmartHome.Value("NTFY_WIDGET_TOPIC", "general"));
 
         _ = builder.AddContainer("worldmonitor", "worldmonitor", "local")
-            .WithContainerName("worldmonitor")
+            .WithContainerName("world")
             .WithDefaultMode(LabMode.Manual)
             .WithEnvironment("UPSTASH_REDIS_REST_URL", "http://worldmonitor-redis-rest:80")
             .WithEnvironment("UPSTASH_REDIS_REST_TOKEN", settings.Secret("WORLDMONITOR_REDIS_TOKEN"))
@@ -39,27 +39,27 @@ internal static class SmartHomeServices
             .WithLabPort(8080, "worldmonitor")
             .WaitFor(dependencies.WorldmonitorRedisRest)
             .WaitFor(dependencies.WorldmonitorAisRelay)
-            .WithHomepage("Entertainment", "WorldMonitor", "mdi-earth-box", "Global intelligence dashboard", $"https://worldmonitor.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Entertainment", "WorldMonitor", "mdi-earth-box", "Global intelligence dashboard", $"https://world.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddContainer("nextcloud", "nextcloud", "stable")
-            .WithContainerName("nextcloud")
+            .WithContainerName("drive")
             .WithDefaultMode(LabMode.Auto)
             .WithEnvironment("POSTGRES_HOST", "nextcloud-db")
-            .WithEnvironment("POSTGRES_DB", "nextcloud")
-            .WithEnvironment("POSTGRES_USER", "nextcloud")
+            .WithEnvironment("POSTGRES_DB", "drive")
+            .WithEnvironment("POSTGRES_USER", "drive")
             .WithEnvironment("POSTGRES_PASSWORD", settings.Secret("NEXTCLOUD_DB_PASSWORD"))
             .WithEnvironment("REDIS_HOST", "nextcloud-redis")
             .WithEnvironment("NEXTCLOUD_ADMIN_USER", settings.SmartHome.Value("NEXTCLOUD_ADMIN_USER", "admin"))
             .WithEnvironment("NEXTCLOUD_ADMIN_PASSWORD", settings.Secret("NEXTCLOUD_ADMIN_PASSWORD"))
-            .WithEnvironment("NEXTCLOUD_TRUSTED_DOMAINS", $"nextcloud.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("NEXTCLOUD_TRUSTED_DOMAINS", $"drive.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("OVERWRITEPROTOCOL", "https")
-            .WithEnvironment("OVERWRITEHOST", $"nextcloud.{settings.Shared.DuckDnsDomain}")
+            .WithEnvironment("OVERWRITEHOST", $"drive.{settings.Shared.DuckDnsDomain}")
             .WithEnvironment("TRUSTED_PROXIES", "caddy")
             .WithBindMount(settings.SmartHome.DataPath("NEXTCLOUD_DATA", "../services-data/system/nextcloud/html"), "/var/www/html")
             .WithLabPort(80, "nextcloud")
             .WaitFor(dependencies.NextcloudDb)
             .WaitFor(dependencies.NextcloudRedis)
-            .WithHomepage("Household", "Nextcloud", "si-nextcloud", "Files, calendar, contacts", $"https://nextcloud.{settings.Shared.DuckDnsDomain}");
+            .WithHomepage("Household", "Nextcloud", "si-nextcloud", "Files, calendar, contacts", $"https://drive.{settings.Shared.DuckDnsDomain}");
 
         _ = builder.AddDockerfile("house-planner", builder.RepoPath("src/containers/house-planner"))
             .WithContainerName("floorplan")
