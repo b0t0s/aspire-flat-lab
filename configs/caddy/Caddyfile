@@ -264,10 +264,21 @@
 
     @homepage host homepage.{$DUCKDNS_DOMAIN}
     handle @homepage {
-        # Forward the original Host header; otherwise homepage's Host validation rejects the request with 400
-        # and Caddy reports 502 to the browser.
-        reverse_proxy homepage:3000 {
-            header_up Host {host}
+        handle /stepan.png {
+            reverse_proxy 192.168.0.11:80 {
+                header_up Host 192.168.0.11
+            }
+        }
+        handle /stepan {
+            header Content-Type "text/html; charset=utf-8"
+            header Cache-Control no-store
+            respond `<!doctype html><title>Stepan</title><body style="margin:0;background:#000;height:100vh;display:flex;align-items:center;justify-content:center"><img src="/stepan.png" alt="Stepan" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated"><script>const i=document.images[0];setInterval(()=>(n=>(n.onload=()=>i.src=n.src,n.src="/stepan.png?t="+Date.now()))(new Image()),3000)</script></body>` 200
+        }
+        # Forward the original Host header; otherwise homepage's Host validation rejects the request with 400 and Caddy reports 502 to the browser.
+        handle {
+            reverse_proxy homepage:3000 {
+                header_up Host {host}
+            }
         }
     }
 

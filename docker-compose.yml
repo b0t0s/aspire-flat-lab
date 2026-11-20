@@ -394,34 +394,6 @@ services:
     networks:
     - flat_lab_net
 
-  # Demo: a second start page with controls (Home Assistant toggles and automations, Docker start/stop).
-  # Not started by default: docker compose --profile demo up -d homarr
-  homarr:
-    logging: *lab-logging
-    profiles: ["demo"]
-    labels:
-    - homepage.group=Infrastructure
-    - homepage.name=Board
-    - homepage.icon=mdi-view-dashboard-edit
-    - homepage.description=Demo start page with controls
-    - homepage.href=https://board.${DUCKDNS_DOMAIN:-localhost}
-    image: ghcr.io/homarr-labs/homarr:latest
-    container_name: board
-    restart: unless-stopped
-    mem_limit: 512m
-    environment:
-    - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_ENCRYPTION_KEY:?set HOMARR_SECRET_ENCRYPTION_KEY in .env}
-    - TZ=${TZ:-Europe/Kyiv}
-    volumes:
-    - ${HOMARR_DATA:-../services-data/system/homarr}:/appdata
-    - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-    - "10007:7575"
-    extra_hosts:
-    - "host.docker.internal:host-gateway"
-    networks:
-    - flat_lab_net
-
   home-assistant:
     logging: *lab-logging
     labels:

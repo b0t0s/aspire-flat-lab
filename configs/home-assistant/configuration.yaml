@@ -33,3 +33,9 @@ lovelace:
       title: Homepage
       icon: mdi:view-dashboard
       show_in_sidebar: false
+
+template:
+  - image:
+      - name: Stepan
+        unique_id: power_meter_stepan_picture
+        url: "http://192.168.0.11/stepan.png?t={{ now().timestamp() | int }}"
