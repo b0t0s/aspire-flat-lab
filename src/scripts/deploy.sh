@@ -117,11 +117,6 @@ for key in \
     echo "generated $key"
   fi
 done
-# Homarr wants exactly 64 hex characters.
-if [[ -z "$(env_get HOMARR_SECRET_ENCRYPTION_KEY)" ]]; then
-  env_set HOMARR_SECRET_ENCRYPTION_KEY "$(tr -dc 'a-f0-9' </dev/urandom | head -c 64)"
-  echo "generated HOMARR_SECRET_ENCRYPTION_KEY"
-fi
 missing=()
 for key in DUCKDNS_DOMAIN DUCKDNS_TOKEN ZEROTIER_NETWORK_ID SEAFILE_ADMIN_EMAIL; do
   [[ -n "$(env_get "$key")" ]] || missing+=("$key")

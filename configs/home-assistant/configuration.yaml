@@ -34,8 +34,12 @@ lovelace:
       icon: mdi:view-dashboard
       show_in_sidebar: false
 
-template:
-  - image:
-      - name: Stepan
-        unique_id: power_meter_stepan_picture
-        url: "http://192.168.0.11/stepan.png?t={{ now().timestamp() | int }}"
+recorder:
+  exclude:
+    entities:
+      - sensor.power_meter_clock
+      - sensor.power_meter_uptime
+      - sensor.power_meter_load
+      - sensor.power_meter_mains_status
+      - sensor.power_meter_today_bill
+      - sensor.power_meter_month_bill
