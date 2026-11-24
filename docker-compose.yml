@@ -428,6 +428,10 @@ services:
     - ./configs/home-assistant/configuration.yaml:/config/configuration.yaml:ro
     - ./configs/home-assistant/lab-automations.yaml:/config/lab-automations.yaml:ro
     - ./configs/home-assistant/lab-dashboard.yaml:/config/lab-dashboard.yaml:ro
+    # Same folders (and .env keys) as Photoview, Navidrome and Jellyfin; see media_dirs in configuration.yaml.
+    - ${PHOTOVIEW_PHOTOS:-../services-data/public/photos}:/media/photos:ro
+    - ${NAVIDROME_MUSIC:-../services-data/public/music}:/media/music:ro
+    - ${MEDIA_FOLDERS:-../services-data/public/movies}:/media/movies:ro
     - /etc/localtime:/etc/localtime:ro
     - /run/dbus:/run/dbus:ro
     environment:

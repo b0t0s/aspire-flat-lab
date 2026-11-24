@@ -178,6 +178,29 @@ if (( ${#conflicts[@]} )); then
 fi
 git status --short -- configs | sed 's/^/  /' || true
 
+step "home-assistant: plotly-graph-card"
+# configuration.yaml loads /local/plotly-graph-card/plotly-graph-card.js (frontend: extra_module_url).
+# The card loads its other chunks on demand, so every .js asset of the release goes into www/.
+plotly_version=v4.0.2
+plotly_dir="$(data_path HOME_ASSISTANT_DATA system/home-assistant)/www/plotly-graph-card"
+HA_RESTART=0
+if [[ "$(cat "$plotly_dir/.version" 2>/dev/null)" != "$plotly_version" ]]; then
+  plotly_tmp="$(mktemp -d)"
+  curl -fsSL "https://api.github.com/repos/dbuezas/lovelace-plotly-graph-card/releases/tags/$plotly_version" \
+    | grep -o '"browser_download_url": *"[^"]*\.js"' | cut -d'"' -f4 \
+    | (cd "$plotly_tmp" && xargs -n1 curl -fsSLO)
+  [[ -f "$plotly_tmp/plotly-graph-card.js" ]] || die "plotly-graph-card $plotly_version: plotly-graph-card.js missing from the release"
+  echo "$plotly_version" >"$plotly_tmp/.version"
+  mkdir -p "$(dirname "$plotly_dir")"
+  rm -rf "$plotly_dir"
+  mv "$plotly_tmp" "$plotly_dir"
+  chmod 755 "$plotly_dir"
+  HA_RESTART=1
+  echo "installed plotly-graph-card $plotly_version ($(ls "$plotly_dir" | wc -l) files); hard-refresh open HA tabs"
+else
+  echo "plotly-graph-card $plotly_version"
+fi
+
 if (( INFRA )); then
   step "infra layer (docker-compose.yml)"
   docker compose config -q
@@ -191,6 +214,11 @@ if (( INFRA )); then
   done
   # --remove-orphans: services moved to the AppHost must give up their container names (cloud, notifications, ...).
   docker compose up -d --build --remove-orphans
+  # HA serves /local only if www/ existed at startup, and caches loaded modules.
+  if (( HA_RESTART )); then
+    docker restart home-assistant >/dev/null
+    echo "restarted home-assistant (new frontend files)"
+  fi
 fi
 
 if (( APPS )); then

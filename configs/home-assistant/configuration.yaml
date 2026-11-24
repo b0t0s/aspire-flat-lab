@@ -5,10 +5,18 @@ homeassistant:
   name: Home Assistant
   unit_system: metric
   time_zone: Europe/Kyiv
+  # Media browser sources; docker-compose.yml mounts services-data/public/* read-only.
+  media_dirs:
+    photos: /media/photos
+    music: /media/music
+    movies: /media/movies
 
 # Load frontend themes from the themes folder
 frontend:
   themes: !include_dir_merge_named themes
+  # custom:plotly-graph card; deploy.sh installs it into www/plotly-graph-card/.
+  extra_module_url:
+    - /local/plotly-graph-card/plotly-graph-card.js
 
 automation: !include automations.yaml
 automation lab: !include lab-automations.yaml
